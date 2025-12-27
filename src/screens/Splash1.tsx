@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
 
@@ -25,7 +25,11 @@ export default function Splash1({ onNext }: { onNext: () => void }) {
         {/* Logo/Icon */}
         <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
-            <Text style={styles.iconText}>₹</Text>
+            <Image
+              source={require("../../assets/images/ballie_logo.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
         </View>
 
@@ -91,7 +95,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: BRAND_COLORS.gold,
+    backgroundColor: SEMANTIC_COLORS.white,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -100,10 +104,9 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-  iconText: {
-    fontSize: 64,
-    fontWeight: "bold",
-    color: BRAND_COLORS.darkPurple,
+  logoImage: {
+    width: 80,
+    height: 80,
   },
   title: {
     fontSize: 48,

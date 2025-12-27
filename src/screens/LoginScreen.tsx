@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
@@ -42,7 +43,11 @@ export default function LoginScreen() {
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <View style={styles.logo}>
-                <Text style={styles.logoText}>₹</Text>
+                <Image
+                  source={require("../../assets/images/ballie_logo.png")}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
               </View>
             </View>
             <Text style={styles.title}>Ballie</Text>
@@ -166,7 +171,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: BRAND_COLORS.gold,
+    backgroundColor: SEMANTIC_COLORS.white,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -175,10 +180,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  logoText: {
-    fontSize: 48,
-    fontWeight: "bold",
-    color: BRAND_COLORS.darkPurple,
+  logoImage: {
+    width: 60,
+    height: 60,
   },
   title: {
     fontSize: 36,

@@ -29,21 +29,21 @@ export default function Splash2({ onNext }: { onNext: () => void }) {
                 { backgroundColor: BRAND_COLORS.green },
               ]}>
               <Text style={styles.statLabel}>Revenue</Text>
-              <Text style={styles.statValue}>₹2,45,890</Text>
+              <Text style={styles.statValue}>₦2,45,890</Text>
               <Text style={styles.statChange}>↑ 12.5%</Text>
             </View>
 
             <View
               style={[styles.statCard, { backgroundColor: BRAND_COLORS.gold }]}>
               <Text style={styles.statLabel}>Expenses</Text>
-              <Text style={styles.statValue}>₹1,23,456</Text>
+              <Text style={styles.statValue}>₦1,23,456</Text>
               <Text style={styles.statChange}>↓ 8.2%</Text>
             </View>
           </View>
 
           <View style={styles.profitCard}>
             <Text style={styles.profitLabel}>Net Profit This Month</Text>
-            <Text style={styles.profitValue}>₹1,22,434</Text>
+            <Text style={styles.profitValue}>₦1,22,434</Text>
           </View>
         </View>
 
