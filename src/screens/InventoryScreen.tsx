@@ -1,20 +1,36 @@
 ﻿import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, SafeAreaView } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useAuth } from "../context/AuthContext";
+import AppHeader from "../components/AppHeader";
 
 export default function InventoryScreen() {
+  const { user, tenant } = useAuth();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Inventory</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="light" />
+      <AppHeader
+        businessName={tenant?.name}
+        userName={user?.name}
+        userRole={user?.role}
+      />
+      <View style={styles.content}>
+        <Text style={styles.title}>Inventory</Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  content: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
   },
   title: {
     fontSize: 24,
