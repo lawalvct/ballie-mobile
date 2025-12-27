@@ -4,7 +4,7 @@ import DashboardScreen from "./DashboardScreen";
 import AccountingScreen from "./AccountingScreen";
 import InventoryScreen from "./InventoryScreen";
 import ReportsScreen from "./ReportsScreen";
-import ProfileScreen from "./ProfileScreen";
+import CRMScreen from "./CRMScreen";
 import CustomTabBar from "../components/CustomTabBar";
 
 export default function MainNavigator() {
@@ -20,8 +20,8 @@ export default function MainNavigator() {
         return <InventoryScreen />;
       case "reports":
         return <ReportsScreen />;
-      case "profile":
-        return <ProfileScreen />;
+      case "crm":
+        return <CRMScreen />;
       default:
         return <DashboardScreen />;
     }

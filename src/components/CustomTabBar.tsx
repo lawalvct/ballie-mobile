@@ -12,7 +12,7 @@ export default function CustomTabBar({ activeTab, onTabPress }: TabBarProps) {
     { id: "accounting", label: "Accounting", icon: "💰" },
     { id: "inventory", label: "Inventory", icon: "📦" },
     { id: "reports", label: "Reports", icon: "📈" },
-    { id: "profile", label: "Profile", icon: "👤" },
+    { id: "crm", label: "CRM", icon: "👥" },
   ];
 
   return (
