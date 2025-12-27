@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BRAND_COLORS, SEMANTIC_COLORS } from '../theme/colors';
+import React from "react";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export default function Splash1({ onNext }: { onNext: () => void }) {
   React.useEffect(() => {
@@ -13,11 +13,14 @@ export default function Splash1({ onNext }: { onNext: () => void }) {
 
   return (
     <LinearGradient
-      colors={[BRAND_COLORS.darkPurple, BRAND_COLORS.deepPurple, BRAND_COLORS.violet]}
+      colors={[
+        BRAND_COLORS.darkPurple,
+        BRAND_COLORS.deepPurple,
+        BRAND_COLORS.violet,
+      ]}
       style={styles.container}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
+      end={{ x: 1, y: 1 }}>
       <View style={styles.content}>
         {/* Logo/Icon */}
         <View style={styles.iconContainer}>
@@ -33,15 +36,30 @@ export default function Splash1({ onNext }: { onNext: () => void }) {
         {/* Features */}
         <View style={styles.featuresContainer}>
           <View style={styles.featureRow}>
-            <View style={[styles.featureDot, { backgroundColor: BRAND_COLORS.gold }]} />
+            <View
+              style={[
+                styles.featureDot,
+                { backgroundColor: BRAND_COLORS.gold },
+              ]}
+            />
             <Text style={styles.featureText}>Track Every Transaction</Text>
           </View>
           <View style={styles.featureRow}>
-            <View style={[styles.featureDot, { backgroundColor: BRAND_COLORS.teal }]} />
+            <View
+              style={[
+                styles.featureDot,
+                { backgroundColor: BRAND_COLORS.teal },
+              ]}
+            />
             <Text style={styles.featureText}>Real-Time Financial Insights</Text>
           </View>
           <View style={styles.featureRow}>
-            <View style={[styles.featureDot, { backgroundColor: BRAND_COLORS.lightBlue }]} />
+            <View
+              style={[
+                styles.featureDot,
+                { backgroundColor: BRAND_COLORS.lightBlue },
+              ]}
+            />
             <Text style={styles.featureText}>Automated Expense Management</Text>
           </View>
         </View>
@@ -62,8 +80,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 32,
   },
   iconContainer: {
@@ -74,9 +92,9 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     backgroundColor: BRAND_COLORS.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -84,12 +102,12 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: 64,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: BRAND_COLORS.darkPurple,
   },
   title: {
     fontSize: 48,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: SEMANTIC_COLORS.white,
     marginBottom: 8,
     letterSpacing: 2,
@@ -98,15 +116,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: BRAND_COLORS.lavender,
     marginBottom: 48,
-    textAlign: 'center',
+    textAlign: "center",
   },
   featuresContainer: {
-    width: '100%',
+    width: "100%",
     marginTop: 24,
   },
   featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   featureDot: {
@@ -121,7 +139,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   dotsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 48,
     gap: 8,
   },

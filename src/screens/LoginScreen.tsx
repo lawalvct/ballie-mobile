@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,14 +8,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BRAND_COLORS, SEMANTIC_COLORS } from '../theme/colors';
-import { StatusBar } from 'expo-status-bar';
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
+import { StatusBar } from "expo-status-bar";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -23,24 +23,21 @@ export default function LoginScreen() {
     // TODO: Implement actual login logic
     setTimeout(() => {
       setIsLoading(false);
-      console.log('Login:', { email, password });
+      console.log("Login:", { email, password });
     }, 1500);
   };
 
   return (
     <LinearGradient
       colors={[BRAND_COLORS.darkPurple, BRAND_COLORS.deepPurple]}
-      style={styles.container}
-    >
+      style={styles.container}>
       <StatusBar style="light" />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
+          keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.logoContainer}>
@@ -87,18 +84,19 @@ export default function LoginScreen() {
 
             {/* Login Button */}
             <TouchableOpacity
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+              style={[
+                styles.loginButton,
+                isLoading && styles.loginButtonDisabled,
+              ]}
               onPress={handleLogin}
-              disabled={isLoading}
-            >
+              disabled={isLoading}>
               <LinearGradient
-                colors={[BRAND_COLORS.gold, '#c9a556']}
+                colors={[BRAND_COLORS.gold, "#c9a556"]}
                 style={styles.loginButtonGradient}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
+                end={{ x: 1, y: 0 }}>
                 <Text style={styles.loginButtonText}>
-                  {isLoading ? 'Signing In...' : 'Sign In'}
+                  {isLoading ? "Signing In..." : "Sign In"}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -113,9 +111,11 @@ export default function LoginScreen() {
             {/* Social Login Options */}
             <View style={styles.socialContainer}>
               <TouchableOpacity style={styles.socialButton}>
-                <Text style={styles.socialButtonText}>📱 Continue with Phone</Text>
+                <Text style={styles.socialButtonText}>
+                  📱 Continue with Phone
+                </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.socialButton}>
                 <Text style={styles.socialButtonText}>🔐 Biometric Login</Text>
               </TouchableOpacity>
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   logoContainer: {
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     backgroundColor: BRAND_COLORS.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -177,12 +177,12 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontSize: 48,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: BRAND_COLORS.darkPurple,
   },
   title: {
     fontSize: 36,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: SEMANTIC_COLORS.white,
     marginBottom: 4,
     letterSpacing: 1,
@@ -199,12 +199,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: SEMANTIC_COLORS.white,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
@@ -213,18 +213,18 @@ const styles = StyleSheet.create({
     borderColor: BRAND_COLORS.violet,
   },
   forgotPassword: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 24,
   },
   forgotPasswordText: {
     color: BRAND_COLORS.lightBlue,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   loginButton: {
     borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -235,16 +235,16 @@ const styles = StyleSheet.create({
   },
   loginButtonGradient: {
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loginButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: BRAND_COLORS.darkPurple,
   },
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 24,
   },
   dividerLine: {
@@ -262,22 +262,22 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   socialButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: BRAND_COLORS.violet,
   },
   socialButtonText: {
     color: SEMANTIC_COLORS.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   signupText: {
     color: BRAND_COLORS.lavender,
@@ -286,15 +286,15 @@ const styles = StyleSheet.create({
   signupLink: {
     color: BRAND_COLORS.gold,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   footer: {
     marginTop: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerText: {
     color: BRAND_COLORS.lavender,
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
