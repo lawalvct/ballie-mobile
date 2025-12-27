@@ -1,18 +1,21 @@
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
+  Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
 import { StatusBar } from "expo-status-bar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { authAPI } from "../api/endpoints/auth";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -20,12 +23,49 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter email and password");
+      return;
+    }
+
     setIsLoading(true);
-    // TODO: Implement actual login logic
-    setTimeout(() => {
+    try {
+      const response = await authAPI.login(email, password);
+
+      if (response.data.multiple_tenants) {
+        // User belongs to multiple workspaces
+        Alert.alert(
+          "Multiple Workspaces",
+          `You belong to ${response.data.tenants?.length} workspaces. Workspace selector coming soon!`,
+          [{ text: "OK" }]
+        );
+        // TODO: Navigate to workspace selector screen
+        console.log("Available workspaces:", response.data.tenants);
+      } else {
+        // Single tenant - save token and proceed
+        await AsyncStorage.multiSet([
+          ["auth_token", response.data.token],
+          ["user_data", JSON.stringify(response.data.user)],
+          ["tenant_slug", response.data.tenant.slug],
+          ["tenant_id", String(response.data.tenant.id)],
+        ]);
+
+        Alert.alert(
+          "Login Successful!",
+          `Welcome ${response.data.user.name}!\nWorkspace: ${response.data.tenant.name}`,
+          [{ text: "OK" }]
+        );
+        // TODO: Navigate to main app
+        console.log("Logged in successfully:", response.data);
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+      const errorMessage =
+        error?.message || error?.error || "Login failed. Please try again.";
+      Alert.alert("Login Error", errorMessage);
+    } finally {
       setIsLoading(false);
-      console.log("Login:", { email, password });
-    }, 1500);
+    }
   };
 
   return (
