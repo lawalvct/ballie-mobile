@@ -57,12 +57,55 @@ export interface CheckEmailResponse {
   tenants: TenantInfo[];
 }
 
+export interface BusinessType {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string;
+  description: string;
+}
+
+export interface BusinessTypeCategory {
+  category: string;
+  types: BusinessType[];
+}
+
+export interface PlanCapabilities {
+  pos: boolean;
+  payroll: boolean;
+  api_access: boolean;
+}
+
+export interface PlanLimits {
+  max_users: number;
+  max_customers: number;
+}
+
+export interface Plan {
+  id: number;
+  name: string;
+  monthly_price: number;
+  formatted_monthly_price: string;
+  yearly_price: number;
+  formatted_yearly_price: string;
+  yearly_savings_percent: number;
+  features: string[];
+  limits: PlanLimits;
+  capabilities: PlanCapabilities;
+  is_popular: boolean;
+}
+
 export interface RegisterData {
-  tenant_slug: string;
+  business_type_id: number;
+  business_structure?: string;
   name: string;
   email: string;
   password: string;
   password_confirmation: string;
+  business_name: string;
   phone?: string;
+  plan_id: number;
+  terms: boolean;
   device_name?: string;
+  affiliate_code?: string;
 }

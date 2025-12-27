@@ -1,459 +1,359 @@
 {
-    "info": {
-        "name": "Ballie Mobile API v1 - Global Auth",
-        "description": "Mobile API with email-based tenant detection - No tenant slug needed for login!",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  "info": {
+    "name": "Ballie Mobile API v1 - Complete",
+    "description": "Mobile API with 3-step registration flow + email-based login",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "📝 Registration Flow (3 Steps)",
+      "description": "Complete registration requires 3 API calls",
+      "item": [
+        {
+          "name": "Step 1: Get Business Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/business-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "business-types"]
+            },
+            "description": "📱 REACT NATIVE - REGISTRATION STEP 1\n\nPURPOSE: Get business types for user selection\n\nWHEN TO CALL:\n- On registration screen load (before showing form)\n\nWHAT TO DO:\n1. Display categories in expandable sections\n2. Show business types with icons\n3. User taps to select\n4. Save selected business_type_id for final registration\n\nUI EXAMPLE:\n```\n📂 Retail & E-commerce\n  🏪 General Store (tap)\n  🛒 Supermarket\n  \n📂 Professional Services\n  👨‍⚕️ Medical Practice\n  ⚖️ Law Firm\n```\n\nRESPONSE FORMAT:\n```json\n[\n  {\n    \"category\": \"Retail & E-commerce\",\n    \"types\": [\n      {\n        \"id\": 1,\n        \"name\": \"General Store\",\n        \"slug\": \"general-store\",\n        \"icon\": \"🏪\",\n        \"description\": \"Small retail business\"\n      }\n    ]\n  }\n]\n```"
+          }
+        },
+        {
+          "name": "Step 2: (User fills form - No API call)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"]
+            },
+            "description": "📱 REACT NATIVE - REGISTRATION STEP 2\n\nNO API CALL NEEDED - This is a form screen\n\nFORM FIELDS:\n\n**Personal Information:**\n- Name (required, string)\n- Email (required, email, unique)\n- Password (required, min 8 chars)\n- Confirm Password (must match)\n- Phone (optional, string)\n\n**Business Information:**\n- Business Name (required, string)\n- Business Structure (optional, dropdown)\n  * Sole Proprietorship\n  * Limited Liability Company (LLC)\n  * Partnership\n  * Corporation\n  * Other\n\nVALIDATION:\n- Email format check\n- Password strength (min 8 chars, recommend special char)\n- Passwords match\n- All required fields filled\n\nON SUBMIT → Go to Step 3 (Plan Selection)"
+          }
+        },
+        {
+          "name": "Step 3: Get Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "plans"]
+            },
+            "description": "📱 REACT NATIVE - REGISTRATION STEP 3\n\nPURPOSE: Get subscription plans\n\nWHEN TO CALL:\n- After Step 2 form validation passes\n\nWHAT TO DO:\n1. Display plans in card layout (3 cards horizontal scroll)\n2. Highlight popular plan (is_popular: true)\n3. Show monthly vs yearly toggle\n4. Display features list\n5. Show capabilities badges (POS, Payroll, etc.)\n6. Add \"30 Days Free Trial\" badge\n7. Show terms & conditions checkbox\n8. User taps plan → checkbox → Submit\n\nUI EXAMPLE:\n```\n┌─────────────┐  ┌─────────────┐  ┌─────────────┐\n│   STARTER   │  │ PROFESSIONAL│  │  ENTERPRISE │\n│             │  │  ⭐ POPULAR │  │             │\n│  ₦5,000/mo  │  │ ₦15,000/mo  │  │  ₦50,000/mo │\n│             │  │             │  │             │\n│ ✓ Feature 1 │  │ ✓ Feature 1 │  │ ✓ Feature 1 │\n│ ✓ Feature 2 │  │ ✓ Feature 2 │  │ ✓ Feature 2 │\n│             │  │ ✓ POS       │  │ ✓ POS       │\n│   [Select]  │  │   [Select]  │  │   [Select]  │\n└─────────────┘  └─────────────┘  └─────────────┘\n\n☑ I agree to Terms & Conditions\n\n        [Complete Registration]\n```\n\nRESPONSE FORMAT:\n```json\n[\n  {\n    \"id\": 1,\n    \"name\": \"Starter\",\n    \"monthly_price\": 500000,\n    \"formatted_monthly_price\": \"₦5,000\",\n    \"yearly_price\": 5000000,\n    \"formatted_yearly_price\": \"₦50,000\",\n    \"yearly_savings_percent\": 17,\n    \"features\": [\"Feature 1\", \"Feature 2\"],\n    \"limits\": {\"max_users\": 5, \"max_customers\": 100},\n    \"capabilities\": {\n      \"pos\": false,\n      \"payroll\": false,\n      \"api_access\": false\n    },\n    \"is_popular\": false\n  }\n]\n```"
+          }
+        },
+        {
+          "name": "Step 4: Complete Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('auth_token', jsonData.data.token);",
+                  "    pm.environment.set('tenant_slug', jsonData.data.tenant.slug);",
+                  "    pm.environment.set('tenant_id', jsonData.data.tenant.id);",
+                  "    console.log('✅ Registration successful!');",
+                  "    console.log('Token:', jsonData.data.token);",
+                  "    console.log('Tenant:', jsonData.data.tenant.name);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"business_type_id\": 1,\n    \"business_structure\": \"Sole Proprietorship\",\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"Password123\",\n    \"password_confirmation\": \"Password123\",\n    \"business_name\": \"John's Store\",\n    \"phone\": \"08012345678\",\n    \"plan_id\": 2,\n    \"terms\": true,\n    \"device_name\": \"iPhone 13\",\n    \"affiliate_code\": \"REF123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "📱 REACT NATIVE - FINAL REGISTRATION\n\nPURPOSE: Create tenant + owner user\n\nREQUIRED PAYLOAD:\n```typescript\ninterface RegistrationPayload {\n  // From Step 1\n  business_type_id: number;           // Selected business type\n  business_structure?: string;        // Optional structure\n  \n  // From Step 2\n  name: string;                       // Owner's name\n  email: string;                      // Must be unique\n  password: string;                   // Min 8 chars\n  password_confirmation: string;      // Must match\n  business_name: string;              // Company name\n  phone?: string;                     // Optional\n  \n  // From Step 3\n  plan_id: number;                    // Selected plan\n  terms: true;                        // Must accept\n  \n  // Auto-detected\n  device_name?: string;               // Device identifier\n  affiliate_code?: string;            // Referral code\n}\n```\n\nWHAT HAPPENS:\n1. Creates Tenant (workspace/business)\n2. Generates unique tenant slug\n3. Creates Owner User\n4. Starts 30-day free trial\n5. Generates auth token\n6. Creates email verification code\n7. Tracks affiliate referral if provided\n\nSUCCESS RESPONSE (201):\n```json\n{\n  \"success\": true,\n  \"message\": \"Registration successful\",\n  \"data\": {\n    \"user\": {...},\n    \"token\": \"1|abc123...\",\n    \"tenant\": {\n      \"id\": 1,\n      \"slug\": \"johns-store\",\n      \"name\": \"John's Store\",\n      \"plan\": {\"id\": 2, \"name\": \"Professional\"},\n      \"trial_ends_at\": \"2026-01-26\"\n    },\n    \"token_type\": \"Bearer\",\n    \"message\": \"Registration successful! You have 30 days free trial.\"\n  }\n}\n```\n\nAFTER SUCCESS:\n1. Save token to SecureStore (NOT AsyncStorage!)\n2. Save tenant_slug and user data\n3. Navigate to Dashboard or Onboarding\n4. Show success message with trial info\n\nERROR HANDLING:\n- 422: Validation error (show field errors)\n- 500: Server error (try again)\n- Email already exists (show login option)"
+          }
+        }
+      ]
     },
-    "item": [
+    {
+      "name": "🔐 Login Flow",
+      "description": "Email-based login - no tenant slug needed",
+      "item": [
         {
-            "name": "🌍 Global Auth (Use These!)",
-            "description": "Email-based authentication - system auto-detects tenant",
-            "item": [
-                {
-                    "name": "1. Check Email (Optional)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"lawalvct@gmail.com\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/auth/check-email",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "v1", "auth", "check-email"]
-                        },
-                        "description": "Optional: Check which workspace(s) an email belongs to before login"
-                    }
-                },
-                {
-                    "name": "2. Login (Auto-Detect Tenant)",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 200) {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    ",
-                                    "    // Check if multiple tenants",
-                                    "    if (jsonData.data.multiple_tenants) {",
-                                    "        console.log('User belongs to multiple workspaces');",
-                                    "        console.log('Use Select Tenant endpoint with tenant_id');",
-                                    "    } else {",
-                                    "        // Single tenant - save token",
-                                    "        pm.environment.set('auth_token', jsonData.data.token);",
-                                    "        pm.environment.set('tenant_slug', jsonData.data.tenant.slug);",
-                                    "        pm.environment.set('tenant_id', jsonData.data.tenant.id);",
-                                    "    }",
-                                    "}"
-                                ]
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"lawalvct@gmail.com\",\n    \"password\": \"password\",\n    \"device_name\": \"Postman Test\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/auth/login",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "v1", "auth", "login"]
-                        },
-                        "description": "✅ Main login endpoint. No tenant slug needed!\n\n- If user belongs to ONE tenant: Returns token immediately\n- If user belongs to MULTIPLE tenants: Returns list of workspaces to choose from\n\nToken auto-saves to environment variable."
-                    }
-                },
-                {
-                    "name": "3. Select Tenant (If Multiple)",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 200) {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.environment.set('auth_token', jsonData.data.token);",
-                                    "    pm.environment.set('tenant_slug', jsonData.data.tenant.slug);",
-                                    "    pm.environment.set('tenant_id', jsonData.data.tenant.id);",
-                                    "}"
-                                ]
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"lawalvct@gmail.com\",\n    \"password\": \"password\",\n    \"tenant_id\": 22,\n    \"device_name\": \"Postman Test\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/auth/select-tenant",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "v1", "auth", "select-tenant"]
-                        },
-                        "description": "Only use this if Login endpoint returns multiple_tenants=true.\n\nProvide the tenant_id from the tenants array returned by Login."
-                    }
-                },
-                {
-                    "name": "4. Register New User",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 201) {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.environment.set('auth_token', jsonData.data.token);",
-                                    "    pm.environment.set('tenant_slug', jsonData.data.tenant.slug);",
-                                    "}"
-                                ]
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"tenant_slug\": \"profound-solutions\",\n    \"name\": \"New User\",\n    \"email\": \"newuser@example.com\",\n    \"password\": \"Password123\",\n    \"password_confirmation\": \"Password123\",\n    \"phone\": \"08012345678\",\n    \"device_name\": \"Postman Test\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/auth/register",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "v1", "auth", "register"]
-                        },
-                        "description": "Registration still requires tenant_slug because user must join a specific workspace.\n\nIn your mobile app, you might:\n- Ask for invite code\n- Scan QR code\n- Show list of available workspaces"
-                    }
-                },
-                {
-                    "name": "5. Forgot Password",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"lawalvct@gmail.com\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/auth/forgot-password",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "v1", "auth", "forgot-password"]
-                        },
-                        "description": "tenant_slug is optional. If omitted, will find first user with that email."
-                    }
+          "name": "1. Check Email (Optional)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"lawalvct@gmail.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
                 }
-            ]
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/check-email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "check-email"]
+            },
+            "description": "Optional: Check workspaces before login"
+          }
         },
         {
-            "name": "🔐 Protected Endpoints",
-            "description": "Requires Bearer token from login",
-            "item": [
-                {
-                    "name": "Get Profile",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{auth_token}}"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/profile",
-                            "host": ["{{base_url}}"],
-                            "path": [
-                                "api",
-                                "v1",
-                                "tenant",
-                                "{{tenant_slug}}",
-                                "profile"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Update Profile",
-                    "request": {
-                        "method": "PUT",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{auth_token}}"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Updated Name\",\n    \"phone\": \"08098765432\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/profile",
-                            "host": ["{{base_url}}"],
-                            "path": [
-                                "api",
-                                "v1",
-                                "tenant",
-                                "{{tenant_slug}}",
-                                "profile"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Change Password",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{auth_token}}"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"current_password\": \"password\",\n    \"password\": \"NewPassword123\",\n    \"password_confirmation\": \"NewPassword123\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/profile/change-password",
-                            "host": ["{{base_url}}"],
-                            "path": [
-                                "api",
-                                "v1",
-                                "tenant",
-                                "{{tenant_slug}}",
-                                "profile",
-                                "change-password"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Logout",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{auth_token}}"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/auth/logout",
-                            "host": ["{{base_url}}"],
-                            "path": [
-                                "api",
-                                "v1",
-                                "tenant",
-                                "{{tenant_slug}}",
-                                "auth",
-                                "logout"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Logout All Devices",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{auth_token}}"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/auth/logout-all",
-                            "host": ["{{base_url}}"],
-                            "path": [
-                                "api",
-                                "v1",
-                                "tenant",
-                                "{{tenant_slug}}",
-                                "auth",
-                                "logout-all"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Get Active Sessions",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{auth_token}}"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/auth/sessions",
-                            "host": ["{{base_url}}"],
-                            "path": [
-                                "api",
-                                "v1",
-                                "tenant",
-                                "{{tenant_slug}}",
-                                "auth",
-                                "sessions"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Refresh Token",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 200) {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.environment.set('auth_token', jsonData.data.token);",
-                                    "}"
-                                ]
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Authorization",
-                                "value": "Bearer {{auth_token}}"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"device_name\": \"Postman Test\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/auth/refresh-token",
-                            "host": ["{{base_url}}"],
-                            "path": [
-                                "api",
-                                "v1",
-                                "tenant",
-                                "{{tenant_slug}}",
-                                "auth",
-                                "refresh-token"
-                            ]
-                        }
-                    }
+          "name": "2. Login (Auto-Detect Tenant)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data.multiple_tenants) {",
+                  "        console.log('Multiple workspaces found');",
+                  "    } else {",
+                  "        pm.environment.set('auth_token', jsonData.data.token);",
+                  "        pm.environment.set('tenant_slug', jsonData.data.tenant.slug);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"lawalvct@gmail.com\",\n    \"password\": \"password\",\n    \"device_name\": \"iPhone 13\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
                 }
-            ]
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Auto-detects tenant from email"
+          }
+        },
+        {
+          "name": "3. Select Tenant (If Multiple)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('auth_token', jsonData.data.token);",
+                  "    pm.environment.set('tenant_slug', jsonData.data.tenant.slug);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"lawalvct@gmail.com\",\n    \"password\": \"password\",\n    \"tenant_id\": 22,\n    \"device_name\": \"iPhone 13\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/select-tenant",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "select-tenant"]
+            },
+            "description": "Use when user belongs to multiple workspaces"
+          }
+        },
+        {
+          "name": "4. Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"lawalvct@gmail.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "forgot-password"]
+            }
+          }
         }
-    ],
-    "variable": [
+      ]
+    },
+    {
+      "name": "👤 Protected Endpoints",
+      "description": "Requires Bearer token",
+      "item": [
         {
-            "key": "base_url",
-            "value": "http://localhost:8000",
-            "type": "string"
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant", "{{tenant_slug}}", "profile"]
+            }
+          }
         },
         {
-            "key": "tenant_slug",
-            "value": "",
-            "type": "string",
-            "description": "Auto-populated after login"
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Name\",\n    \"phone\": \"08098765432\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant", "{{tenant_slug}}", "profile"]
+            }
+          }
         },
         {
-            "key": "tenant_id",
-            "value": "",
-            "type": "string",
-            "description": "Auto-populated after login"
-        },
-        {
-            "key": "auth_token",
-            "value": "",
-            "type": "string",
-            "description": "Auto-populated after login"
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "v1",
+                "tenant",
+                "{{tenant_slug}}",
+                "auth",
+                "logout"
+              ]
+            }
+          }
         }
-    ]
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "tenant_slug",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
 }

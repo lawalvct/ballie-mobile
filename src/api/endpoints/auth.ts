@@ -4,6 +4,8 @@ import {
   LoginResponse,
   CheckEmailResponse,
   RegisterData,
+  BusinessTypeCategory,
+  Plan,
 } from "../types";
 
 export const authAPI = {
@@ -53,8 +55,24 @@ export const authAPI = {
   },
 
   /**
-   * Register new user
-   * Requires tenant_slug (from invite code, QR scan, or workspace list)
+   * Get business types for registration (Step 1)
+   */
+  getBusinessTypes: async (): Promise<
+    ApiResponse<BusinessTypeCategory[]>
+  > => {
+    return apiClient.get("/auth/business-types");
+  },
+
+  /**
+   * Get subscription plans for registration (Step 3)
+   */
+  getPlans: async (): Promise<ApiResponse<Plan[]>> => {
+    return apiClient.get("/auth/plans");
+  },
+
+  /**
+   * Register new user with complete business setup (Step 4)
+   * Creates tenant + owner user with 30-day free trial
    */
   register: async (
     userData: RegisterData

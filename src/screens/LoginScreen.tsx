@@ -19,9 +19,13 @@ import { useAuth } from "../context/AuthContext";
 
 interface LoginScreenProps {
   onForgotPassword?: () => void;
+  onSignUp?: () => void;
 }
 
-export default function LoginScreen({ onForgotPassword }: LoginScreenProps) {
+export default function LoginScreen({
+  onForgotPassword,
+  onSignUp,
+}: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -171,7 +175,7 @@ export default function LoginScreen({ onForgotPassword }: LoginScreenProps) {
             {/* Sign Up Link */}
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>Don't have an account? </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={onSignUp}>
                 <Text style={styles.signupLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
