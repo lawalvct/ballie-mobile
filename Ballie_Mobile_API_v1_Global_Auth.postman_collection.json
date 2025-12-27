@@ -181,7 +181,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"email\": \"lawalvct@gmail.com\",\n    \"tenant_slug\": \"profound-solutions\"\n}"
+                            "raw": "{\n    \"email\": \"lawalvct@gmail.com\"\n}"
                         },
                         "url": {
                             "raw": "{{base_url}}/api/v1/auth/forgot-password",
