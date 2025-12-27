@@ -152,9 +152,15 @@ export default function LoginScreen({ onForgotPassword }: LoginScreenProps) {
             {/* Social Login Options */}
             <View style={styles.socialContainer}>
               <TouchableOpacity style={styles.socialButton}>
-                <Text style={styles.socialButtonText}>
-                  📱 Continue with Phone
-                </Text>
+                <View style={styles.googleButtonContent}>
+                  <Image
+                    source={{ uri: "https://www.google.com/favicon.ico" }}
+                    style={styles.googleIcon}
+                  />
+                  <Text style={styles.socialButtonText}>
+                    Continue with Google
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.socialButton}>
@@ -193,7 +199,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 24,
   },
   header: {
@@ -224,7 +230,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "bold",
     color: SEMANTIC_COLORS.white,
-    marginBottom: 4,
+    marginBottom: 3,
     letterSpacing: 1,
   },
   subtitle: {
@@ -299,7 +305,7 @@ const styles = StyleSheet.create({
   },
   socialContainer: {
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   socialButton: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
@@ -313,6 +319,15 @@ const styles = StyleSheet.create({
     color: SEMANTIC_COLORS.white,
     fontSize: 16,
     fontWeight: "600",
+  },
+  googleButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
   },
   signupContainer: {
     flexDirection: "row",
