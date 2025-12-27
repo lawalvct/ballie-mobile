@@ -5,7 +5,7 @@ import Splash1 from "./src/screens/Splash1";
 import Splash2 from "./src/screens/Splash2";
 import LoginScreen from "./src/screens/LoginScreen";
 import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
-import DashboardScreen from "./src/screens/DashboardScreen";
+import MainNavigator from "./src/screens/MainNavigator";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { BRAND_COLORS } from "./src/theme/colors";
 
@@ -30,12 +30,12 @@ function AppContent() {
     );
   }
 
-  // If authenticated, show dashboard
+  // If authenticated, show main navigator with tabs
   if (isAuthenticated) {
     return (
       <>
         <StatusBar style="light" />
-        <DashboardScreen />
+        <MainNavigator />
       </>
     );
   }
