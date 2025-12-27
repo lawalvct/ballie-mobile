@@ -14,8 +14,8 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
 import { StatusBar } from "expo-status-bar";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authAPI } from "../api/endpoints/auth";
+import { useAuth } from "../context/AuthContext";
 
 interface LoginScreenProps {
   onForgotPassword?: () => void;
@@ -25,6 +25,7 @@ export default function LoginScreen({ onForgotPassword }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -46,21 +47,12 @@ export default function LoginScreen({ onForgotPassword }: LoginScreenProps) {
         // TODO: Navigate to workspace selector screen
         console.log("Available workspaces:", response.data.tenants);
       } else {
-        // Single tenant - save token and proceed
-        await AsyncStorage.multiSet([
-          ["auth_token", response.data.token],
-          ["user_data", JSON.stringify(response.data.user)],
-          ["tenant_slug", response.data.tenant.slug],
-          ["tenant_id", String(response.data.tenant.id)],
-        ]);
-
-        Alert.alert(
-          "Login Successful!",
-          `Welcome ${response.data.user.name}!\nWorkspace: ${response.data.tenant.name}`,
-          [{ text: "OK" }]
+        // Single tenant - use auth context to login
+        await login(
+          response.data.token,
+          response.data.user,
+          response.data.tenant
         );
-        // TODO: Navigate to main app
-        console.log("Logged in successfully:", response.data);
       }
     } catch (error: any) {
       console.error("Login error:", error);
@@ -73,9 +65,7 @@ export default function LoginScreen({ onForgotPassword }: LoginScreenProps) {
   };
 
   return (
-    <LinearGradient
-      colors={[BRAND_COLORS.darkPurple, BRAND_COLORS.deepPurple]}
-      style={styles.container}>
+    <LinearGradient colors={["#3c2c64", "#4a3570"]} style={styles.container}>
       <StatusBar style="light" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -142,7 +132,7 @@ export default function LoginScreen({ onForgotPassword }: LoginScreenProps) {
               onPress={handleLogin}
               disabled={isLoading}>
               <LinearGradient
-                colors={[BRAND_COLORS.gold, "#c9a556"]}
+                colors={["#d1b05e", "#c9a556"]}
                 style={styles.loginButtonGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}>

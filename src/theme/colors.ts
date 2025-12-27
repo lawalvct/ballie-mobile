@@ -13,10 +13,11 @@ export const BRAND_COLORS = {
 };
 
 export const SEMANTIC_COLORS = {
-  profit: BRAND_COLORS.green,
+  profit: "#249484",
+  success: "#249484",
   loss: "#ef4444",
-  pending: BRAND_COLORS.gold,
-  approved: BRAND_COLORS.teal,
+  pending: "#d1b05e",
+  approved: "#69a2a4",
   rejected: "#dc2626",
   white: "#ffffff",
   text: "#1f2937",

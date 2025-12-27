@@ -74,9 +74,7 @@ export default function ForgotPasswordScreen({
   };
 
   return (
-    <LinearGradient
-      colors={[BRAND_COLORS.darkPurple, BRAND_COLORS.deepPurple]}
-      style={styles.container}>
+    <LinearGradient colors={["#3c2c64", "#4a3570"]} style={styles.container}>
       <StatusBar style="light" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -136,7 +134,7 @@ export default function ForgotPasswordScreen({
                   onPress={handleResetPassword}
                   disabled={isLoading}>
                   <LinearGradient
-                    colors={[BRAND_COLORS.gold, "#c9a556"]}
+                    colors={["#d1b05e", "#c9a556"]}
                     style={styles.resetButtonGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}>

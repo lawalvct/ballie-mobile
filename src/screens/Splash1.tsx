@@ -13,11 +13,7 @@ export default function Splash1({ onNext }: { onNext: () => void }) {
 
   return (
     <LinearGradient
-      colors={[
-        BRAND_COLORS.darkPurple,
-        BRAND_COLORS.deepPurple,
-        BRAND_COLORS.violet,
-      ]}
+      colors={["#3c2c64", "#4a3570", "#614c80"]}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}>
