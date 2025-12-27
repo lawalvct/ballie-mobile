@@ -6,9 +6,11 @@ import { ApiResponse, ApiError } from "./types";
 // For Android emulator: use 10.0.2.2:8000
 // For iOS simulator: use localhost:8000
 // For physical device: use your computer's IP address
-const API_BASE_URL = __DEV__
-  ? "http://10.0.2.2:8000/api/v1" // Android emulator
-  : "https://api.ballie.co/api/v1"; // Production
+// const API_BASE_URL = __DEV__
+//   ? "http://10.0.2.2:8000/api/v1" // Android emulator
+//   : "https://ballie.co/api/v1"; // Production
+
+const API_BASE_URL = "https://ballie.co/api/v1"; // Production
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
