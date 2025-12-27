@@ -24,14 +24,20 @@ export default function DashboardScreen() {
       <StatusBar style="light" />
       <LinearGradient colors={["#3c2c64", "#4a3570"]} style={styles.header}>
         <View style={styles.headerContent}>
-          <View>
+          <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Welcome back,</Text>
-            <Text style={styles.userName}>{user?.name || "User"}</Text>
-            <Text style={styles.tenantName}>{tenant?.name}</Text>
+            <Text style={styles.businessName}>
+              {tenant?.name || "Your Business"}
+            </Text>
           </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.userSection}>
+            <View style={styles.userAvatar}>
+              <Text style={styles.avatarText}>
+                {user?.name?.charAt(0).toUpperCase() || "U"}
+              </Text>
+            </View>
+            <Text style={styles.userRole}>{user?.role || "Admin"}</Text>
+          </View>
         </View>
       </LinearGradient>
 
@@ -213,37 +219,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   headerContent: {
+    marginTop: 10,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
+  },
+  headerLeft: {
+    flex: 1,
   },
   greeting: {
     fontSize: 14,
     color: BRAND_COLORS.lavender,
     marginBottom: 4,
   },
-  userName: {
+  businessName: {
     fontSize: 24,
     fontWeight: "bold",
     color: SEMANTIC_COLORS.white,
-    marginBottom: 4,
   },
-  tenantName: {
-    fontSize: 14,
-    color: BRAND_COLORS.gold,
-    fontWeight: "600",
+  userSection: {
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 6,
   },
-  logoutButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: BRAND_COLORS.lightBlue,
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: BRAND_COLORS.gold,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: SEMANTIC_COLORS.white,
   },
-  logoutText: {
-    color: BRAND_COLORS.lightBlue,
-    fontSize: 14,
-    fontWeight: "600",
+  avatarText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: SEMANTIC_COLORS.white,
+  },
+  userRole: {
+    fontSize: 11,
+    color: BRAND_COLORS.lavender,
+    marginTop: 4,
   },
   content: {
     flex: 1,
