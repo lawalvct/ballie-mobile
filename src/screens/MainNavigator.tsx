@@ -8,6 +8,9 @@ import CRMScreen from "./CRMScreen";
 import ReportsScreen from "./ReportsScreen";
 import AuditScreen from "./AuditScreen";
 import EcommerceScreen from "./EcommerceScreen";
+import PayrollScreen from "./PayrollScreen";
+import AdminsScreen from "./AdminsScreen";
+import StatutoryScreen from "./StatutoryScreen";
 import CustomTabBar from "../components/CustomTabBar";
 
 export default function MainNavigator() {
@@ -31,6 +34,12 @@ export default function MainNavigator() {
         return <AuditScreen />;
       case "ecommerce":
         return <EcommerceScreen />;
+      case "payroll":
+        return <PayrollScreen />;
+      case "admins":
+        return <AdminsScreen />;
+      case "statutory":
+        return <StatutoryScreen />;
       default:
         return <DashboardScreen />;
     }

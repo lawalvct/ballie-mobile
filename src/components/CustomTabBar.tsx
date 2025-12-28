@@ -26,6 +26,9 @@ export default function CustomTabBar({ activeTab, onTabPress }: TabBarProps) {
     { id: "reports", label: "Reports", icon: "📈" },
     { id: "audit", label: "Audit", icon: "🔍" },
     { id: "ecommerce", label: "E-commerce", icon: "🛒" },
+    { id: "payroll", label: "Payroll", icon: "💵" },
+    { id: "admins", label: "Admins", icon: "👔" },
+    { id: "statutory", label: "Statutory", icon: "📜" },
   ];
 
   useEffect(() => {
