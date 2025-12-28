@@ -33,20 +33,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const checkAuthStatus = async () => {
     try {
-      const [storedToken, storedUser, storedTenant] =
-        await AsyncStorage.multiGet(["auth_token", "user_data", "tenant_slug"]);
+      const [
+        storedToken,
+        storedUser,
+        storedTenantSlug,
+        storedTenantId,
+        storedTenantName,
+      ] = await AsyncStorage.multiGet([
+        "auth_token",
+        "user_data",
+        "tenant_slug",
+        "tenant_id",
+        "tenant_name",
+      ]);
 
       const tokenValue = storedToken[1];
       const userData = storedUser[1] ? JSON.parse(storedUser[1]) : null;
-      const tenantSlug = storedTenant[1];
+      const tenantSlug = storedTenantSlug[1];
+      const tenantId = storedTenantId[1];
+      const tenantName = storedTenantName[1];
 
       if (tokenValue && userData && tenantSlug) {
         setToken(tokenValue);
         setUser(userData);
         setTenant({
-          id: userData.tenant_id || 0,
+          id: tenantId ? parseInt(tenantId) : 0,
           slug: tenantSlug,
-          name: userData.tenant_name || "",
+          name: tenantName || "",
         });
         setIsAuthenticated(true);
       }
@@ -64,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         ["user_data", JSON.stringify(user)],
         ["tenant_slug", tenant.slug],
         ["tenant_id", String(tenant.id)],
+        ["tenant_name", tenant.name],
       ]);
 
       setToken(token);
@@ -83,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         "user_data",
         "tenant_slug",
         "tenant_id",
+        "tenant_name",
       ]);
 
       setToken(null);

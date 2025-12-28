@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
@@ -17,6 +18,13 @@ interface OnboardingCompleteScreenProps {
 export default function OnboardingCompleteScreen({
   onComplete,
 }: OnboardingCompleteScreenProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleComplete = async () => {
+    setIsLoading(true);
+    await onComplete();
+  };
+
   return (
     <LinearGradient colors={["#3c2c64", "#4a3570"]} style={styles.container}>
       <StatusBar style="light" />
@@ -52,9 +60,18 @@ export default function OnboardingCompleteScreen({
         </View>
 
         {/* Main CTA */}
-        <TouchableOpacity style={styles.dashboardButton} onPress={onComplete}>
-          <Text style={styles.dashboardButtonText}>Go to Dashboard</Text>
-          <Text style={styles.arrow}>→</Text>
+        <TouchableOpacity
+          style={[styles.dashboardButton, isLoading && styles.buttonDisabled]}
+          onPress={handleComplete}
+          disabled={isLoading}>
+          {isLoading ? (
+            <ActivityIndicator color={BRAND_COLORS.darkPurple} />
+          ) : (
+            <>
+              <Text style={styles.dashboardButtonText}>Go to Dashboard</Text>
+              <Text style={styles.arrow}>→</Text>
+            </>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </LinearGradient>
@@ -144,6 +161,9 @@ const styles = StyleSheet.create({
   },
   dashboardButtonText: {
     color: BRAND_COLORS.darkPurple,
+    buttonDisabled: {
+      opacity: 0.6,
+    },
     fontSize: 18,
     fontWeight: "bold",
     marginRight: 8,

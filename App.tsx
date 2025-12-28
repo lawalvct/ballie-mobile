@@ -63,6 +63,11 @@ function AppContent() {
   useEffect(() => {
     const checkOnboarding = async () => {
       if (isAuthenticated && tenant?.slug) {
+        // Skip check if we just completed registration (needsOnboarding is already set)
+        if (needsOnboarding && currentScreen === "onboardingWelcome") {
+          return;
+        }
+
         try {
           const response = await onboardingAPI.getStatus(tenant.slug);
           const data = response.data;
@@ -134,6 +139,10 @@ function AppContent() {
         response.data.user,
         response.data.tenant
       );
+
+      // After registration, always start at onboarding welcome
+      setNeedsOnboarding(true);
+      setCurrentScreen("onboardingWelcome");
 
       Alert.alert(
         "Welcome to Ballie! 🎉",
