@@ -7,6 +7,8 @@ interface AuthContextType {
   user: User | null;
   tenant: Tenant | null;
   token: string | null;
+  needsOnboarding: boolean;
+  setNeedsOnboarding: (needs: boolean) => void;
   login: (token: string, user: User, tenant: Tenant) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -21,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check if user is already logged in on app start
@@ -98,6 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         user,
         tenant,
         token,
+        needsOnboarding,
+        setNeedsOnboarding,
         login,
         logout,
         isLoading,

@@ -19,7 +19,8 @@
         "foregroundImage": "./assets/images/ballie_logo.png",
         "backgroundColor": "#ffffff"
       },
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "package": "com.talosmartcto.ballie"
     },
     "web": {
       "favicon": "./assets/images/ballie_logo.png"

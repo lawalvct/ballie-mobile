@@ -1,0 +1,459 @@
+{
+    "info": {
+        "name": "Ballie Mobile API - Complete with Onboarding",
+        "description": "Complete mobile API: Registration → Login → Onboarding → Dashboard",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "📝 1. Registration Flow (3 Steps)",
+            "description": "Complete registration requires 3 API calls",
+            "item": [
+                {
+                    "name": "Step 1: Get Business Types",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/business-types",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "business-types"]
+                        },
+                        "description": "📱 REACT NATIVE - REGISTRATION STEP 1\n\nPURPOSE: Get business types for user selection\n\nWHEN TO CALL:\n- On registration screen load (before showing form)\n\nWHAT TO DO:\n1. Display categories in expandable sections\n2. Show business types with icons\n3. User taps to select\n4. Save selected business_type_id for final registration\n\nUI EXAMPLE:\n```tsx\n<ScrollView>\n  {categories.map(category => (\n    <View key={category.category}>\n      <Text style={styles.categoryTitle}>{category.category}</Text>\n      {category.types.map(type => (\n        <TouchableOpacity\n          key={type.id}\n          onPress={() => setSelectedType(type.id)}\n          style={[\n            styles.typeCard,\n            selectedType === type.id && styles.selectedCard\n          ]}\n        >\n          <Text style={styles.icon}>{type.icon}</Text>\n          <Text style={styles.typeName}>{type.name}</Text>\n          <Text style={styles.typeDesc}>{type.description}</Text>\n        </TouchableOpacity>\n      ))}\n    </View>\n  ))}\n</ScrollView>\n```\n\nRESPONSE FORMAT:\n```json\n{\n  \"success\": true,\n  \"data\": [\n    {\n      \"category\": \"Retail & E-commerce\",\n      \"types\": [\n        {\n          \"id\": 1,\n          \"name\": \"General Store\",\n          \"slug\": \"general-store\",\n          \"icon\": \"🏪\",\n          \"description\": \"Small retail business\"\n        }\n      ]\n    }\n  ]\n}\n```"
+                    }
+                },
+                {
+                    "name": "Step 2: (User fills form - No API call)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/",
+                            "host": ["{{base_url}}"]
+                        },
+                        "description": "📱 REACT NATIVE - REGISTRATION STEP 2\n\nNO API CALL NEEDED - This is a form screen\n\nFORM FIELDS:\n\n**Personal Information:**\n- Name (required, string)\n- Email (required, email, unique)\n- Password (required, min 8 chars)\n- Confirm Password (must match)\n- Phone (optional, string)\n\n**Business Information:**\n- Business Name (required, string)\n- Business Structure (optional, dropdown)\n  * Sole Proprietorship\n  * Limited Liability Company (LLC)\n  * Partnership\n  * Corporation\n  * Other\n\nVALIDATION:\n```tsx\nconst validateForm = () => {\n  const errors: FormErrors = {};\n  \n  if (!formData.name.trim()) errors.name = 'Name is required';\n  if (!formData.email.trim()) errors.email = 'Email is required';\n  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(formData.email)) {\n    errors.email = 'Invalid email format';\n  }\n  if (formData.password.length < 8) {\n    errors.password = 'Password must be at least 8 characters';\n  }\n  if (formData.password !== formData.password_confirmation) {\n    errors.password_confirmation = 'Passwords do not match';\n  }\n  if (!formData.business_name.trim()) {\n    errors.business_name = 'Business name is required';\n  }\n  \n  return errors;\n};\n```\n\nON SUBMIT → Go to Step 3 (Plan Selection)"
+                    }
+                },
+                {
+                    "name": "Step 3: Get Plans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/plans",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "plans"]
+                        },
+                        "description": "📱 REACT NATIVE - REGISTRATION STEP 3\n\nPURPOSE: Get subscription plans\n\nWHEN TO CALL:\n- After Step 2 form validation passes\n\nWHAT TO DO:\n1. Display plans in horizontal scroll or cards\n2. Highlight popular plan (is_popular: true)\n3. Show monthly vs yearly toggle\n4. Display features list\n5. Show capabilities badges (POS, Payroll, etc.)\n6. Add \"30 Days Free Trial\" badge\n7. Show terms & conditions checkbox\n8. User taps plan → checkbox → Submit\n\nUI EXAMPLE:\n```tsx\n<ScrollView horizontal>\n  {plans.map(plan => (\n    <TouchableOpacity\n      key={plan.id}\n      onPress={() => setSelectedPlan(plan.id)}\n      style={[\n        styles.planCard,\n        plan.is_popular && styles.popularCard,\n        selectedPlan === plan.id && styles.selectedPlan\n      ]}\n    >\n      {plan.is_popular && (\n        <View style={styles.popularBadge}>\n          <Text>⭐ POPULAR</Text>\n        </View>\n      )}\n      <Text style={styles.planName}>{plan.name}</Text>\n      <Text style={styles.price}>\n        {showYearly ? plan.formatted_yearly_price : plan.formatted_monthly_price}\n        {showYearly && plan.yearly_savings_percent > 0 && (\n          <Text style={styles.savings}>\n            Save {plan.yearly_savings_percent}%\n          </Text>\n        )}\n      </Text>\n      \n      <View style={styles.features}>\n        {plan.features.map((feature, idx) => (\n          <Text key={idx}>✓ {feature}</Text>\n        ))}\n      </View>\n      \n      <View style={styles.capabilities}>\n        {plan.capabilities.pos && <Badge>POS</Badge>}\n        {plan.capabilities.payroll && <Badge>Payroll</Badge>}\n      </View>\n    </TouchableOpacity>\n  ))}\n</ScrollView>\n\n<View style={styles.termsContainer}>\n  <Checkbox\n    value={acceptedTerms}\n    onValueChange={setAcceptedTerms}\n  />\n  <Text>I agree to Terms & Conditions</Text>\n</View>\n\n<Button\n  disabled={!selectedPlan || !acceptedTerms}\n  onPress={handleRegister}\n>\n  Complete Registration\n</Button>\n```\n\nRESPONSE FORMAT:\n```json\n{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Starter\",\n      \"monthly_price\": 500000,\n      \"formatted_monthly_price\": \"₦5,000\",\n      \"yearly_price\": 5000000,\n      \"formatted_yearly_price\": \"₦50,000\",\n      \"yearly_savings_percent\": 17,\n      \"features\": [\"Feature 1\", \"Feature 2\"],\n      \"limits\": {\"max_users\": 5, \"max_customers\": 100},\n      \"capabilities\": {\n        \"pos\": false,\n        \"payroll\": false,\n        \"api_access\": false\n      },\n      \"is_popular\": false\n    }\n  ]\n}\n```"
+                    }
+                },
+                {
+                    "name": "Step 4: Complete Registration",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set('auth_token', jsonData.data.token);",
+                                    "    pm.environment.set('tenant_slug', jsonData.data.tenant.slug);",
+                                    "    pm.environment.set('tenant_id', jsonData.data.tenant.id);",
+                                    "    console.log('✅ Registration successful!');",
+                                    "    console.log('Token:', jsonData.data.token);",
+                                    "    console.log('Tenant:', jsonData.data.tenant.name);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"business_type_id\": 1,\n    \"business_structure\": \"Sole Proprietorship\",\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"Password123\",\n    \"password_confirmation\": \"Password123\",\n    \"business_name\": \"John's Store\",\n    \"phone\": \"08012345678\",\n    \"plan_id\": 2,\n    \"terms\": true,\n    \"device_name\": \"iPhone 13\",\n    \"affiliate_code\": \"REF123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/register",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "register"]
+                        },
+                        "description": "📱 REACT NATIVE - FINAL REGISTRATION\n\nPURPOSE: Create tenant + owner user\n\nREQUIRED PAYLOAD:\n```typescript\ninterface RegistrationPayload {\n  // From Step 1\n  business_type_id: number;\n  business_structure?: string;\n  \n  // From Step 2\n  name: string;\n  email: string;\n  password: string;\n  password_confirmation: string;\n  business_name: string;\n  phone?: string;\n  \n  // From Step 3\n  plan_id: number;\n  terms: true;\n  \n  // Auto-detected\n  device_name?: string;\n  affiliate_code?: string;\n}\n```\n\nSUCCESS (201):\n```json\n{\n  \"success\": true,\n  \"message\": \"Registration successful\",\n  \"data\": {\n    \"user\": {...},\n    \"token\": \"1|abc123...\",\n    \"tenant\": {\n      \"id\": 1,\n      \"slug\": \"johns-store\",\n      \"name\": \"John's Store\",\n      \"plan\": {\"id\": 2, \"name\": \"Professional\"},\n      \"trial_ends_at\": \"2026-01-26\"\n    },\n    \"token_type\": \"Bearer\"\n  }\n}\n```\n\nAFTER SUCCESS:\n```tsx\n// 1. Save token securely\nawait SecureStore.setItemAsync('auth_token', data.token);\nawait SecureStore.setItemAsync('tenant_slug', data.tenant.slug);\nawait AsyncStorage.setItem('user', JSON.stringify(data.user));\n\n// 2. Update global state\nauthStore.setToken(data.token);\nauthStore.setUser(data.user);\nauthStore.setTenant(data.tenant);\n\n// 3. Navigate to Onboarding\nnavigation.reset({\n  index: 0,\n  routes: [{ name: 'OnboardingWelcome' }],\n});\n```"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🎯 2. Onboarding Flow (After Registration)",
+            "description": "Post-registration setup - can be skipped",
+            "item": [
+                {
+                    "name": "1. Get Onboarding Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/onboarding/status",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tenant",
+                                "{{tenant_slug}}",
+                                "onboarding",
+                                "status"
+                            ]
+                        },
+                        "description": "📱 REACT NATIVE - ONBOARDING STATUS CHECK\n\nPURPOSE: Check if user needs to complete onboarding\n\nWHEN TO CALL:\n- After successful registration\n- After successful login\n- On app launch (if authenticated)\n\nWHAT TO DO:\n```tsx\nconst checkOnboarding = async () => {\n  const response = await api.get('/onboarding/status');\n  \n  if (response.data.onboarding_completed) {\n    // User already completed onboarding\n    navigation.navigate('Dashboard');\n  } else {\n    // Show onboarding welcome screen\n    navigation.navigate('OnboardingWelcome');\n  }\n};\n```\n\nRESPONSE:\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"onboarding_completed\": false,\n    \"onboarding_completed_at\": null,\n    \"current_step\": \"company\",\n    \"steps\": [\n      {\n        \"name\": \"company\",\n        \"label\": \"Company Info\",\n        \"completed\": false\n      },\n      {\n        \"name\": \"preferences\",\n        \"label\": \"Preferences\",\n        \"completed\": false\n      }\n    ],\n    \"can_skip\": true\n  }\n}\n```"
+                    }
+                },
+                {
+                    "name": "2a. Onboarding Welcome Screen (No API)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/",
+                            "host": ["{{base_url}}"]
+                        },
+                        "description": "📱 REACT NATIVE - ONBOARDING WELCOME SCREEN\n\nNO API CALL - This matches index.blade.php\n\nUI COMPONENTS:\n\n```tsx\nconst OnboardingWelcome = () => {\n  return (\n    <ScrollView style={styles.container}>\n      {/* Header */}\n      <View style={styles.header}>\n        <View style={styles.iconCircle}>\n          <Icon name=\"document-text\" size={40} color=\"white\" />\n        </View>\n        <Text style={styles.title}>Welcome to Ballie!</Text>\n        <Text style={styles.subtitle}>\n          Let's get your business set up in just a few minutes.\n        </Text>\n      </View>\n\n      {/* Progress Steps */}\n      <View style={styles.progressSteps}>\n        <StepIndicator step={1} label=\"Company Info\" active />\n        <View style={styles.connector} />\n        <StepIndicator step={2} label=\"Preferences\" />\n        <View style={styles.connector} />\n        <StepIndicator step={3} label=\"Complete\" />\n      </View>\n\n      {/* Options */}\n      <View style={styles.options}>\n        {/* Guided Setup Card */}\n        <TouchableOpacity\n          style={styles.optionCard}\n          onPress={() => navigation.navigate('OnboardingCompany')}\n        >\n          <View style={[styles.optionIcon, { backgroundColor: '#d1b05e' }]}>\n            <Icon name=\"clipboard-outline\" size={32} color=\"white\" />\n          </View>\n          <Text style={styles.optionTitle}>Guided Setup</Text>\n          <Text style={styles.optionDesc}>\n            We'll walk you through each step to configure your business.\n          </Text>\n          <View style={styles.featureList}>\n            <FeatureItem text=\"Configure company information\" />\n            <FeatureItem text=\"Set business preferences\" />\n            <FeatureItem text=\"Customize settings\" />\n          </View>\n          <Button\n            title=\"Start Setup →\"\n            style={styles.primaryButton}\n          />\n        </TouchableOpacity>\n\n        {/* Quick Start Card */}\n        <TouchableOpacity\n          style={styles.optionCard}\n          onPress={handleSkipOnboarding}\n        >\n          <View style={[styles.optionIcon, { backgroundColor: '#7e3af2' }]}>\n            <Icon name=\"flash-outline\" size={32} color=\"white\" />\n          </View>\n          <Text style={styles.optionTitle}>Quick Start</Text>\n          <Text style={styles.optionDesc}>\n            Skip setup and jump straight to dashboard with defaults.\n          </Text>\n          <View style={styles.featureList}>\n            <FeatureItem text=\"Start immediately\" />\n            <FeatureItem text=\"Sensible defaults applied\" />\n            <FeatureItem text=\"Customize later in settings\" />\n          </View>\n          <Button\n            title=\"Skip to Dashboard →\"\n            style={styles.secondaryButton}\n          />\n        </TouchableOpacity>\n      </View>\n    </ScrollView>\n  );\n};\n\nconst handleSkipOnboarding = async () => {\n  try {\n    const response = await api.post('/onboarding/skip');\n    \n    // Show success message\n    Toast.show({\n      type: 'success',\n      text1: 'Setup Complete!',\n      text2: response.data.message,\n    });\n    \n    // Navigate to dashboard\n    navigation.reset({\n      index: 0,\n      routes: [{ name: 'Dashboard' }],\n    });\n  } catch (error) {\n    Toast.show({\n      type: 'error',\n      text1: 'Error',\n      text2: error.message,\n    });\n  }\n};\n```\n\nCOLORS (from your theme):\n- Primary Blue: #2b6399\n- Gold: #d1b05e\n- Purple: #7e3af2\n- Dark Purple: #3c2c64\n- Teal: #20c997"
+                    }
+                },
+                {
+                    "name": "2b. Save Company Info (Step 1)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"logo_base64\": \"data:image/png;base64,iVBORw0KG...\",\n    \"company_name\": \"John's Supermarket\",\n    \"business_structure\": \"Limited Liability Company (LLC)\",\n    \"email\": \"contact@johnsstore.com\",\n    \"phone\": \"+234-803-123-4567\",\n    \"website\": \"https://johnsstore.com\",\n    \"address\": \"123 Main Street\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"country\": \"Nigeria\",\n    \"postal_code\": \"100001\",\n    \"registration_number\": \"RC123456\",\n    \"tax_id\": \"TIN123456789\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/onboarding/company",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tenant",
+                                "{{tenant_slug}}",
+                                "onboarding",
+                                "company"
+                            ]
+                        },
+                        "description": "📱 REACT NATIVE - COMPANY INFO SCREEN\n\nPURPOSE: Save company/business information (matches company.blade.php)\n\nFORM FIELDS:\n\n**Logo Upload (Optional):**\n```tsx\nconst pickImage = async () => {\n  const result = await ImagePicker.launchImageLibraryAsync({\n    mediaTypes: ImagePicker.MediaTypeOptions.Images,\n    allowsEditing: true,\n    aspect: [1, 1],\n    quality: 0.8,\n  });\n\n  if (!result.canceled) {\n    // Convert to base64\n    const base64 = await FileSystem.readAsStringAsync(\n      result.assets[0].uri,\n      { encoding: FileSystem.EncodingType.Base64 }\n    );\n    setFormData({\n      ...formData,\n      logo_base64: `data:image/jpeg;base64,${base64}`\n    });\n  }\n};\n```\n\n**Required Fields:**\n- company_name (string, max 255)\n- business_structure (dropdown):\n  * Sole Proprietorship\n  * Limited Liability Company (LLC)\n  * Partnership\n  * Corporation\n  * Other (if selected, show other_structure field)\n- email (email format)\n- phone (string)\n- address (multiline, max 500)\n- city (string)\n- state (string)\n- country (string)\n\n**Optional Fields:**\n- website (URL format)\n- postal_code\n- registration_number (Business registration)\n- tax_id (Tax identification number)\n\nUI LAYOUT:\n```tsx\n<KeyboardAwareScrollView>\n  {/* Progress Header */}\n  <ProgressBar step={1} totalSteps={3} />\n  \n  {/* Logo Upload */}\n  <View style={styles.logoSection}>\n    <TouchableOpacity onPress={pickImage}>\n      {logo ? (\n        <Image source={{ uri: logo }} style={styles.logoPreview} />\n      ) : (\n        <View style={styles.logoPlaceholder}>\n          <Icon name=\"camera\" size={32} />\n          <Text>Add Company Logo</Text>\n        </View>\n      )}\n    </TouchableOpacity>\n  </View>\n\n  {/* Basic Info */}\n  <View style={styles.section}>\n    <Text style={styles.sectionTitle}>Basic Information</Text>\n    <Input\n      label=\"Company Name *\"\n      value={formData.company_name}\n      onChangeText={(val) => handleChange('company_name', val)}\n      error={errors.company_name}\n    />\n    <Picker\n      label=\"Business Structure *\"\n      selectedValue={formData.business_structure}\n      onValueChange={(val) => handleChange('business_structure', val)}\n    >\n      <Picker.Item label=\"Sole Proprietorship\" value=\"Sole Proprietorship\" />\n      <Picker.Item label=\"LLC\" value=\"Limited Liability Company (LLC)\" />\n      <Picker.Item label=\"Partnership\" value=\"Partnership\" />\n      <Picker.Item label=\"Corporation\" value=\"Corporation\" />\n      <Picker.Item label=\"Other\" value=\"Other\" />\n    </Picker>\n  </View>\n\n  {/* Contact Info */}\n  <View style={styles.section}>\n    <Text style={styles.sectionTitle}>Contact Information</Text>\n    <Input label=\"Email *\" keyboardType=\"email-address\" />\n    <Input label=\"Phone *\" keyboardType=\"phone-pad\" />\n    <Input label=\"Website\" keyboardType=\"url\" />\n  </View>\n\n  {/* Address */}\n  <View style={styles.section}>\n    <Text style={styles.sectionTitle}>Address</Text>\n    <Input label=\"Address *\" multiline numberOfLines={3} />\n    <View style={styles.row}>\n      <Input label=\"City *\" style={styles.halfWidth} />\n      <Input label=\"State *\" style={styles.halfWidth} />\n    </View>\n    <View style={styles.row}>\n      <Input label=\"Country *\" style={styles.halfWidth} />\n      <Input label=\"Postal Code\" style={styles.halfWidth} />\n    </View>\n  </View>\n\n  {/* Registration (Optional) */}\n  <View style={styles.section}>\n    <Text style={styles.sectionTitle}>Registration (Optional)</Text>\n    <Input label=\"Registration Number\" />\n    <Input label=\"Tax ID\" />\n  </View>\n\n  {/* Actions */}\n  <View style={styles.actions}>\n    <Button\n      title=\"← Back\"\n      onPress={() => navigation.goBack()}\n      style={styles.backButton}\n    />\n    <Button\n      title=\"Next: Preferences →\"\n      onPress={handleSubmit}\n      loading={loading}\n      disabled={!isValid}\n      style={styles.nextButton}\n    />\n  </View>\n</KeyboardAwareScrollView>\n```\n\nVALIDATION:\n```tsx\nconst validate = () => {\n  const newErrors: FormErrors = {};\n  \n  if (!formData.company_name) newErrors.company_name = 'Required';\n  if (!formData.business_structure) newErrors.business_structure = 'Required';\n  if (!formData.email) newErrors.email = 'Required';\n  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(formData.email)) {\n    newErrors.email = 'Invalid email';\n  }\n  if (!formData.phone) newErrors.phone = 'Required';\n  if (!formData.address) newErrors.address = 'Required';\n  if (!formData.city) newErrors.city = 'Required';\n  if (!formData.state) newErrors.state = 'Required';\n  if (!formData.country) newErrors.country = 'Required';\n  \n  if (formData.website && !/^https?:\\/\\/.+/.test(formData.website)) {\n    newErrors.website = 'Invalid URL';\n  }\n  \n  setErrors(newErrors);\n  return Object.keys(newErrors).length === 0;\n};\n```\n\nSUCCESS RESPONSE:\n```json\n{\n  \"success\": true,\n  \"message\": \"Company information saved successfully\",\n  \"data\": {\n    \"tenant\": { /* updated tenant */ },\n    \"next_step\": \"preferences\"\n  }\n}\n```\n\nAFTER SUCCESS:\n```tsx\nToast.show({\n  type: 'success',\n  text1: 'Saved!',\n  text2: 'Company information saved'\n});\n\n// Navigate to preferences\nnavigation.navigate('OnboardingPreferences');\n```"
+                    }
+                },
+                {
+                    "name": "2c. Save Preferences (Step 2)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"default_currency\": \"NGN\",\n    \"timezone\": \"Africa/Lagos\",\n    \"date_format\": \"d/m/Y\",\n    \"time_format\": \"12\",\n    \"fiscal_year_start\": \"01-01\",\n    \"default_tax_rate\": 7.5,\n    \"payment_methods\": [\"cash\", \"bank_transfer\", \"card\", \"mobile_money\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/onboarding/preferences",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tenant",
+                                "{{tenant_slug}}",
+                                "onboarding",
+                                "preferences"
+                            ]
+                        },
+                        "description": "📱 REACT NATIVE - PREFERENCES SCREEN\n\nPURPOSE: Save business preferences (matches preferences.blade.php)\n\nFORM FIELDS:\n\n**Currency & Localization:**\n```tsx\n<View style={styles.section}>\n  <Text style={styles.sectionTitle}>Currency & Regional Settings</Text>\n  \n  <Picker\n    label=\"Currency *\"\n    selectedValue={formData.default_currency}\n    onValueChange={(val) => handleChange('default_currency', val)}\n  >\n    <Picker.Item label=\"🇳🇬 Nigerian Naira (NGN)\" value=\"NGN\" />\n    <Picker.Item label=\"🇺🇸 US Dollar (USD)\" value=\"USD\" />\n    <Picker.Item label=\"🇬🇧 British Pound (GBP)\" value=\"GBP\" />\n    <Picker.Item label=\"🇪🇺 Euro (EUR)\" value=\"EUR\" />\n  </Picker>\n  \n  <Picker\n    label=\"Timezone *\"\n    selectedValue={formData.timezone}\n    onValueChange={(val) => handleChange('timezone', val)}\n  >\n    <Picker.Item label=\"West Africa (Lagos)\" value=\"Africa/Lagos\" />\n    <Picker.Item label=\"East Africa (Nairobi)\" value=\"Africa/Nairobi\" />\n    <Picker.Item label=\"UTC\" value=\"UTC\" />\n  </Picker>\n  \n  <Picker label=\"Date Format *\">\n    <Picker.Item label=\"DD/MM/YYYY (31/12/2025)\" value=\"d/m/Y\" />\n    <Picker.Item label=\"MM/DD/YYYY (12/31/2025)\" value=\"m/d/Y\" />\n    <Picker.Item label=\"YYYY-MM-DD (2025-12-31)\" value=\"Y-m-d\" />\n  </Picker>\n  \n  <Picker label=\"Time Format *\">\n    <Picker.Item label=\"12 Hour (2:30 PM)\" value=\"12\" />\n    <Picker.Item label=\"24 Hour (14:30)\" value=\"24\" />\n  </Picker>\n</View>\n```\n\n**Business Settings:**\n```tsx\n<View style={styles.section}>\n  <Text style={styles.sectionTitle}>Business Operations</Text>\n  \n  {/* Fiscal Year Start */}\n  <DatePicker\n    label=\"Fiscal Year Starts *\"\n    value={formData.fiscal_year_start}\n    mode=\"month-day\"\n    onChange={(date) => handleChange('fiscal_year_start', date)}\n    format=\"MM-DD\"\n    placeholder=\"Select month and day\"\n  />\n  <Text style={styles.helpText}>\n    Example: 01-01 for January 1st, 04-01 for April 1st\n  </Text>\n  \n  {/* Tax Rate */}\n  <Input\n    label=\"Default Tax Rate (%)\"\n    keyboardType=\"decimal-pad\"\n    value={formData.default_tax_rate}\n    onChangeText={(val) => handleChange('default_tax_rate', val)}\n    placeholder=\"e.g., 7.5\"\n  />\n  \n  {/* Payment Methods */}\n  <Text style={styles.label}>Enabled Payment Methods</Text>\n  <View style={styles.checkboxGroup}>\n    <Checkbox\n      label=\"Cash\"\n      checked={formData.payment_methods.includes('cash')}\n      onPress={() => togglePaymentMethod('cash')}\n    />\n    <Checkbox\n      label=\"Bank Transfer\"\n      checked={formData.payment_methods.includes('bank_transfer')}\n      onPress={() => togglePaymentMethod('bank_transfer')}\n    />\n    <Checkbox\n      label=\"Card Payment\"\n      checked={formData.payment_methods.includes('card')}\n      onPress={() => togglePaymentMethod('card')}\n    />\n    <Checkbox\n      label=\"Mobile Money\"\n      checked={formData.payment_methods.includes('mobile_money')}\n      onPress={() => togglePaymentMethod('mobile_money')}\n    />\n    <Checkbox\n      label=\"Cheque\"\n      checked={formData.payment_methods.includes('cheque')}\n      onPress={() => togglePaymentMethod('cheque')}\n    />\n  </View>\n</View>\n```\n\nPAYMENT METHOD HELPER:\n```tsx\nconst togglePaymentMethod = (method: string) => {\n  setFormData(prev => {\n    const methods = prev.payment_methods || [];\n    if (methods.includes(method)) {\n      return {\n        ...prev,\n        payment_methods: methods.filter(m => m !== method)\n      };\n    } else {\n      return {\n        ...prev,\n        payment_methods: [...methods, method]\n      };\n    }\n  });\n};\n```\n\nVALIDATION:\n```tsx\nconst validate = () => {\n  const errors: FormErrors = {};\n  \n  if (!formData.default_currency) {\n    errors.default_currency = 'Currency is required';\n  }\n  if (!formData.timezone) {\n    errors.timezone = 'Timezone is required';\n  }\n  if (!formData.date_format) {\n    errors.date_format = 'Date format is required';\n  }\n  if (!formData.time_format) {\n    errors.time_format = 'Time format is required';\n  }\n  if (!formData.fiscal_year_start) {\n    errors.fiscal_year_start = 'Fiscal year start is required';\n  }\n  \n  // Validate tax rate\n  if (formData.default_tax_rate) {\n    const rate = parseFloat(formData.default_tax_rate);\n    if (isNaN(rate) || rate < 0 || rate > 100) {\n      errors.default_tax_rate = 'Tax rate must be between 0 and 100';\n    }\n  }\n  \n  setErrors(errors);\n  return Object.keys(errors).length === 0;\n};\n```\n\nACTIONS:\n```tsx\n<View style={styles.actions}>\n  <Button\n    title=\"← Back\"\n    onPress={() => navigation.goBack()}\n    style={styles.backButton}\n  />\n  <Button\n    title=\"Complete Setup →\"\n    onPress={handleSubmit}\n    loading={loading}\n    disabled={!isValid}\n    style={styles.nextButton}\n  />\n</View>\n```\n\nSUCCESS RESPONSE:\n```json\n{\n  \"success\": true,\n  \"message\": \"Preferences saved successfully\",\n  \"data\": {\n    \"tenant\": { /* updated tenant */ },\n    \"next_step\": \"complete\"\n  }\n}\n```\n\nAFTER SUCCESS:\n```tsx\nToast.show({\n  type: 'success',\n  text1: 'Saved!',\n  text2: 'Preferences saved successfully'\n});\n\n// Navigate to completion\nnavigation.navigate('OnboardingComplete');\n```"
+                    }
+                },
+                {
+                    "name": "2d. Complete Onboarding",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/onboarding/complete",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tenant",
+                                "{{tenant_slug}}",
+                                "onboarding",
+                                "complete"
+                            ]
+                        },
+                        "description": "📱 REACT NATIVE - COMPLETE ONBOARDING\n\nPURPOSE: Mark onboarding as complete and seed default data\n\nWHEN TO CALL:\n- After user completes all onboarding steps\n- When user is on the congratulation screen\n\nWHAT HAPPENS:\n1. Marks onboarding_completed = true\n2. Sets onboarding_completed_at timestamp\n3. Seeds default data:\n   - Account Groups\n   - Voucher Types\n   - Default Ledger Accounts\n   - Default Banks (Nigerian banks)\n   - Product Categories\n   - Units (Pieces, Kg, Liters, etc.)\n   - Shifts (for POS)\n   - PFAs (Pension Fund Administrators)\n4. Creates default roles and permissions:\n   - Owner (full access)\n   - Manager\n   - Accountant\n   - Sales Person\n   - Cashier\n\nNO PAYLOAD NEEDED - Just POST with auth token\n\nSUCCESS RESPONSE:\n```json\n{\n  \"success\": true,\n  \"message\": \"Onboarding completed successfully\",\n  \"data\": {\n    \"tenant\": {\n      \"id\": 1,\n      \"slug\": \"johns-store\",\n      \"name\": \"John's Store\",\n      \"onboarding_completed\": true,\n      \"onboarding_completed_at\": \"2025-12-28T10:30:00Z\",\n      \"default_data_seeded\": true\n    },\n    \"message\": \"Welcome to your dashboard! Your business is now set up.\"\n  }\n}\n```\n\nREACT NATIVE USAGE:\n```tsx\nconst handleComplete = async () => {\n  try {\n    setLoading(true);\n    const response = await api.post('/onboarding/complete');\n    \n    // Show success animation\n    await showCelebrationAnimation();\n    \n    // Show success message\n    Toast.show({\n      type: 'success',\n      text1: '🎉 Setup Complete!',\n      text2: response.data.data.message,\n      visibilityTime: 4000,\n    });\n    \n    // Small delay for user to see success\n    await new Promise(resolve => setTimeout(resolve, 2000));\n    \n    // Navigate to Dashboard\n    navigation.reset({\n      index: 0,\n      routes: [{ name: 'Dashboard' }],\n    });\n    \n  } catch (error) {\n    Toast.show({\n      type: 'error',\n      text1: 'Error',\n      text2: error.message || 'Failed to complete onboarding',\n    });\n  } finally {\n    setLoading(false);\n  }\n};\n```"
+                    }
+                },
+                {
+                    "name": "2e. Skip Onboarding (Quick Start)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/onboarding/skip",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tenant",
+                                "{{tenant_slug}}",
+                                "onboarding",
+                                "skip"
+                            ]
+                        },
+                        "description": "📱 REACT NATIVE - SKIP ONBOARDING\n\nPURPOSE: Skip onboarding with default values (Quick Start)\n\nWHEN TO CALL:\n- When user clicks \"Quick Start\" on welcome screen\n- When user wants to skip manual setup\n\nWHAT HAPPENS:\n1. Sets default values:\n   - Currency: NGN (Nigerian Naira)\n   - Timezone: Africa/Lagos\n   - Date Format: d/m/Y (31/12/2025)\n   - Time Format: 12-hour\n   - Fiscal Year: January 1st\n   - Tax Rate: 0%\n   - Payment Methods: Cash, Bank Transfer\n2. Marks onboarding as completed\n3. Seeds all default data (same as complete)\n4. Creates default roles\n\nNO PAYLOAD NEEDED\n\nSUCCESS RESPONSE:\n```json\n{\n  \"success\": true,\n  \"message\": \"Onboarding skipped successfully\",\n  \"data\": {\n    \"tenant\": {\n      \"id\": 1,\n      \"slug\": \"johns-store\",\n      \"name\": \"John's Store\",\n      \"default_currency\": \"NGN\",\n      \"timezone\": \"Africa/Lagos\",\n      \"onboarding_completed\": true\n    },\n    \"message\": \"Setup complete! Sensible defaults applied. Customize anytime.\"\n  }\n}\n```\n\nREACT NATIVE USAGE:\n```tsx\nconst handleSkip = async () => {\n  Alert.alert(\n    'Skip Onboarding?',\n    'We\\'ll use sensible defaults. You can customize settings later.',\n    [\n      {\n        text: 'Cancel',\n        style: 'cancel'\n      },\n      {\n        text: 'Skip to Dashboard',\n        onPress: async () => {\n          try {\n            setLoading(true);\n            const response = await api.post('/onboarding/skip');\n            \n            Toast.show({\n              type: 'success',\n              text1: '✅ All Set!',\n              text2: response.data.data.message,\n              visibilityTime: 3000,\n            });\n            \n            // Navigate to Dashboard\n            navigation.reset({\n              index: 0,\n              routes: [{ name: 'Dashboard' }],\n            });\n            \n          } catch (error) {\n            Toast.show({\n              type: 'error',\n              text1: 'Error',\n              text2: error.message,\n            });\n          } finally {\n            setLoading(false);\n          }\n        }\n      }\n    ]\n  );\n};\n```\n\nDEFAULTS APPLIED:\n```typescript\ninterface DefaultPreferences {\n  default_currency: 'NGN';\n  timezone: 'Africa/Lagos';\n  date_format: 'd/m/Y';\n  time_format: '12';\n  fiscal_year_start: '01-01';\n  default_tax_rate: 0;\n  payment_methods: ['cash', 'bank_transfer'];\n}\n```\n\nNOTE: User can change these defaults later in Settings"
+                    }
+                },
+                {
+                    "name": "3. Congratulation Screen (No API)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/",
+                            "host": ["{{base_url}}"]
+                        },
+                        "description": "📱 REACT NATIVE - CONGRATULATION SCREEN\n\nNO API CALL - This matches complete.blade.php\n\nUI COMPONENTS:\n\n```tsx\nimport LottieView from 'lottie-react-native';\nimport ConfettiCannon from 'react-native-confetti-cannon';\n\nconst OnboardingComplete = () => {\n  const confettiRef = useRef<ConfettiCannon>(null);\n  const navigation = useNavigation();\n\n  useEffect(() => {\n    // Trigger confetti on mount\n    confettiRef.current?.start();\n  }, []);\n\n  const handleGoToDashboard = async () => {\n    await api.post('/onboarding/complete');\n    \n    navigation.reset({\n      index: 0,\n      routes: [{ name: 'Dashboard' }],\n    });\n  };\n\n  return (\n    <View style={styles.container}>\n      {/* Confetti Animation */}\n      <ConfettiCannon\n        ref={confettiRef}\n        count={200}\n        origin={{ x: -10, y: 0 }}\n        autoStart={false}\n        fadeOut\n      />\n\n      <ScrollView contentContainerStyle={styles.content}>\n        {/* Success Icon with Animation */}\n        <View style={styles.iconContainer}>\n          <View style={styles.successCircle}>\n            <LottieView\n              source={require('./animations/success-checkmark.json')}\n              autoPlay\n              loop={false}\n              style={styles.lottie}\n            />\n          </View>\n        </View>\n\n        {/* Celebration Message */}\n        <Text style={styles.title}>Setup Complete!</Text>\n        <Text style={styles.subtitle}>\n          Congratulations! Your business is now set up and ready to go.\n          You can now start using Ballie to manage your business.\n        </Text>\n\n        {/* Success Stats (Optional) */}\n        <View style={styles.statsContainer}>\n          <View style={styles.statCard}>\n            <Icon name=\"checkmark-circle\" size={24} color=\"#10b981\" />\n            <Text style={styles.statLabel}>Accounts Created</Text>\n          </View>\n          <View style={styles.statCard}>\n            <Icon name=\"settings\" size={24} color=\"#10b981\" />\n            <Text style={styles.statLabel}>Preferences Set</Text>\n          </View>\n          <View style={styles.statCard}>\n            <Icon name=\"rocket\" size={24} color=\"#10b981\" />\n            <Text style={styles.statLabel}>Ready to Launch</Text>\n          </View>\n        </View>\n\n        {/* Quick Actions (Optional) */}\n        <View style={styles.quickActions}>\n          <Text style={styles.quickActionsTitle}>Quick Start Actions:</Text>\n          \n          <TouchableOpacity style={styles.actionCard}>\n            <Icon name=\"cube\" size={32} color=\"#2b6399\" />\n            <View style={styles.actionContent}>\n              <Text style={styles.actionTitle}>Add Products</Text>\n              <Text style={styles.actionDesc}>\n                Start by adding products to your inventory\n              </Text>\n            </View>\n            <Icon name=\"chevron-forward\" size={20} color=\"#9ca3af\" />\n          </TouchableOpacity>\n\n          <TouchableOpacity style={styles.actionCard}>\n            <Icon name=\"people\" size={32} color=\"#2b6399\" />\n            <View style={styles.actionContent}>\n              <Text style={styles.actionTitle}>Add Customers</Text>\n              <Text style={styles.actionDesc}>\n                Create your customer database\n              </Text>\n            </View>\n            <Icon name=\"chevron-forward\" size={20} color=\"#9ca3af\" />\n          </TouchableOpacity>\n\n          <TouchableOpacity style={styles.actionCard}>\n            <Icon name=\"document-text\" size={32} color=\"#2b6399\" />\n            <View style={styles.actionContent}>\n              <Text style={styles.actionTitle}>Create Invoice</Text>\n              <Text style={styles.actionDesc}>\n                Generate your first invoice\n              </Text>\n            </View>\n            <Icon name=\"chevron-forward\" size={20} color=\"#9ca3af\" />\n          </TouchableOpacity>\n        </View>\n\n        {/* Main CTA */}\n        <TouchableOpacity\n          style={styles.dashboardButton}\n          onPress={handleGoToDashboard}\n        >\n          <Text style={styles.dashboardButtonText}>\n            Go to Dashboard\n          </Text>\n          <Icon name=\"arrow-forward\" size={20} color=\"white\" />\n        </TouchableOpacity>\n\n        {/* Skip Quick Actions */}\n        <TouchableOpacity\n          style={styles.skipButton}\n          onPress={handleGoToDashboard}\n        >\n          <Text style={styles.skipButtonText}>\n            I'll set these up later\n          </Text>\n        </TouchableOpacity>\n      </ScrollView>\n    </View>\n  );\n};\n\nconst styles = StyleSheet.create({\n  container: {\n    flex: 1,\n    backgroundColor: '#f9fafb',\n  },\n  content: {\n    padding: 24,\n    alignItems: 'center',\n  },\n  iconContainer: {\n    marginVertical: 32,\n  },\n  successCircle: {\n    width: 120,\n    height: 120,\n    borderRadius: 60,\n    backgroundColor: '#d1fae5',\n    justifyContent: 'center',\n    alignItems: 'center',\n  },\n  lottie: {\n    width: 80,\n    height: 80,\n  },\n  title: {\n    fontSize: 32,\n    fontWeight: 'bold',\n    color: '#111827',\n    marginBottom: 16,\n    textAlign: 'center',\n  },\n  subtitle: {\n    fontSize: 16,\n    color: '#6b7280',\n    textAlign: 'center',\n    marginBottom: 32,\n    lineHeight: 24,\n  },\n  statsContainer: {\n    flexDirection: 'row',\n    justifyContent: 'space-around',\n    width: '100%',\n    marginBottom: 32,\n  },\n  statCard: {\n    alignItems: 'center',\n    padding: 16,\n  },\n  statLabel: {\n    marginTop: 8,\n    fontSize: 12,\n    color: '#6b7280',\n    textAlign: 'center',\n  },\n  quickActions: {\n    width: '100%',\n    marginBottom: 32,\n  },\n  quickActionsTitle: {\n    fontSize: 18,\n    fontWeight: '600',\n    color: '#111827',\n    marginBottom: 16,\n  },\n  actionCard: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    backgroundColor: 'white',\n    borderRadius: 12,\n    padding: 16,\n    marginBottom: 12,\n    shadowColor: '#000',\n    shadowOffset: { width: 0, height: 1 },\n    shadowOpacity: 0.05,\n    shadowRadius: 2,\n    elevation: 2,\n  },\n  actionContent: {\n    flex: 1,\n    marginLeft: 16,\n  },\n  actionTitle: {\n    fontSize: 16,\n    fontWeight: '600',\n    color: '#111827',\n    marginBottom: 4,\n  },\n  actionDesc: {\n    fontSize: 14,\n    color: '#6b7280',\n  },\n  dashboardButton: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'center',\n    backgroundColor: '#2b6399',\n    paddingVertical: 16,\n    paddingHorizontal: 32,\n    borderRadius: 12,\n    width: '100%',\n    marginBottom: 16,\n  },\n  dashboardButtonText: {\n    color: 'white',\n    fontSize: 18,\n    fontWeight: '600',\n    marginRight: 8,\n  },\n  skipButton: {\n    padding: 12,\n  },\n  skipButtonText: {\n    color: '#6b7280',\n    fontSize: 14,\n  },\n});\n```\n\nANIMATION PACKAGES:\n```bash\nnpm install lottie-react-native\nnpm install react-native-confetti-cannon\n```\n\nFREE LOTTIE ANIMATIONS:\n- Success: https://lottiefiles.com/search?q=success&category=animations\n- Celebration: https://lottiefiles.com/search?q=celebration&category=animations\n- Confetti: https://lottiefiles.com/search?q=confetti&category=animations"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🔐 3. Login Flow",
+            "description": "Email-based login - no tenant slug needed",
+            "item": [
+                {
+                    "name": "1. Check Email (Optional)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"lawalvct@gmail.com\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/check-email",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "check-email"]
+                        },
+                        "description": "Optional: Check workspaces before login"
+                    }
+                },
+                {
+                    "name": "2. Login (Auto-Detect Tenant)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.data.multiple_tenants) {",
+                                    "        console.log('Multiple workspaces found');",
+                                    "    } else {",
+                                    "        pm.environment.set('auth_token', jsonData.data.token);",
+                                    "        pm.environment.set('tenant_slug', jsonData.data.tenant.slug);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"lawalvct@gmail.com\",\n    \"password\": \"password\",\n    \"device_name\": \"iPhone 13\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/login",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "auth", "login"]
+                        },
+                        "description": "Auto-detects tenant from email. After login, check onboarding status!"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "👤 4. Protected Endpoints",
+            "description": "Requires Bearer token",
+            "item": [
+                {
+                    "name": "Get Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/profile",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tenant",
+                                "{{tenant_slug}}",
+                                "profile"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{auth_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/auth/logout",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "tenant",
+                                "{{tenant_slug}}",
+                                "auth",
+                                "logout"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000",
+            "type": "string"
+        },
+        {
+            "key": "tenant_slug",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "tenant_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "auth_token",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}

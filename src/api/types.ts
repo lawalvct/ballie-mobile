@@ -109,3 +109,43 @@ export interface RegisterData {
   device_name?: string;
   affiliate_code?: string;
 }
+
+export interface OnboardingStep {
+  name: string;
+  label: string;
+  completed: boolean;
+}
+
+export interface OnboardingStatus {
+  onboarding_completed: boolean;
+  onboarding_completed_at: string | null;
+  current_step: string;
+  steps: OnboardingStep[];
+  can_skip: boolean;
+}
+
+export interface CompanyInfoData {
+  logo_base64?: string;
+  company_name: string;
+  business_structure: string;
+  email: string;
+  phone: string;
+  website?: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code?: string;
+  registration_number?: string;
+  tax_id?: string;
+}
+
+export interface PreferencesData {
+  default_currency: string;
+  timezone: string;
+  date_format: string;
+  time_format: string;
+  fiscal_year_start: string;
+  default_tax_rate?: number;
+  payment_methods: string[];
+}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, Alert } from "react-native";
 import Splash1 from "./src/screens/Splash1";
@@ -8,9 +8,14 @@ import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
 import BusinessTypeScreen from "./src/screens/BusinessTypeScreen";
 import RegistrationFormScreen from "./src/screens/RegistrationFormScreen";
 import PlanSelectionScreen from "./src/screens/PlanSelectionScreen";
+import OnboardingWelcomeScreen from "./src/screens/OnboardingWelcomeScreen";
+import OnboardingCompanyScreen from "./src/screens/OnboardingCompanyScreen";
+import OnboardingPreferencesScreen from "./src/screens/OnboardingPreferencesScreen";
+import OnboardingCompleteScreen from "./src/screens/OnboardingCompleteScreen";
 import MainNavigator from "./src/screens/MainNavigator";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { authAPI } from "./src/api/endpoints/auth";
+import { onboardingAPI } from "./src/api/endpoints/onboarding";
 import { BRAND_COLORS } from "./src/theme/colors";
 
 type Screen =
@@ -20,7 +25,11 @@ type Screen =
   | "forgotPassword"
   | "businessType"
   | "registrationForm"
-  | "planSelection";
+  | "planSelection"
+  | "onboardingWelcome"
+  | "onboardingCompany"
+  | "onboardingPreferences"
+  | "onboardingComplete";
 
 interface RegistrationData {
   businessTypeId?: number;
@@ -41,7 +50,46 @@ function AppContent() {
     {}
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { isAuthenticated, isLoading, login } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading,
+    login,
+    tenant,
+    needsOnboarding,
+    setNeedsOnboarding,
+  } = useAuth();
+
+  // Check onboarding status when authenticated
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (isAuthenticated && tenant?.slug) {
+        try {
+          const response = await onboardingAPI.getStatus(tenant.slug);
+          const data = response.data;
+
+          if (!data.onboarding_completed) {
+            setNeedsOnboarding(true);
+
+            // If current step is "complete", go directly to completion screen
+            if (data.current_step === "complete") {
+              setCurrentScreen("onboardingComplete");
+            } else if (data.current_step === "preferences") {
+              setCurrentScreen("onboardingPreferences");
+            } else if (data.current_step === "company") {
+              setCurrentScreen("onboardingCompany");
+            } else {
+              setCurrentScreen("onboardingWelcome");
+            }
+          } else {
+            setNeedsOnboarding(false);
+          }
+        } catch (error) {
+          console.error("Error checking onboarding:", error);
+        }
+      }
+    };
+    checkOnboarding();
+  }, [isAuthenticated, tenant]);
 
   // Registration flow handlers
   const handleBusinessTypeSelected = (businessTypeId: number) => {
@@ -104,6 +152,99 @@ function AppContent() {
     }
   };
 
+  // Onboarding flow handlers
+  const handleGuidedSetup = () => {
+    setCurrentScreen("onboardingCompany");
+  };
+
+  const handleQuickStart = async () => {
+    if (!tenant?.slug) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await onboardingAPI.skip(tenant.slug);
+      Alert.alert(
+        "Setup Complete! ✅",
+        response.data.data?.message || "Your business is ready to go!"
+      );
+      setNeedsOnboarding(false);
+      setCurrentScreen("onboardingComplete");
+    } catch (error: any) {
+      Alert.alert("Error", error?.message || "Failed to skip onboarding");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOnboardingComplete = async () => {
+    if (!tenant?.slug) {
+      Alert.alert("Error", "Tenant information not found. Please login again.");
+      return;
+    }
+
+    try {
+      const response = await onboardingAPI.complete(tenant.slug);
+      console.log("Onboarding complete response:", response);
+      setNeedsOnboarding(false);
+    } catch (error: any) {
+      console.error("Error completing onboarding:", error);
+
+      let errorMessage = "Failed to complete onboarding";
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.errors && typeof data.errors === "object") {
+          const errorMessages = Object.entries(data.errors)
+            .map(([field, messages]) => {
+              const fieldName = field
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase());
+              return `${fieldName}: ${
+                Array.isArray(messages) ? messages[0] : messages
+              }`;
+            })
+            .join("\n");
+          errorMessage = errorMessages;
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Show error but allow user to proceed to dashboard
+      Alert.alert(
+        "Warning",
+        errorMessage + "\n\nWould you like to proceed to the dashboard anyway?",
+        [
+          {
+            text: "Try Again",
+            style: "cancel",
+          },
+          {
+            text: "Proceed to Dashboard",
+            onPress: () => setNeedsOnboarding(false),
+          },
+        ]
+      );
+    }
+  };
+
+  const handleCompanyInfoNext = () => {
+    setCurrentScreen("onboardingPreferences");
+  };
+
+  const handlePreferencesNext = () => {
+    setCurrentScreen("onboardingComplete");
+  };
+
+  const handleCompanyBack = () => {
+    setCurrentScreen("onboardingWelcome");
+  };
+
+  const handlePreferencesBack = () => {
+    setCurrentScreen("onboardingCompany");
+  };
+
   // Show loading while checking auth status
   if (isLoading) {
     return (
@@ -119,12 +260,44 @@ function AppContent() {
     );
   }
 
-  // If authenticated, show main navigator with tabs
-  if (isAuthenticated) {
+  // If authenticated and onboarding complete, show main navigator
+  if (isAuthenticated && !needsOnboarding) {
     return (
       <>
         <StatusBar style="light" />
         <MainNavigator />
+      </>
+    );
+  }
+
+  // If authenticated but needs onboarding
+  if (isAuthenticated && needsOnboarding) {
+    return (
+      <>
+        <StatusBar style="light" />
+        {currentScreen === "onboardingWelcome" && (
+          <OnboardingWelcomeScreen
+            onGuidedSetup={handleGuidedSetup}
+            onQuickStart={handleQuickStart}
+          />
+        )}
+        {currentScreen === "onboardingCompany" && tenant && (
+          <OnboardingCompanyScreen
+            tenantSlug={tenant.slug}
+            onNext={handleCompanyInfoNext}
+            onBack={handleCompanyBack}
+          />
+        )}
+        {currentScreen === "onboardingPreferences" && tenant && (
+          <OnboardingPreferencesScreen
+            tenantSlug={tenant.slug}
+            onNext={handlePreferencesNext}
+            onBack={handlePreferencesBack}
+          />
+        )}
+        {currentScreen === "onboardingComplete" && (
+          <OnboardingCompleteScreen onComplete={handleOnboardingComplete} />
+        )}
       </>
     );
   }
