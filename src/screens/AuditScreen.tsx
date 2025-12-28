@@ -1,30 +1,44 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import AppHeader from "../components/AppHeader";
+import { useAuth } from "../context/AuthContext";
+import ExportSection from "../components/audit/ExportSection";
+import AuditStats from "../components/audit/AuditStats";
+import AuditFilters from "../components/audit/AuditFilters";
+import AuditTimeline from "../components/audit/AuditTimeline";
 
 export default function AuditScreen() {
+  const { user, tenant } = useAuth();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Audit Trail</Text>
-      <Text style={styles.subtitle}>Coming Soon</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="light" backgroundColor="#3c2c64" translucent={false} />
+      <AppHeader
+        businessName={tenant?.name}
+        userName={user?.name}
+        userRole={user?.role}
+      />
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <AuditStats />
+        <AuditFilters />
+        <AuditTimeline />
+        <ExportSection />
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#3c2c64",
+  },
+  content: {
+    flex: 1,
     backgroundColor: "#f5f5f5",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#3c2c64",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
   },
 });
