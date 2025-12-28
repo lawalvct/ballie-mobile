@@ -1,8 +1,13 @@
 import React from "react";
-import { View, Text, StyleSheet, SafeAreaView } from "react-native";
+import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import AppHeader from "../components/AppHeader";
 import { useAuth } from "../context/AuthContext";
+import PayrollOverview from "../components/payroll/PayrollOverview";
+import EmployeeManagement from "../components/payroll/EmployeeManagement";
+import PayrollOperations from "../components/payroll/PayrollOperations";
+import PayrollHistory from "../components/payroll/PayrollHistory";
+import PayrollReportsSection from "../components/payroll/PayrollReportsSection";
 
 export default function PayrollScreen() {
   const { user, tenant } = useAuth();
@@ -16,10 +21,15 @@ export default function PayrollScreen() {
         userRole={user?.role}
       />
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Payroll Management</Text>
-        <Text style={styles.subtitle}>Coming Soon</Text>
-      </View>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <PayrollOverview />
+        <EmployeeManagement />
+        <PayrollOperations />
+        <PayrollHistory />
+        <PayrollReportsSection />
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -32,17 +42,5 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#3c2c64",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
   },
 });
