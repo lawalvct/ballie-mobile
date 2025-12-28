@@ -3,8 +3,11 @@ import { View, StyleSheet } from "react-native";
 import DashboardScreen from "./DashboardScreen";
 import AccountingScreen from "./AccountingScreen";
 import InventoryScreen from "./InventoryScreen";
-import ReportsScreen from "./ReportsScreen";
+import POSScreen from "./POSScreen";
 import CRMScreen from "./CRMScreen";
+import ReportsScreen from "./ReportsScreen";
+import AuditScreen from "./AuditScreen";
+import EcommerceScreen from "./EcommerceScreen";
 import CustomTabBar from "../components/CustomTabBar";
 
 export default function MainNavigator() {
@@ -18,10 +21,16 @@ export default function MainNavigator() {
         return <AccountingScreen />;
       case "inventory":
         return <InventoryScreen />;
-      case "reports":
-        return <ReportsScreen />;
+      case "pos":
+        return <POSScreen />;
       case "crm":
         return <CRMScreen />;
+      case "reports":
+        return <ReportsScreen />;
+      case "audit":
+        return <AuditScreen />;
+      case "ecommerce":
+        return <EcommerceScreen />;
       default:
         return <DashboardScreen />;
     }
