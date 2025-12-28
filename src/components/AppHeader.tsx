@@ -93,8 +93,8 @@ export default function AppHeader({
 
 const styles = StyleSheet.create({
   header: {
-    paddingTop: 30,
-    paddingBottom: 30,
+    paddingTop: 5,
+    paddingBottom: 10,
     paddingHorizontal: 20,
   },
   headerContent: {

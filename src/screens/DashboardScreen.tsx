@@ -22,7 +22,7 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="light" backgroundColor="#3c2c64" translucent={false} />
       <AppHeader
         businessName={tenant?.name}
         userName={user?.name}
@@ -199,10 +199,11 @@ function TransactionItem({ title, amount, date, type }: TransactionItemProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#3c2c64",
   },
   content: {
     flex: 1,
+    backgroundColor: "#f5f5f5",
   },
   section: {
     paddingHorizontal: 20,
