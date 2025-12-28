@@ -1,0 +1,90 @@
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { SEMANTIC_COLORS } from "../../theme/colors";
+
+export default function AdminOverview() {
+  const stats = [
+    {
+      label: "Total Users",
+      value: "87",
+      subtitle: "Active accounts",
+      color1: "#3c2c64",
+      color2: "#5a4a7e",
+    },
+    {
+      label: "Total Roles",
+      value: "6",
+      subtitle: "Permission sets",
+      color1: "#10b981",
+      color2: "#059669",
+    },
+    {
+      label: "Recent Logins",
+      value: "42",
+      subtitle: "Last 24 hours",
+      color1: "#3b82f6",
+      color2: "#2563eb",
+    },
+    {
+      label: "Failed Logins",
+      value: "8",
+      subtitle: "Security alerts",
+      color1: "#ef4444",
+      color2: "#dc2626",
+    },
+  ];
+
+  return (
+    <View style={styles.container}>
+      {stats.map((stat, index) => (
+        <LinearGradient
+          key={index}
+          colors={[stat.color1, stat.color2]}
+          style={styles.statCard}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}>
+          <Text style={styles.statValue}>{stat.value}</Text>
+          <Text style={styles.statLabel}>{stat.label}</Text>
+          <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
+        </LinearGradient>
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    gap: 12,
+  },
+  statCard: {
+    width: "48%",
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: SEMANTIC_COLORS.white,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: SEMANTIC_COLORS.white,
+    marginBottom: 2,
+  },
+  statSubtitle: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+});
