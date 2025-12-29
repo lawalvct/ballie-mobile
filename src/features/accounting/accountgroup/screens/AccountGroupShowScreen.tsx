@@ -13,6 +13,7 @@ import {
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
+import { showToast } from "../../../../utils/toast";
 import { accountGroupService } from "../services/accountGroupService";
 import type { AccountGroup } from "../types";
 
@@ -38,7 +39,7 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
       const data = await accountGroupService.show(id);
       setAccountGroup(data);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to load account group");
+      showToast(error.message || "Failed to load account group", "error");
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -57,10 +58,12 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
           onPress: async () => {
             try {
               await accountGroupService.delete(id);
-              Alert.alert("Success", "Account group deleted successfully");
-              navigation.goBack();
+              showToast("🗑️ Account group deleted successfully", "success");
+              setTimeout(() => {
+                navigation.goBack();
+              }, 500);
             } catch (error: any) {
-              Alert.alert("Error", error.message || "Failed to delete");
+              showToast(error.message || "Failed to delete", "error");
             }
           },
         },
@@ -72,9 +75,9 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
     try {
       const updated = await accountGroupService.toggleStatus(id);
       setAccountGroup(updated);
-      Alert.alert("Success", "Status updated successfully");
+      showToast("✅ Status updated successfully", "success");
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to update status");
+      showToast(error.message || "Failed to update status", "error");
     }
   };
 

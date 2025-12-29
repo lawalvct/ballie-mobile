@@ -15,6 +15,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { Picker } from "@react-native-picker/picker";
+import { showToast } from "../../../../utils/toast";
 import { accountGroupService } from "../services/accountGroupService";
 import type { FormData } from "../types";
 
@@ -50,9 +51,9 @@ export default function AccountGroupCreateScreen({ navigation }: Props) {
         ...prev,
         is_active: data.defaults.is_active,
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading form data:", error);
-      alert("Failed to load form data");
+      showToast(error.message || "Failed to load form data", "error");
     } finally {
       setLoading(false);
     }
@@ -96,7 +97,7 @@ export default function AccountGroupCreateScreen({ navigation }: Props) {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      alert("Please fix the errors in the form");
+      showToast("Please fix the errors in the form", "error");
       return;
     }
 
@@ -111,17 +112,23 @@ export default function AccountGroupCreateScreen({ navigation }: Props) {
         is_active: accountGroup.is_active,
       });
 
-      alert("Account group created successfully!");
-      navigation.goBack();
+      showToast("🎉 Account group created successfully", "success");
+
+      // Wait a bit for toast to show before navigating
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1500);
     } catch (error: any) {
-      if (error.response?.status === 422) {
+      if (error.errors) {
         // Validation errors from server
-        const serverErrors = error.response.data.errors;
-        setErrors(serverErrors);
-        const firstError = Object.values(serverErrors)[0];
-        alert(Array.isArray(firstError) ? firstError[0] : firstError);
+        setErrors(error.errors);
+        const firstError = Object.values(error.errors)[0];
+        showToast(
+          Array.isArray(firstError) ? firstError[0] : (firstError as string),
+          "error"
+        );
       } else {
-        alert(error.message || "Failed to create account group");
+        showToast(error.message || "Failed to create account group", "error");
       }
     } finally {
       setSubmitting(false);

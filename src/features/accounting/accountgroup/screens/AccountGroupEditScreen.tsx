@@ -16,6 +16,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { Picker } from "@react-native-picker/picker";
+import { showToast } from "../../../../utils/toast";
 import { accountGroupService } from "../services/accountGroupService";
 import type { AccountGroup, FormData } from "../types";
 
@@ -61,7 +62,7 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
         is_active: groupData.is_active,
       });
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to load data");
+      showToast(error.message || "Failed to load data", "error");
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -92,7 +93,7 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert("Validation Error", "Please fix the errors in the form");
+      showToast("Please fix the errors in the form", "error");
       return;
     }
 
@@ -106,19 +107,21 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
         is_active: accountGroup.is_active,
       });
 
-      Alert.alert("Success", "Account group updated successfully");
-      navigation.goBack();
+      showToast("🎉 Account group updated successfully", "success");
+
+      setTimeout(() => {
+        navigation.goBack();
+      }, 500);
     } catch (error: any) {
-      if (error.response?.status === 422) {
-        const serverErrors = error.response.data.errors;
-        setErrors(serverErrors);
-        const firstError = Object.values(serverErrors)[0];
-        Alert.alert(
-          "Validation Error",
-          Array.isArray(firstError) ? firstError[0] : (firstError as string)
+      if (error.errors) {
+        setErrors(error.errors);
+        const firstError = Object.values(error.errors)[0];
+        showToast(
+          Array.isArray(firstError) ? firstError[0] : (firstError as string),
+          "error"
         );
       } else {
-        Alert.alert("Error", error.message || "Failed to update account group");
+        showToast(error.message || "Failed to update account group", "error");
       }
     } finally {
       setSubmitting(false);
