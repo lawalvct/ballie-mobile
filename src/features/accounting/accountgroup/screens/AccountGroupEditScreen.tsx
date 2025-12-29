@@ -329,7 +329,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 24,
+    paddingBottom: 12,
     backgroundColor: BRAND_COLORS.darkPurple,
   },
   backButton: {
