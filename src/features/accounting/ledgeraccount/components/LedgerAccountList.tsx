@@ -17,6 +17,7 @@ interface LedgerAccountListProps {
   onToggleView: () => void;
   onDelete: (id: number) => void;
   onItemUpdated: (id: number) => void;
+  onPageChange: (page: number) => void;
 }
 
 export default function LedgerAccountList({
@@ -26,6 +27,7 @@ export default function LedgerAccountList({
   onToggleView,
   onDelete,
   onItemUpdated,
+  onPageChange,
 }: LedgerAccountListProps) {
   const navigation = useNavigation();
 
@@ -203,12 +205,53 @@ export default function LedgerAccountList({
         </ScrollView>
       )}
 
-      {/* Pagination Info */}
-      {pagination && (
+      {/* Pagination Controls */}
+      {pagination && pagination.last_page > 1 && (
         <View style={styles.pagination}>
-          <Text style={styles.paginationText}>
-            Showing {pagination.from} to {pagination.to} of {pagination.total}
-          </Text>
+          <View style={styles.paginationInfo}>
+            <Text style={styles.paginationText}>
+              Page {pagination.current_page} of {pagination.last_page}
+            </Text>
+            <Text style={styles.paginationSubtext}>
+              Showing {pagination.from} to {pagination.to} of {pagination.total}
+            </Text>
+          </View>
+          <View style={styles.paginationButtons}>
+            <TouchableOpacity
+              style={[
+                styles.paginationButton,
+                pagination.current_page === 1 &&
+                  styles.paginationButtonDisabled,
+              ]}
+              onPress={() => onPageChange(pagination.current_page - 1)}
+              disabled={pagination.current_page === 1}>
+              <Text
+                style={[
+                  styles.paginationButtonText,
+                  pagination.current_page === 1 &&
+                    styles.paginationButtonTextDisabled,
+                ]}>
+                ← Previous
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.paginationButton,
+                pagination.current_page === pagination.last_page &&
+                  styles.paginationButtonDisabled,
+              ]}
+              onPress={() => onPageChange(pagination.current_page + 1)}
+              disabled={pagination.current_page === pagination.last_page}>
+              <Text
+                style={[
+                  styles.paginationButtonText,
+                  pagination.current_page === pagination.last_page &&
+                    styles.paginationButtonTextDisabled,
+                ]}>
+                Next →
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -373,10 +416,44 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
+  },
+  paginationInfo: {
     alignItems: "center",
+    marginBottom: 12,
   },
   paginationText: {
     fontSize: 14,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 4,
+  },
+  paginationSubtext: {
+    fontSize: 12,
     color: "#6b7280",
+  },
+  paginationButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+  },
+  paginationButton: {
+    backgroundColor: BRAND_COLORS.gold,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: "center",
+  },
+  paginationButtonDisabled: {
+    backgroundColor: "#e5e7eb",
+    opacity: 0.6,
+  },
+  paginationButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
+  },
+  paginationButtonTextDisabled: {
+    color: "#9ca3af",
   },
 });

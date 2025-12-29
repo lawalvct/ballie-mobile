@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -21,16 +21,26 @@ export default function LedgerAccountFilters({
   setFilters,
   onSearch,
 }: LedgerAccountFiltersProps) {
+  // Local state for search text to prevent triggering on every keystroke
+  const [searchText, setSearchText] = useState(filters.search || "");
+
   const handleFilterChange = (key: keyof ListParams, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
+    setSearchText("");
     setFilters({
       sort: "code",
       direction: "asc",
       view_mode: filters.view_mode || "list", // Keep view mode
+      search: undefined,
     });
+  };
+
+  const handleSearch = () => {
+    setFilters((prev) => ({ ...prev, search: searchText || undefined }));
+    onSearch();
   };
 
   return (
@@ -40,11 +50,12 @@ export default function LedgerAccountFilters({
         <TextInput
           style={styles.searchInput}
           placeholder="Search accounts..."
-          value={filters.search || ""}
-          onChangeText={(text) => handleFilterChange("search", text)}
-          onSubmitEditing={onSearch}
+          value={searchText}
+          onChangeText={setSearchText}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
         />
-        <TouchableOpacity style={styles.searchButton} onPress={onSearch}>
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
           <Text style={styles.searchButtonText}>Search</Text>
         </TouchableOpacity>
       </View>

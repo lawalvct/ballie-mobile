@@ -128,6 +128,13 @@ export default function LedgerAccountHomeScreen({ navigation }: Props) {
     }));
   };
 
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      page,
+    }));
+  };
+
   const handleExportExcel = async () => {
     try {
       showToast("Exporting to Excel...", "success");
@@ -266,6 +273,7 @@ export default function LedgerAccountHomeScreen({ navigation }: Props) {
           onToggleView={handleToggleView}
           onDelete={handleDelete}
           onItemUpdated={handleItemUpdated}
+          onPageChange={handlePageChange}
         />
       </ScrollView>
     </SafeAreaView>
