@@ -48,7 +48,7 @@ function AccountingStack() {
 
       {/* Account Groups Module */}
       <Stack.Screen
-        name="AccountGroupList"
+        name="AccountGroupHome"
         component={AccountGroupHomeScreen}
         options={{ title: "Account Groups" }}
       />

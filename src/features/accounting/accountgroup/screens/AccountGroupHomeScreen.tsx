@@ -23,7 +23,7 @@ import { showToast } from "../../../../utils/toast";
 
 type Props = NativeStackScreenProps<
   AccountingStackParamList,
-  "AccountGroupList"
+  "AccountGroupHome"
 >;
 
 export default function AccountGroupHomeScreen({ navigation }: Props) {

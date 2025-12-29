@@ -21,7 +21,7 @@ export default function AccountManagement() {
 
       <TouchableOpacity
         style={styles.menuCard}
-        onPress={() => navigation.navigate("AccountGroupList")}>
+        onPress={() => navigation.navigate("AccountGroupHome")}>
         <View style={[styles.menuIcon, { backgroundColor: "#dbeafe" }]}>
           <Text style={styles.menuEmoji}>📁</Text>
         </View>
