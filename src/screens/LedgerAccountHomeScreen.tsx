@@ -205,35 +205,47 @@ export default function LedgerAccountHomeScreen({ navigation }: Props) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }>
-        {/* Action Buttons Row */}
-        <View style={styles.actionsRow}>
+        {/* Action Buttons Section */}
+        <View style={styles.actionsSection}>
+          {/* Primary Action - Create */}
           <TouchableOpacity
-            style={[styles.actionBtn, styles.createBtn]}
+            style={styles.primaryBtn}
             onPress={() =>
               navigation.navigate("LedgerAccountCreate", {
                 onCreated: handleItemCreated,
               } as any)
-            }>
-            <Text style={styles.actionBtnText}>+ Create</Text>
+            }
+            activeOpacity={0.8}>
+            <Text style={styles.primaryBtnIcon}>+</Text>
+            <Text style={styles.primaryBtnText}>Create New Account</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.importBtn]}
-            onPress={handleImport}>
-            <Text style={styles.actionBtnText}>📥 Import</Text>
-          </TouchableOpacity>
+          {/* Secondary Actions Row */}
+          <View style={styles.secondaryActionsRow}>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={handleImport}
+              activeOpacity={0.7}>
+              <Text style={styles.secondaryBtnIcon}>📥</Text>
+              <Text style={styles.secondaryBtnText}>Import</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.exportBtn]}
-            onPress={handleExportExcel}>
-            <Text style={styles.actionBtnText}>📊 Excel</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={handleExportExcel}
+              activeOpacity={0.7}>
+              <Text style={styles.secondaryBtnIcon}>📊</Text>
+              <Text style={styles.secondaryBtnText}>Export Excel</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.exportBtn]}
-            onPress={handleExportPdf}>
-            <Text style={styles.actionBtnText}>📄 PDF</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={handleExportPdf}
+              activeOpacity={0.7}>
+              <Text style={styles.secondaryBtnIcon}>📄</Text>
+              <Text style={styles.secondaryBtnText}>Export PDF</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Stats Section */}
@@ -307,37 +319,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: BRAND_COLORS.darkPurple,
   },
-  actionsRow: {
-    flexDirection: "row",
+  actionsSection: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 12,
-    gap: 12,
+    paddingBottom: 16,
   },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  primaryBtn: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: BRAND_COLORS.gold,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  primaryBtnIcon: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: BRAND_COLORS.darkPurple,
+    marginRight: 8,
+  },
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: BRAND_COLORS.darkPurple,
+    letterSpacing: 0.5,
+  },
+  secondaryActionsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  secondaryBtn: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
-  createBtn: {
-    backgroundColor: BRAND_COLORS.gold,
+  secondaryBtnIcon: {
+    fontSize: 24,
+    marginBottom: 6,
   },
-  importBtn: {
-    backgroundColor: "#3B82F6",
-  },
-  exportBtn: {
-    backgroundColor: "#10B981",
-  },
-  actionBtnText: {
-    fontSize: 14,
+  secondaryBtnText: {
+    fontSize: 12,
     fontWeight: "600",
-    color: "#fff",
+    color: "#374151",
   },
 });
