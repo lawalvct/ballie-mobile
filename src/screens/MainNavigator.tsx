@@ -11,6 +11,8 @@ import EcommerceScreen from "./EcommerceScreen";
 import PayrollScreen from "./PayrollScreen";
 import AdminsScreen from "./AdminsScreen";
 import StatutoryScreen from "./StatutoryScreen";
+import AccountGroupScreen from "./AccountGroupScreen";
+import AccountGroupCreateScreen from "./AccountGroupCreateScreen";
 import CustomTabBar from "../components/CustomTabBar";
 
 export default function MainNavigator() {
@@ -21,7 +23,7 @@ export default function MainNavigator() {
       case "dashboard":
         return <DashboardScreen />;
       case "accounting":
-        return <AccountingScreen />;
+        return <AccountingScreen navigation={{ navigate: setActiveTab }} />;
       case "inventory":
         return <InventoryScreen />;
       case "pos":
@@ -40,6 +42,24 @@ export default function MainNavigator() {
         return <AdminsScreen />;
       case "statutory":
         return <StatutoryScreen />;
+      case "accountgroup":
+        return (
+          <AccountGroupScreen
+            navigation={{
+              navigate: setActiveTab,
+              goBack: () => setActiveTab("accounting"),
+            }}
+          />
+        );
+      case "accountgroupcreate":
+        return (
+          <AccountGroupCreateScreen
+            navigation={{
+              navigate: setActiveTab,
+              goBack: () => setActiveTab("accountgroup"),
+            }}
+          />
+        );
       default:
         return <DashboardScreen />;
     }

@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 
-export default function AccountManagement() {
+export default function AccountManagement({ navigation }: any) {
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -12,7 +12,9 @@ export default function AccountManagement() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.menuCard}>
+      <TouchableOpacity
+        style={styles.menuCard}
+        onPress={() => navigation.navigate("accountgroup")}>
         <View style={[styles.menuIcon, { backgroundColor: "#dbeafe" }]}>
           <Text style={styles.menuEmoji}>📁</Text>
         </View>

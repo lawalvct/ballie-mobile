@@ -1,0 +1,307 @@
+{
+    "info": {
+        "name": "Ballie - Account Groups API",
+        "description": "Complete Account Group Management API for React Native\n\nThis collection covers full CRUD operations for account groups:\n- Create account groups with hierarchy\n- List with search, filter, and pagination\n- View details with relationships\n- Update with validation\n- Delete with constraints\n- Toggle active status\n\nAll endpoints require authentication with Bearer token.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Get Form Data for Creation",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/account-groups/create",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "account-groups",
+                        "create"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - ACCOUNT GROUP CREATION SCREEN\n\n**PURPOSE**: Load form data before showing creation screen\n\n**WHEN TO CALL**:\n- When user navigates to \"Create Account Group\" screen\n- On screen mount/useEffect\n- Before rendering form fields\n\n**WHAT YOU GET**:\n1. **parent_groups**: Array of available parent groups for hierarchy\n2. **natures**: Account nature options with icons and descriptions\n3. **defaults**: Default values for form fields\n4. **validation_rules**: Client-side validation requirements\n\n**REACT NATIVE IMPLEMENTATION**:\n\n```typescript\ninterface AccountNature {\n  value: 'assets' | 'liabilities' | 'equity' | 'income' | 'expenses';\n  label: string;\n  description: string;\n  icon: string;\n}\n\ninterface ParentGroup {\n  id: number;\n  name: string;\n  code: string;\n  nature: string;\n  display_name: string;\n}\n\ninterface FormData {\n  parent_groups: ParentGroup[];\n  natures: AccountNature[];\n  defaults: {\n    is_active: boolean;\n  };\n  validation_rules: Record<string, string>;\n}\n\nconst AccountGroupCreateScreen = () => {\n  const [loading, setLoading] = useState(true);\n  const [formData, setFormData] = useState<FormData | null>(null);\n  const [selectedNature, setSelectedNature] = useState('');\n  const [selectedParent, setSelectedParent] = useState<number | null>(null);\n  const [accountGroup, setAccountGroup] = useState({\n    name: '',\n    code: '',\n    nature: '',\n    parent_id: null as number | null,\n    is_active: true\n  });\n\n  useEffect(() => {\n    loadFormData();\n  }, []);\n\n  const loadFormData = async () => {\n    try {\n      setLoading(true);\n      const response = await api.get(\n        `/accounting/account-groups/create`\n      );\n      \n      setFormData(response.data.data);\n      setAccountGroup(prev => ({\n        ...prev,\n        is_active: response.data.data.defaults.is_active\n      }));\n    } catch (error) {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: error.message || 'Failed to load form data'\n      });\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const handleNatureSelect = (nature: string) => {\n    setSelectedNature(nature);\n    setAccountGroup(prev => ({\n      ...prev,\n      nature,\n      parent_id: null // Reset parent when nature changes\n    }));\n  };\n\n  // Filter parent groups by selected nature\n  const availableParents = formData?.parent_groups.filter(\n    parent => parent.nature === selectedNature\n  ) || [];\n\n  if (loading) {\n    return <LoadingSpinner />;\n  }\n\n  return (\n    <KeyboardAwareScrollView style={styles.container}>\n      {/* Header */}\n      <View style={styles.header}>\n        <TouchableOpacity onPress={() => navigation.goBack()}>\n          <Icon name=\"arrow-back\" size={24} />\n        </TouchableOpacity>\n        <Text style={styles.headerTitle}>Create Account Group</Text>\n      </View>\n\n      {/* Nature Selection (Required First) */}\n      <View style={styles.section}>\n        <Text style={styles.label}>Account Nature *</Text>\n        <Text style={styles.helpText}>\n          Select the type of account group. This determines its category.\n        </Text>\n        <View style={styles.natureGrid}>\n          {formData?.natures.map((nature) => (\n            <TouchableOpacity\n              key={nature.value}\n              onPress={() => handleNatureSelect(nature.value)}\n              style={[\n                styles.natureCard,\n                selectedNature === nature.value && styles.natureCardSelected\n              ]}\n            >\n              <Text style={styles.natureIcon}>{nature.icon}</Text>\n              <Text style={styles.natureLabel}>{nature.label}</Text>\n              <Text style={styles.natureDesc}>{nature.description}</Text>\n            </TouchableOpacity>\n          ))}\n        </View>\n      </View>\n\n      {/* Show rest of form only after nature is selected */}\n      {selectedNature && (\n        <>\n          {/* Group Name */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Group Name *</Text>\n            <TextInput\n              style={styles.input}\n              placeholder=\"e.g., Current Assets\"\n              value={accountGroup.name}\n              onChangeText={(text) => setAccountGroup(prev => ({ ...prev, name: text }))}\n            />\n          </View>\n\n          {/* Group Code */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Group Code *</Text>\n            <Text style={styles.helpText}>\n              Uppercase letters, numbers, hyphens, and underscores only\n            </Text>\n            <TextInput\n              style={styles.input}\n              placeholder=\"e.g., CA-001\"\n              value={accountGroup.code}\n              onChangeText={(text) => \n                setAccountGroup(prev => ({ \n                  ...prev, \n                  code: text.toUpperCase() \n                }))\n              }\n              autoCapitalize=\"characters\"\n            />\n          </View>\n\n          {/* Parent Group (Optional) */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Parent Group (Optional)</Text>\n            <Text style={styles.helpText}>\n              Select a parent to create hierarchy. Only groups with same nature shown.\n            </Text>\n            {availableParents.length > 0 ? (\n              <Picker\n                selectedValue={accountGroup.parent_id}\n                onValueChange={(value) => \n                  setAccountGroup(prev => ({ ...prev, parent_id: value }))\n                }\n                style={styles.picker}\n              >\n                <Picker.Item label=\"None (Top Level)\" value={null} />\n                {availableParents.map((parent) => (\n                  <Picker.Item\n                    key={parent.id}\n                    label={parent.display_name}\n                    value={parent.id}\n                  />\n                ))}\n              </Picker>\n            ) : (\n              <Text style={styles.infoText}>\n                No parent groups available for {selectedNature}\n              </Text>\n            )}\n          </View>\n\n          {/* Active Status */}\n          <View style={styles.section}>\n            <View style={styles.switchRow}>\n              <View>\n                <Text style={styles.label}>Active Status</Text>\n                <Text style={styles.helpText}>\n                  Inactive groups won't appear in dropdowns\n                </Text>\n              </View>\n              <Switch\n                value={accountGroup.is_active}\n                onValueChange={(value) => \n                  setAccountGroup(prev => ({ ...prev, is_active: value }))\n                }\n              />\n            </View>\n          </View>\n\n          {/* Submit Button */}\n          <TouchableOpacity\n            style={styles.submitButton}\n            onPress={handleSubmit}\n          >\n            <Text style={styles.submitButtonText}>Create Account Group</Text>\n          </TouchableOpacity>\n        </>\n      )}\n    </KeyboardAwareScrollView>\n  );\n};\n```\n\n**RESPONSE FORMAT**:\n```json\n{\n  \"success\": true,\n  \"message\": \"Account group creation form data retrieved successfully\",\n  \"data\": {\n    \"parent_groups\": [\n      {\n        \"id\": 1,\n        \"name\": \"Assets\",\n        \"code\": \"AST\",\n        \"nature\": \"assets\",\n        \"display_name\": \"Assets (AST)\"\n      }\n    ],\n    \"natures\": [\n      {\n        \"value\": \"assets\",\n        \"label\": \"Assets\",\n        \"description\": \"Resources owned by the business (Cash, Inventory, Equipment, etc.)\",\n        \"icon\": \"💰\"\n      },\n      {\n        \"value\": \"liabilities\",\n        \"label\": \"Liabilities\",\n        \"description\": \"Debts and obligations (Accounts Payable, Loans, etc.)\",\n        \"icon\": \"📋\"\n      },\n      {\n        \"value\": \"equity\",\n        \"label\": \"Equity\",\n        \"description\": \"Owner's stake in the business (Capital, Retained Earnings, etc.)\",\n        \"icon\": \"🏦\"\n      },\n      {\n        \"value\": \"income\",\n        \"label\": \"Income\",\n        \"description\": \"Revenue and earnings (Sales, Service Income, etc.)\",\n        \"icon\": \"📈\"\n      },\n      {\n        \"value\": \"expenses\",\n        \"label\": \"Expenses\",\n        \"description\": \"Costs and expenditures (Office Expenses, Travel, etc.)\",\n        \"icon\": \"💸\"\n      }\n    ],\n    \"defaults\": {\n      \"is_active\": true\n    },\n    \"validation_rules\": {\n      \"name\": \"Required, max 255 characters\",\n      \"code\": \"Required, uppercase letters, numbers, hyphens, underscores only, max 10 characters\",\n      \"nature\": \"Required, one of: assets, liabilities, equity, income, expenses\",\n      \"parent_id\": \"Optional, must exist and have same nature\",\n      \"is_active\": \"Optional, boolean\"\n    }\n  }\n}\n```\n\n**KEY FEATURES**:\n- Icons for visual identification (💰 📋 🏦 📈 💸)\n- Nature descriptions help users understand categories\n- Parent groups filtered by nature automatically\n- Validation rules documented for client-side validation\n- display_name format: \"Name (CODE)\" for clarity"
+            }
+        },
+        {
+            "name": "2. Create Account Group",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "if (pm.response.code === 201) {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.environment.set('account_group_id', jsonData.data.account_group.id);",
+                            "    console.log('✅ Account group created:', jsonData.data.account_group.name);",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Current Assets\",\n    \"code\": \"CA-001\",\n    \"nature\": \"assets\",\n    \"parent_id\": null,\n    \"is_active\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/account-groups",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "account-groups"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - CREATE ACCOUNT GROUP\n\n**PURPOSE**: Create new account group with validation\n\n**WHEN TO CALL**:\n- When user submits creation form\n- After validating all required fields\n\n**PAYLOAD STRUCTURE**:\n```typescript\ninterface CreateAccountGroupPayload {\n  name: string;              // Required, max 255 chars\n  code: string;              // Required, uppercase only, max 10 chars\n  nature: 'assets' | 'liabilities' | 'equity' | 'income' | 'expenses';  // Required\n  parent_id?: number | null; // Optional\n  is_active?: boolean;       // Optional, default true\n}\n```\n\n**CLIENT-SIDE VALIDATION**:\n```typescript\nconst validateAccountGroup = (data: CreateAccountGroupPayload) => {\n  const errors: Record<string, string> = {};\n\n  // Name validation\n  if (!data.name.trim()) {\n    errors.name = 'Group name is required';\n  } else if (data.name.length > 255) {\n    errors.name = 'Name must not exceed 255 characters';\n  }\n\n  // Code validation\n  if (!data.code.trim()) {\n    errors.code = 'Group code is required';\n  } else if (data.code.length > 10) {\n    errors.code = 'Code must not exceed 10 characters';\n  } else if (!/^[A-Z0-9_-]+$/.test(data.code)) {\n    errors.code = 'Code can only contain uppercase letters, numbers, hyphens, and underscores';\n  }\n\n  // Nature validation\n  if (!data.nature) {\n    errors.nature = 'Account nature is required';\n  } else if (!['assets', 'liabilities', 'equity', 'income', 'expenses'].includes(data.nature)) {\n    errors.nature = 'Invalid account nature';\n  }\n\n  return errors;\n};\n```\n\n**SUBMIT HANDLER**:\n```typescript\nconst handleSubmit = async () => {\n  try {\n    // Validate\n    const errors = validateAccountGroup(accountGroup);\n    if (Object.keys(errors).length > 0) {\n      setFormErrors(errors);\n      Toast.show({\n        type: 'error',\n        text1: 'Validation Error',\n        text2: 'Please fix the errors in the form'\n      });\n      return;\n    }\n\n    setSubmitting(true);\n\n    // Submit\n    const response = await api.post(\n      `/accounting/account-groups`,\n      {\n        name: accountGroup.name,\n        code: accountGroup.code.toUpperCase(),\n        nature: accountGroup.nature,\n        parent_id: accountGroup.parent_id,\n        is_active: accountGroup.is_active\n      }\n    );\n\n    // Success\n    Toast.show({\n      type: 'success',\n      text1: '✅ Success',\n      text2: response.data.message\n    });\n\n    // Navigate back or to details\n    navigation.goBack();\n    // Or navigate to details:\n    // navigation.navigate('AccountGroupDetails', { \n    //   id: response.data.data.account_group.id \n    // });\n\n  } catch (error) {\n    if (error.response?.status === 422) {\n      // Validation errors from server\n      const serverErrors = error.response.data.errors;\n      setFormErrors(serverErrors);\n      \n      // Show first error\n      const firstError = Object.values(serverErrors)[0];\n      Toast.show({\n        type: 'error',\n        text1: 'Validation Error',\n        text2: Array.isArray(firstError) ? firstError[0] : firstError\n      });\n    } else {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: error.message || 'Failed to create account group'\n      });\n    }\n  } finally {\n    setSubmitting(false);\n  }\n};\n```\n\n**SUCCESS RESPONSE (201)**:\n```json\n{\n  \"success\": true,\n  \"message\": \"Account group created successfully\",\n  \"data\": {\n    \"account_group\": {\n      \"id\": 15,\n      \"name\": \"Current Assets\",\n      \"code\": \"CA-001\",\n      \"nature\": \"assets\",\n      \"nature_label\": \"Assets\",\n      \"parent_id\": null,\n      \"parent\": null,\n      \"is_active\": true,\n      \"is_system\": false,\n      \"children_count\": 0,\n      \"ledger_accounts_count\": 0,\n      \"created_at\": \"2025-12-29T10:30:00.000000Z\",\n      \"updated_at\": \"2025-12-29T10:30:00.000000Z\"\n    }\n  }\n}\n```\n\n**VALIDATION ERROR RESPONSE (422)**:\n```json\n{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"code\": [\n      \"This code is already used by another account group.\"\n    ],\n    \"parent_id\": [\n      \"Parent group must have the same nature\"\n    ]\n  }\n}\n```\n\n**BUSINESS RULES**:\n1. **Code Uniqueness**: Code must be unique per tenant\n2. **Code Format**: Uppercase letters, numbers, hyphens, underscores only\n3. **Nature Matching**: If parent_id provided, parent must have same nature\n4. **Tenant Isolation**: Parent must belong to same tenant\n5. **Auto-uppercase**: Code automatically converted to uppercase\n\n**ERROR HANDLING**:\n```typescript\n// Handle specific validation errors\nif (error.response?.status === 422) {\n  const errors = error.response.data.errors;\n  \n  if (errors.code) {\n    // Duplicate code error\n    Toast.show({\n      type: 'error',\n      text1: 'Duplicate Code',\n      text2: 'This code is already in use. Please choose another.'\n    });\n  }\n  \n  if (errors.parent_id) {\n    // Parent validation error\n    Toast.show({\n      type: 'error',\n      text1: 'Invalid Parent',\n      text2: 'Parent group must have the same nature'\n    });\n  }\n}\n```"
+            }
+        },
+        {
+            "name": "3. List Account Groups",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/account-groups?search=&status=&nature=&level=&sort=name&direction=asc&per_page=15",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "account-groups"
+                    ],
+                    "query": [
+                        {
+                            "key": "search",
+                            "value": "",
+                            "description": "Search by name or code"
+                        },
+                        {
+                            "key": "status",
+                            "value": "",
+                            "description": "Filter: active or inactive"
+                        },
+                        {
+                            "key": "nature",
+                            "value": "",
+                            "description": "Filter: assets, liabilities, equity, income, expenses"
+                        },
+                        {
+                            "key": "level",
+                            "value": "",
+                            "description": "Filter: parent or child"
+                        },
+                        {
+                            "key": "sort",
+                            "value": "name",
+                            "description": "Sort by: name, code, nature, created_at, is_active"
+                        },
+                        {
+                            "key": "direction",
+                            "value": "asc",
+                            "description": "Sort direction: asc or desc"
+                        },
+                        {
+                            "key": "per_page",
+                            "value": "15",
+                            "description": "Items per page"
+                        }
+                    ]
+                },
+                "description": "📱 REACT NATIVE - LIST ACCOUNT GROUPS\n\n**PURPOSE**: Display list of account groups with filtering and pagination\n\n**WHEN TO CALL**:\n- On Account Groups list screen mount\n- When user applies filters\n- When user searches\n- When pagination changes\n- On pull-to-refresh\n\n**QUERY PARAMETERS**:\n```typescript\ninterface ListParams {\n  search?: string;           // Search in name or code\n  status?: 'active' | 'inactive';  // Filter by status\n  nature?: 'assets' | 'liabilities' | 'equity' | 'income' | 'expenses';\n  level?: 'parent' | 'child';      // Filter hierarchy level\n  sort?: 'name' | 'code' | 'nature' | 'created_at' | 'is_active';\n  direction?: 'asc' | 'desc';\n  per_page?: number;         // Default 15\n  page?: number;             // Current page (handled by pagination)\n}\n```\n\n**REACT NATIVE IMPLEMENTATION**:\n```typescript\nconst AccountGroupsListScreen = () => {\n  const [groups, setGroups] = useState<AccountGroup[]>([]);\n  const [loading, setLoading] = useState(true);\n  const [refreshing, setRefreshing] = useState(false);\n  const [pagination, setPagination] = useState<PaginationInfo | null>(null);\n  const [statistics, setStatistics] = useState<Statistics | null>(null);\n  const [filters, setFilters] = useState<ListParams>({\n    search: '',\n    status: undefined,\n    nature: undefined,\n    level: undefined,\n    sort: 'name',\n    direction: 'asc',\n    per_page: 15\n  });\n\n  useEffect(() => {\n    loadAccountGroups();\n  }, [filters]);\n\n  const loadAccountGroups = async (page = 1) => {\n    try {\n      setLoading(true);\n      \n      const params = new URLSearchParams();\n      if (filters.search) params.append('search', filters.search);\n      if (filters.status) params.append('status', filters.status);\n      if (filters.nature) params.append('nature', filters.nature);\n      if (filters.level) params.append('level', filters.level);\n      if (filters.sort) params.append('sort', filters.sort);\n      if (filters.direction) params.append('direction', filters.direction);\n      params.append('per_page', filters.per_page.toString());\n      params.append('page', page.toString());\n\n      const response = await api.get(\n        `/accounting/account-groups?${params.toString()}`\n      );\n\n      setGroups(response.data.data.account_groups);\n      setPagination(response.data.data.pagination);\n      setStatistics(response.data.data.statistics);\n    } catch (error) {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: error.message || 'Failed to load account groups'\n      });\n    } finally {\n      setLoading(false);\n      setRefreshing(false);\n    }\n  };\n\n  const handleRefresh = () => {\n    setRefreshing(true);\n    loadAccountGroups(1);\n  };\n\n  const handleSearch = useCallback(\n    debounce((searchText: string) => {\n      setFilters(prev => ({ ...prev, search: searchText }));\n    }, 500),\n    []\n  );\n\n  const renderItem = ({ item }: { item: AccountGroup }) => (\n    <TouchableOpacity\n      style={styles.groupCard}\n      onPress={() => navigation.navigate('AccountGroupDetails', { id: item.id })}\n    >\n      <View style={styles.groupHeader}>\n        <View style={styles.groupInfo}>\n          <Text style={styles.groupName}>{item.name}</Text>\n          <Text style={styles.groupCode}>{item.code}</Text>\n        </View>\n        <View style={styles.badges}>\n          <View style={[\n            styles.natureBadge,\n            { backgroundColor: getNatureColor(item.nature) }\n          ]}>\n            <Text style={styles.natureBadgeText}>\n              {getNatureIcon(item.nature)} {item.nature_label}\n            </Text>\n          </View>\n          <View style={[\n            styles.statusBadge,\n            item.is_active ? styles.activeBadge : styles.inactiveBadge\n          ]}>\n            <Text style={styles.statusBadgeText}>\n              {item.is_active ? 'Active' : 'Inactive'}\n            </Text>\n          </View>\n        </View>\n      </View>\n\n      {item.parent && (\n        <View style={styles.parentInfo}>\n          <Icon name=\"trending-up\" size={14} color=\"#6b7280\" />\n          <Text style={styles.parentText}>\n            Child of: {item.parent.name} ({item.parent.code})\n          </Text>\n        </View>\n      )}\n\n      <View style={styles.counts}>\n        <View style={styles.countItem}>\n          <Icon name=\"folder\" size={16} color=\"#6b7280\" />\n          <Text style={styles.countText}>\n            {item.children_count} child groups\n          </Text>\n        </View>\n        <View style={styles.countItem}>\n          <Icon name=\"list\" size={16} color=\"#6b7280\" />\n          <Text style={styles.countText}>\n            {item.ledger_accounts_count} accounts\n          </Text>\n        </View>\n      </View>\n\n      <Text style={styles.dateText}>\n        Created {formatDate(item.created_at)}\n      </Text>\n    </TouchableOpacity>\n  );\n\n  return (\n    <View style={styles.container}>\n      {/* Search Bar */}\n      <View style={styles.searchContainer}>\n        <Icon name=\"search\" size={20} color=\"#9ca3af\" />\n        <TextInput\n          style={styles.searchInput}\n          placeholder=\"Search by name or code...\"\n          onChangeText={handleSearch}\n        />\n      </View>\n\n      {/* Filters */}\n      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>\n        {/* Status Filter */}\n        <TouchableOpacity\n          style={[\n            styles.filterChip,\n            filters.status && styles.filterChipActive\n          ]}\n          onPress={() => showStatusPicker()}\n        >\n          <Text style={styles.filterChipText}>\n            {filters.status ? `Status: ${filters.status}` : 'All Status'}\n          </Text>\n        </TouchableOpacity>\n\n        {/* Nature Filter */}\n        <TouchableOpacity\n          style={[\n            styles.filterChip,\n            filters.nature && styles.filterChipActive\n          ]}\n          onPress={() => showNaturePicker()}\n        >\n          <Text style={styles.filterChipText}>\n            {filters.nature ? getNatureIcon(filters.nature) : 'All Natures'}\n          </Text>\n        </TouchableOpacity>\n\n        {/* Level Filter */}\n        <TouchableOpacity\n          style={[\n            styles.filterChip,\n            filters.level && styles.filterChipActive\n          ]}\n          onPress={() => toggleLevel()}\n        >\n          <Text style={styles.filterChipText}>\n            {filters.level ? `${filters.level}s only` : 'All Levels'}\n          </Text>\n        </TouchableOpacity>\n      </ScrollView>\n\n      {/* Statistics */}\n      {statistics && (\n        <View style={styles.stats}>\n          <View style={styles.statCard}>\n            <Text style={styles.statValue}>{statistics.total_groups}</Text>\n            <Text style={styles.statLabel}>Total</Text>\n          </View>\n          <View style={styles.statCard}>\n            <Text style={styles.statValue}>{statistics.active_groups}</Text>\n            <Text style={styles.statLabel}>Active</Text>\n          </View>\n          <View style={styles.statCard}>\n            <Text style={styles.statValue}>{statistics.parent_groups}</Text>\n            <Text style={styles.statLabel}>Parents</Text>\n          </View>\n          <View style={styles.statCard}>\n            <Text style={styles.statValue}>{statistics.child_groups}</Text>\n            <Text style={styles.statLabel}>Children</Text>\n          </View>\n        </View>\n      )}\n\n      {/* List */}\n      <FlatList\n        data={groups}\n        renderItem={renderItem}\n        keyExtractor={(item) => item.id.toString()}\n        refreshControl={\n          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />\n        }\n        onEndReached={() => {\n          if (pagination && pagination.current_page < pagination.last_page) {\n            loadAccountGroups(pagination.current_page + 1);\n          }\n        }}\n        onEndReachedThreshold={0.5}\n        ListEmptyComponent={\n          <View style={styles.emptyState}>\n            <Icon name=\"folder-open\" size={48} color=\"#d1d5db\" />\n            <Text style={styles.emptyText}>No account groups found</Text>\n          </View>\n        }\n      />\n\n      {/* FAB for Create */}\n      <TouchableOpacity\n        style={styles.fab}\n        onPress={() => navigation.navigate('AccountGroupCreate')}\n      >\n        <Icon name=\"add\" size={24} color=\"white\" />\n      </TouchableOpacity>\n    </View>\n  );\n};\n\n// Helper functions\nconst getNatureIcon = (nature: string): string => {\n  const icons = {\n    assets: '💰',\n    liabilities: '📋',\n    equity: '🏦',\n    income: '📈',\n    expenses: '💸'\n  };\n  return icons[nature] || '';\n};\n\nconst getNatureColor = (nature: string): string => {\n  const colors = {\n    assets: '#10b981',\n    liabilities: '#ef4444',\n    equity: '#3b82f6',\n    income: '#8b5cf6',\n    expenses: '#f59e0b'\n  };\n  return colors[nature] || '#6b7280';\n};\n```\n\n**RESPONSE FORMAT**:\n```json\n{\n  \"success\": true,\n  \"message\": \"Account groups retrieved successfully\",\n  \"data\": {\n    \"account_groups\": [\n      {\n        \"id\": 1,\n        \"name\": \"Assets\",\n        \"code\": \"AST\",\n        \"nature\": \"assets\",\n        \"nature_label\": \"Assets\",\n        \"parent_id\": null,\n        \"parent\": null,\n        \"is_active\": true,\n        \"is_system\": false,\n        \"children_count\": 3,\n        \"ledger_accounts_count\": 5,\n        \"created_at\": \"2025-12-29T10:30:00.000000Z\"\n      }\n    ],\n    \"pagination\": {\n      \"current_page\": 1,\n      \"per_page\": 15,\n      \"total\": 25,\n      \"last_page\": 2,\n      \"from\": 1,\n      \"to\": 15\n    },\n    \"statistics\": {\n      \"total_groups\": 25,\n      \"active_groups\": 23,\n      \"parent_groups\": 5,\n      \"child_groups\": 20\n    }\n  }\n}\n```"
+            }
+        },
+        {
+            "name": "4. View Account Group Details",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/account-groups/{{account_group_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "account-groups",
+                        "{{account_group_id}}"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - ACCOUNT GROUP DETAILS SCREEN\n\n**PURPOSE**: View complete details of an account group with relationships\n\n**WHEN TO CALL**:\n- When user taps on an account group from list\n- After creating/updating to show result\n- On details screen mount\n\n**REACT NATIVE IMPLEMENTATION**:\n```typescript\nconst AccountGroupDetailsScreen = ({ route }) => {\n  const { id } = route.params;\n  const [group, setGroup] = useState<AccountGroupDetails | null>(null);\n  const [loading, setLoading] = useState(true);\n\n  useEffect(() => {\n    loadGroupDetails();\n  }, [id]);\n\n  const loadGroupDetails = async () => {\n    try {\n      setLoading(true);\n      const response = await api.get(\n        `/accounting/account-groups/${id}`\n      );\n      setGroup(response.data.data);\n    } catch (error) {\n      if (error.response?.status === 404) {\n        Toast.show({\n          type: 'error',\n          text1: 'Not Found',\n          text2: 'Account group not found'\n        });\n        navigation.goBack();\n      } else {\n        Toast.show({\n          type: 'error',\n          text1: 'Error',\n          text2: error.message\n        });\n      }\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const handleEdit = () => {\n    navigation.navigate('AccountGroupEdit', { id: group.account_group.id });\n  };\n\n  const handleDelete = () => {\n    Alert.alert(\n      'Delete Account Group',\n      `Are you sure you want to delete \"${group.account_group.name}\"?`,\n      [\n        { text: 'Cancel', style: 'cancel' },\n        {\n          text: 'Delete',\n          style: 'destructive',\n          onPress: async () => {\n            try {\n              await api.delete(`/accounting/account-groups/${id}`);\n              Toast.show({\n                type: 'success',\n                text1: '✅ Deleted',\n                text2: 'Account group deleted successfully'\n              });\n              navigation.goBack();\n            } catch (error) {\n              Toast.show({\n                type: 'error',\n                text1: 'Cannot Delete',\n                text2: error.response?.data?.error || error.message\n              });\n            }\n          }\n        }\n      ]\n    );\n  };\n\n  const handleToggleStatus = async () => {\n    try {\n      const response = await api.post(\n        `/accounting/account-groups/${id}/toggle`\n      );\n      setGroup(prev => ({\n        ...prev!,\n        account_group: {\n          ...prev!.account_group,\n          is_active: response.data.data.account_group.is_active\n        }\n      }));\n      Toast.show({\n        type: 'success',\n        text1: '✅ Updated',\n        text2: response.data.message\n      });\n    } catch (error) {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: error.message\n      });\n    }\n  };\n\n  if (loading) {\n    return <LoadingSpinner />;\n  }\n\n  if (!group) {\n    return null;\n  }\n\n  return (\n    <ScrollView style={styles.container}>\n      {/* Header with Actions */}\n      <View style={styles.header}>\n        <TouchableOpacity onPress={() => navigation.goBack()}>\n          <Icon name=\"arrow-back\" size={24} />\n        </TouchableOpacity>\n        <View style={styles.headerActions}>\n          <TouchableOpacity onPress={handleEdit} style={styles.iconButton}>\n            <Icon name=\"edit\" size={24} color=\"#3b82f6\" />\n          </TouchableOpacity>\n          {group.account_group.can_be_deleted && (\n            <TouchableOpacity onPress={handleDelete} style={styles.iconButton}>\n              <Icon name=\"delete\" size={24} color=\"#ef4444\" />\n            </TouchableOpacity>\n          )}\n        </View>\n      </View>\n\n      {/* Main Info Card */}\n      <View style={styles.card}>\n        <View style={styles.titleRow}>\n          <Text style={styles.icon}>\n            {getNatureIcon(group.account_group.nature)}\n          </Text>\n          <View style={styles.titleInfo}>\n            <Text style={styles.title}>{group.account_group.name}</Text>\n            <Text style={styles.code}>{group.account_group.code}</Text>\n          </View>\n        </View>\n\n        <View style={styles.badges}>\n          <View style={[\n            styles.badge,\n            { backgroundColor: getNatureColor(group.account_group.nature) }\n          ]}>\n            <Text style={styles.badgeText}>{group.account_group.nature_label}</Text>\n          </View>\n          <TouchableOpacity\n            onPress={handleToggleStatus}\n            style={[\n              styles.badge,\n              group.account_group.is_active ? styles.activeBadge : styles.inactiveBadge\n            ]}\n          >\n            <Text style={styles.badgeText}>\n              {group.account_group.is_active ? '✓ Active' : '✕ Inactive'}\n            </Text>\n          </TouchableOpacity>\n        </View>\n      </View>\n\n      {/* Parent Info */}\n      {group.account_group.parent && (\n        <View style={styles.card}>\n          <Text style={styles.cardTitle}>Parent Group</Text>\n          <TouchableOpacity\n            onPress={() => navigation.push('AccountGroupDetails', {\n              id: group.account_group.parent.id\n            })}\n            style={styles.linkCard}\n          >\n            <Icon name=\"trending-up\" size={20} color=\"#6b7280\" />\n            <View style={styles.linkContent}>\n              <Text style={styles.linkText}>{group.account_group.parent.name}</Text>\n              <Text style={styles.linkSubtext}>{group.account_group.parent.code}</Text>\n            </View>\n            <Icon name=\"chevron-forward\" size={20} color=\"#9ca3af\" />\n          </TouchableOpacity>\n        </View>\n      )}\n\n      {/* Statistics */}\n      <View style={styles.card}>\n        <Text style={styles.cardTitle}>Statistics</Text>\n        <View style={styles.statsGrid}>\n          <View style={styles.statBox}>\n            <Text style={styles.statValue}>{group.account_group.children_count}</Text>\n            <Text style={styles.statLabel}>Child Groups</Text>\n          </View>\n          <View style={styles.statBox}>\n            <Text style={styles.statValue}>{group.account_group.direct_accounts_count}</Text>\n            <Text style={styles.statLabel}>Direct Accounts</Text>\n          </View>\n          <View style={styles.statBox}>\n            <Text style={styles.statValue}>{group.account_group.total_accounts_count}</Text>\n            <Text style={styles.statLabel}>Total Accounts</Text>\n          </View>\n        </View>\n      </View>\n\n      {/* Child Groups */}\n      {group.children.length > 0 && (\n        <View style={styles.card}>\n          <Text style={styles.cardTitle}>Child Groups ({group.children.length})</Text>\n          {group.children.map((child) => (\n            <TouchableOpacity\n              key={child.id}\n              onPress={() => navigation.push('AccountGroupDetails', { id: child.id })}\n              style={styles.listItem}\n            >\n              <View style={styles.listItemContent}>\n                <Text style={styles.listItemTitle}>{child.name}</Text>\n                <Text style={styles.listItemSubtitle}>{child.code}</Text>\n                <Text style={styles.listItemMeta}>\n                  {child.ledger_accounts_count} accounts\n                </Text>\n              </View>\n              <Icon name=\"chevron-forward\" size={20} color=\"#9ca3af\" />\n            </TouchableOpacity>\n          ))}\n        </View>\n      )}\n\n      {/* Ledger Accounts */}\n      {group.ledger_accounts.length > 0 && (\n        <View style={styles.card}>\n          <Text style={styles.cardTitle}>Ledger Accounts ({group.ledger_accounts.length})</Text>\n          {group.ledger_accounts.map((account) => (\n            <TouchableOpacity\n              key={account.id}\n              onPress={() => navigation.navigate('LedgerAccountDetails', { id: account.id })}\n              style={styles.listItem}\n            >\n              <View style={styles.listItemContent}>\n                <Text style={styles.listItemTitle}>{account.name}</Text>\n                <Text style={styles.listItemSubtitle}>{account.code}</Text>\n              </View>\n              <View style={styles.listItemBadge}>\n                <Text style={styles.listItemBadgeText}>\n                  {account.is_active ? 'Active' : 'Inactive'}\n                </Text>\n              </View>\n            </TouchableOpacity>\n          ))}\n        </View>\n      )}\n\n      {/* Metadata */}\n      <View style={styles.card}>\n        <Text style={styles.cardTitle}>Information</Text>\n        <View style={styles.metaRow}>\n          <Text style={styles.metaLabel}>Created</Text>\n          <Text style={styles.metaValue}>\n            {formatDateTime(group.account_group.created_at)}\n          </Text>\n        </View>\n        <View style={styles.metaRow}>\n          <Text style={styles.metaLabel}>Last Updated</Text>\n          <Text style={styles.metaValue}>\n            {formatDateTime(group.account_group.updated_at)}\n          </Text>\n        </View>\n        <View style={styles.metaRow}>\n          <Text style={styles.metaLabel}>System Group</Text>\n          <Text style={styles.metaValue}>\n            {group.account_group.is_system ? 'Yes' : 'No'}\n          </Text>\n        </View>\n        <View style={styles.metaRow}>\n          <Text style={styles.metaLabel}>Can Delete</Text>\n          <Text style={[\n            styles.metaValue,\n            group.account_group.can_be_deleted ? styles.successText : styles.errorText\n          ]}>\n            {group.account_group.can_be_deleted ? 'Yes' : 'No'}\n          </Text>\n        </View>\n      </View>\n    </ScrollView>\n  );\n};\n```\n\n**RESPONSE FORMAT**:\n```json\n{\n  \"success\": true,\n  \"message\": \"Account group retrieved successfully\",\n  \"data\": {\n    \"account_group\": {\n      \"id\": 1,\n      \"name\": \"Assets\",\n      \"code\": \"AST\",\n      \"nature\": \"assets\",\n      \"nature_label\": \"Assets\",\n      \"parent_id\": null,\n      \"parent\": null,\n      \"is_active\": true,\n      \"is_system\": false,\n      \"children_count\": 3,\n      \"direct_accounts_count\": 2,\n      \"total_accounts_count\": 15,\n      \"can_be_deleted\": false,\n      \"created_at\": \"2025-12-29T10:30:00.000000Z\",\n      \"updated_at\": \"2025-12-29T10:30:00.000000Z\"\n    },\n    \"children\": [\n      {\n        \"id\": 2,\n        \"name\": \"Current Assets\",\n        \"code\": \"CA\",\n        \"nature\": \"assets\",\n        \"is_active\": true,\n        \"ledger_accounts_count\": 8\n      }\n    ],\n    \"ledger_accounts\": [\n      {\n        \"id\": 1,\n        \"name\": \"Cash in Hand\",\n        \"code\": \"1001\",\n        \"is_active\": true\n      }\n    ]\n  }\n}\n```"
+            }
+        },
+        {
+            "name": "5. Update Account Group",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Current Assets (Updated)\",\n    \"code\": \"CA-001\",\n    \"nature\": \"assets\",\n    \"parent_id\": 1,\n    \"is_active\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/account-groups/{{account_group_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "account-groups",
+                        "{{account_group_id}}"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - EDIT ACCOUNT GROUP\n\n**PURPOSE**: Update existing account group\n\n**WHEN TO CALL**:\n- When user submits edit form\n\n**VALIDATION**: Same as create endpoint\n\n**ADDITIONAL BUSINESS RULES**:\n1. **Circular Reference Prevention**: Cannot set itself as parent\n2. **Descendant Check**: Cannot set any child/grandchild as parent\n3. **Code Uniqueness**: Code must be unique (except current group)\n\n**REACT NATIVE IMPLEMENTATION**:\n```typescript\nconst AccountGroupEditScreen = ({ route }) => {\n  const { id } = route.params;\n  const [group, setGroup] = useState<AccountGroupDetails | null>(null);\n  const [loading, setLoading] = useState(true);\n  const [submitting, setSubmitting] = useState(false);\n\n  useEffect(() => {\n    loadGroupData();\n  }, [id]);\n\n  const loadGroupData = async () => {\n    try {\n      const response = await api.get(`/accounting/account-groups/${id}`);\n      setGroup(response.data.data.account_group);\n    } catch (error) {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: 'Failed to load group data'\n      });\n      navigation.goBack();\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const handleUpdate = async () => {\n    try {\n      setSubmitting(true);\n\n      const response = await api.put(\n        `/accounting/account-groups/${id}`,\n        {\n          name: group.name,\n          code: group.code.toUpperCase(),\n          nature: group.nature,\n          parent_id: group.parent_id,\n          is_active: group.is_active\n        }\n      );\n\n      Toast.show({\n        type: 'success',\n        text1: '✅ Updated',\n        text2: response.data.message\n      });\n\n      navigation.goBack();\n    } catch (error) {\n      if (error.response?.status === 422) {\n        const errors = error.response.data.errors;\n        if (errors.parent_id) {\n          Toast.show({\n            type: 'error',\n            text1: 'Invalid Parent',\n            text2: errors.parent_id[0]\n          });\n        }\n      } else {\n        Toast.show({\n          type: 'error',\n          text1: 'Error',\n          text2: error.message\n        });\n      }\n    } finally {\n      setSubmitting(false);\n    }\n  };\n\n  // Rest of implementation similar to Create screen\n  // but with pre-filled values from loaded group\n};\n```\n\n**SUCCESS RESPONSE (200)**:\n```json\n{\n  \"success\": true,\n  \"message\": \"Account group updated successfully\",\n  \"data\": {\n    \"account_group\": {\n      \"id\": 15,\n      \"name\": \"Current Assets (Updated)\",\n      \"code\": \"CA-001\",\n      \"nature\": \"assets\",\n      \"nature_label\": \"Assets\",\n      \"parent_id\": 1,\n      \"parent\": {\n        \"id\": 1,\n        \"name\": \"Assets\",\n        \"code\": \"AST\"\n      },\n      \"is_active\": true,\n      \"updated_at\": \"2025-12-29T11:00:00.000000Z\"\n    }\n  }\n}\n```\n\n**VALIDATION ERRORS (422)**:\n```json\n{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"parent_id\": [\n      \"Cannot set a child group as parent\"\n    ]\n  }\n}\n```"
+            }
+        },
+        {
+            "name": "6. Delete Account Group",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/account-groups/{{account_group_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "account-groups",
+                        "{{account_group_id}}"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - DELETE ACCOUNT GROUP\n\n**PURPOSE**: Delete account group with constraint validation\n\n**DELETION CONSTRAINTS**:\n1. Cannot delete if has ledger accounts (must move/delete accounts first)\n2. Cannot delete if has child groups (must delete/reassign children first)\n\n**REACT NATIVE IMPLEMENTATION**:\n```typescript\nconst handleDelete = (groupId: number, groupName: string) => {\n  Alert.alert(\n    'Delete Account Group',\n    `Are you sure you want to delete \"${groupName}\"?\\n\\nThis action cannot be undone.`,\n    [\n      {\n        text: 'Cancel',\n        style: 'cancel'\n      },\n      {\n        text: 'Delete',\n        style: 'destructive',\n        onPress: async () => {\n          try {\n            await api.delete(\n              `/accounting/account-groups/${groupId}`\n            );\n\n            Toast.show({\n              type: 'success',\n              text1: '✅ Deleted',\n              text2: 'Account group deleted successfully'\n            });\n\n            navigation.goBack();\n          } catch (error) {\n            if (error.response?.status === 422) {\n              // Deletion constraint error\n              Alert.alert(\n                'Cannot Delete',\n                error.response.data.error,\n                [\n                  {\n                    text: 'OK',\n                    onPress: () => {\n                      // Maybe navigate to accounts/children screen\n                    }\n                  }\n                ]\n              );\n            } else {\n              Toast.show({\n                type: 'error',\n                text1: 'Error',\n                text2: error.message || 'Failed to delete'\n              });\n            }\n          }\n        }\n      }\n    ]\n  );\n};\n```\n\n**SUCCESS RESPONSE (200)**:\n```json\n{\n  \"success\": true,\n  \"message\": \"Account group deleted successfully\"\n}\n```\n\n**CONSTRAINT ERROR (422)**:\n```json\n{\n  \"success\": false,\n  \"message\": \"Cannot delete account group with ledger accounts\",\n  \"error\": \"This group has 5 ledger account(s). Please move or delete them first.\"\n}\n```\n\nor\n\n```json\n{\n  \"success\": false,\n  \"message\": \"Cannot delete account group with child groups\",\n  \"error\": \"This group has child groups. Please delete or reassign them first.\"\n}\n```\n\n**HELPFUL UI**:\n```typescript\n// Check can_be_deleted before showing delete button\nif (group.can_be_deleted) {\n  return (\n    <TouchableOpacity onPress={handleDelete}>\n      <Icon name=\"delete\" color=\"#ef4444\" />\n    </TouchableOpacity>\n  );\n} else {\n  return (\n    <Tooltip text=\"Cannot delete: has accounts or children\">\n      <Icon name=\"delete\" color=\"#d1d5db\" />\n    </Tooltip>\n  );\n}\n```"
+            }
+        },
+        {
+            "name": "7. Toggle Active Status",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/account-groups/{{account_group_id}}/toggle",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "account-groups",
+                        "{{account_group_id}}",
+                        "toggle"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - TOGGLE ACCOUNT GROUP STATUS\n\n**PURPOSE**: Quickly activate/deactivate account group\n\n**WHEN TO USE**:\n- As alternative to full update\n- For quick status changes\n- In list view with toggle switch\n\n**REACT NATIVE IMPLEMENTATION**:\n```typescript\nconst handleToggleStatus = async (groupId: number, currentStatus: boolean) => {\n  try {\n    const response = await api.post(\n      `/accounting/account-groups/${groupId}/toggle`\n    );\n\n    // Update local state\n    setGroups(prev => prev.map(group => \n      group.id === groupId\n        ? { ...group, is_active: response.data.data.account_group.is_active }\n        : group\n    ));\n\n    Toast.show({\n      type: 'success',\n      text1: '✅ Updated',\n      text2: response.data.message\n    });\n  } catch (error) {\n    Toast.show({\n      type: 'error',\n      text1: 'Error',\n      text2: error.message\n    });\n  }\n};\n\n// Usage in list item\n<View style={styles.listItem}>\n  <Text>{group.name}</Text>\n  <Switch\n    value={group.is_active}\n    onValueChange={() => handleToggleStatus(group.id, group.is_active)}\n  />\n</View>\n```\n\n**SUCCESS RESPONSE (200)**:\n```json\n{\n  \"success\": true,\n  \"message\": \"Account group activated successfully\",\n  \"data\": {\n    \"account_group\": {\n      \"id\": 15,\n      \"name\": \"Current Assets\",\n      \"is_active\": true\n    }\n  }\n}\n```\n\n**NOTE**: Message will say \"activated\" or \"deactivated\" based on new status"
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000",
+            "type": "string"
+        },
+        {
+            "key": "tenant_slug",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "auth_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "account_group_id",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}

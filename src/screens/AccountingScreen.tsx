@@ -10,7 +10,7 @@ import VouchersSection from "../components/accounting/VouchersSection";
 import BankingSection from "../components/accounting/BankingSection";
 import ReconciliationSection from "../components/accounting/ReconciliationSection";
 
-export default function AccountingScreen() {
+export default function AccountingScreen({ navigation }: any) {
   const { user, tenant } = useAuth();
 
   return (
@@ -25,7 +25,7 @@ export default function AccountingScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <AccountingOverview />
         <QuickActions />
-        <AccountManagement />
+        <AccountManagement navigation={navigation} />
         <VouchersSection />
         <BankingSection />
         <ReconciliationSection />
