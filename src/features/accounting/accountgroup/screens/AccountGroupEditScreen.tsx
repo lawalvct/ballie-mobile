@@ -27,6 +27,7 @@ type Props = NativeStackScreenProps<
 
 export default function AccountGroupEditScreen({ navigation, route }: Props) {
   const { id } = route.params;
+  const onUpdated = (route.params as any)?.onUpdated;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
@@ -109,6 +110,11 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
       });
 
       showToast("🎉 Account group updated successfully", "success");
+
+      // Notify parent to update the item
+      if (onUpdated) {
+        onUpdated(id);
+      }
 
       setTimeout(() => {
         navigation.goBack();

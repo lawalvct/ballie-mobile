@@ -24,7 +24,8 @@ type Props = NativeStackScreenProps<
   "AccountGroupCreate"
 >;
 
-export default function AccountGroupCreateScreen({ navigation }: Props) {
+export default function AccountGroupCreateScreen({ navigation, route }: Props) {
+  const onCreated = (route.params as any)?.onCreated;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
@@ -113,6 +114,11 @@ export default function AccountGroupCreateScreen({ navigation }: Props) {
       });
 
       showToast("🎉 Account group created successfully", "success");
+
+      // Notify parent to reload the list
+      if (onCreated) {
+        onCreated();
+      }
 
       // Wait a bit for toast to show before navigating
       setTimeout(() => {

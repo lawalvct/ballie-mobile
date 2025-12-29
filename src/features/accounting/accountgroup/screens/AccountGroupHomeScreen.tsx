@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import {
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
-import { useFocusEffect } from "@react-navigation/native";
 import AppHeader from "../../../../components/AppHeader";
 import AccountGroupStats from "../components/AccountGroupStats";
 import AccountGroupFilters from "../components/AccountGroupFilters";
@@ -52,12 +51,25 @@ export default function AccountGroupHomeScreen({ navigation }: Props) {
     filters.direction,
   ]);
 
-  // Reload data when screen comes into focus (after edit/create)
-  useFocusEffect(
-    useCallback(() => {
+  const handleItemUpdated = async (id: number) => {
+    try {
+      // Fetch only the updated item
+      const updatedGroup = await accountGroupService.show(id);
+
+      // Update the item in the list
+      setAccountGroups((prev) =>
+        prev.map((group) => (group.id === id ? updatedGroup : group))
+      );
+    } catch (error) {
+      // If fetch fails, do a full reload
       loadAccountGroups();
-    }, [filters])
-  );
+    }
+  };
+
+  const handleItemCreated = () => {
+    // For new items, we need to reload to get proper ordering
+    loadAccountGroups();
+  };
 
   const loadAccountGroups = async () => {
     try {
@@ -144,7 +156,11 @@ export default function AccountGroupHomeScreen({ navigation }: Props) {
         <View style={styles.addButtonContainer}>
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => navigation.navigate("AccountGroupCreate")}>
+            onPress={() =>
+              navigation.navigate("AccountGroupCreate", {
+                onCreated: handleItemCreated,
+              } as any)
+            }>
             <Text style={styles.addButtonText}>+ Add New Account Group</Text>
           </TouchableOpacity>
         </View>
@@ -164,6 +180,7 @@ export default function AccountGroupHomeScreen({ navigation }: Props) {
           accountGroups={accountGroups}
           pagination={pagination}
           onToggleStatus={handleToggleStatus}
+          onItemUpdated={handleItemUpdated}
         />
       </ScrollView>
     </SafeAreaView>

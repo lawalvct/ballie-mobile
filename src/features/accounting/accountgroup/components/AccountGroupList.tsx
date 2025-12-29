@@ -18,12 +18,14 @@ interface AccountGroupListProps {
   accountGroups: AccountGroup[];
   pagination: PaginationInfo | null;
   onToggleStatus: (id: number) => void;
+  onItemUpdated: (id: number) => void;
 }
 
 export default function AccountGroupList({
   accountGroups,
   pagination,
   onToggleStatus,
+  onItemUpdated,
 }: AccountGroupListProps) {
   const navigation = useNavigation<NavigationProp>();
 
@@ -167,7 +169,8 @@ export default function AccountGroupList({
                       onPress={() =>
                         navigation.navigate("AccountGroupEdit", {
                           id: group.id,
-                        })
+                          onUpdated: onItemUpdated,
+                        } as any)
                       }>
                       <Text style={styles.actionButtonText}>Edit</Text>
                     </TouchableOpacity>
