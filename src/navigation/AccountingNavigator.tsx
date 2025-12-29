@@ -1,10 +1,5 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import type { AccountingStackParamList } from "./types";
-import { BRAND_COLORS } from "../theme/colors";
+import { useNavigation } from "@react-navigation/native";
 
-// Main Accounting Screen
-import AccountingScreen from "../screens/AccountingScreen";
 import LedgerAccountListScreen from "../screens/LedgerAccountListScreen";
 // Account Groups Feature
 import {
@@ -13,10 +8,30 @@ import {
   AccountGroupShowScreen,
   AccountGroupEditScreen,
 } from "../features/accounting/accountgroup";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import type { AccountingStackParamList } from "./types";
+import { BRAND_COLORS } from "../theme/colors";
+import AccountingScreen from "../screens/AccountingScreen";
+import { useEffect } from "react";
 
 const Stack = createNativeStackNavigator<AccountingStackParamList>();
 
-export default function AccountingNavigator() {
+function AccountingStack() {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    // Reset to AccountingHome when tab is pressed
+    const unsubscribe = navigation.addListener("tabPress" as any, (e) => {
+      // Reset the stack to AccountingHome
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "AccountingHome" as any }],
+      });
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -74,4 +89,8 @@ export default function AccountingNavigator() {
       */}
     </Stack.Navigator>
   );
+}
+
+export default function AccountingNavigator() {
+  return <AccountingStack />;
 }

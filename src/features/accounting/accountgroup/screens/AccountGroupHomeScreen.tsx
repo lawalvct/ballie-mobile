@@ -122,11 +122,18 @@ export default function AccountGroupHomeScreen({ navigation }: Props) {
           barStyle="light-content"
           backgroundColor={BRAND_COLORS.darkPurple}
         />
-        <AppHeader
-          businessName="Account Group"
-          userName="Admin"
-          userRole="Administrator"
-        />
+
+        {/* Header with Back Button */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Account Groups</Text>
+          <View style={styles.placeholder} />
+        </View>
+
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
           <Text style={styles.loadingText}>Loading account groups...</Text>
@@ -141,11 +148,17 @@ export default function AccountGroupHomeScreen({ navigation }: Props) {
         barStyle="light-content"
         backgroundColor={BRAND_COLORS.darkPurple}
       />
-      <AppHeader
-        businessName="Account Group"
-        userName="Admin"
-        userRole="Administrator"
-      />
+
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Account Groups</Text>
+        <View style={styles.placeholder} />
+      </View>
 
       <ScrollView
         style={styles.content}
@@ -191,6 +204,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: BRAND_COLORS.darkPurple,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 12,
+    backgroundColor: BRAND_COLORS.darkPurple,
+  },
+  backButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  backButtonText: {
+    color: BRAND_COLORS.gold,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  placeholder: {
+    width: 60, // Same width as back button to center the title
   },
   content: {
     flex: 1,
