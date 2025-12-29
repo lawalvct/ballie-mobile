@@ -34,9 +34,9 @@ export type AccountingStackParamList = {
 
   // Ledger Accounts Module (placeholder for future)
   LedgerAccountHome: undefined;
-  LedgerAccountCreate: undefined;
+  LedgerAccountCreate: { onCreated?: () => void };
   LedgerAccountShow: { id: number };
-  LedgerAccountEdit: { id: number };
+  LedgerAccountEdit: { id: number; onUpdated?: (id: number) => void };
 
   // Journal Entries Module (placeholder for future)
   JournalEntryList: undefined;

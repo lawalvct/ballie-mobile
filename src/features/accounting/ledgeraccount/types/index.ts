@@ -70,20 +70,28 @@ export interface Statistics {
 // Form data response
 export interface FormDataResponse {
   account_groups: Array<{
-    id: number;
-    name: string;
-    code: string;
     nature: string;
+    nature_label: string;
+    groups: Array<{
+      id: number;
+      name: string;
+      code: string;
+      display_name: string;
+    }>;
   }>;
   parent_accounts: Array<{
     id: number;
     name: string;
     code: string;
+    account_type: string;
     level: number;
   }>;
   account_types: Array<{
     value: string;
     label: string;
+    description: string;
+    icon: string;
+    balance_type: string;
   }>;
 }
 
