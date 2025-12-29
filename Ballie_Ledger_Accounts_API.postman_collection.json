@@ -1,0 +1,432 @@
+{
+    "info": {
+        "name": "Ballie - Ledger Accounts API",
+        "description": "Complete Ledger Account Management API for React Native\n\nThis collection covers full CRUD operations for ledger accounts:\n- Create accounts with opening balance\n- List with search, filter, and pagination\n- View details with transactions\n- Update with validation\n- Delete with constraints\n- Toggle active status\n- Search for autocomplete\n- Get balance information\n- Bulk operations\n\nAll endpoints require authentication with Bearer token.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Get Form Data for Creation",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/create",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "create"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - LEDGER ACCOUNT CREATION SCREEN\n\n**PURPOSE**: Load form data before showing creation screen\n\n**WHEN TO CALL**:\n- When user navigates to \"Create Ledger Account\" screen\n- On screen mount/useEffect\n- Before rendering form fields\n\n**WHAT YOU GET**:\n1. **account_groups**: Organized by nature with all groups\n2. **parent_accounts**: Available parent accounts for hierarchy\n3. **account_types**: Account type options with descriptions and icons\n4. **defaults**: Default values for form fields\n5. **validation_rules**: Client-side validation requirements\n\n**REACT NATIVE IMPLEMENTATION**:\n\n```typescript\nimport React, { useState, useEffect } from 'react';\nimport { View, Text, TextInput, ScrollView, TouchableOpacity, Switch } from 'react-native';\nimport { Picker } from '@react-native-picker/picker';\nimport Toast from 'react-native-toast-message';\n\ninterface AccountType {\n  value: 'asset' | 'liability' | 'equity' | 'income' | 'expense';\n  label: string;\n  description: string;\n  icon: string;\n  balance_type: 'debit' | 'credit';\n}\n\ninterface AccountGroup {\n  id: number;\n  name: string;\n  code: string;\n  display_name: string;\n}\n\ninterface GroupedAccountGroups {\n  nature: string;\n  nature_label: string;\n  groups: AccountGroup[];\n}\n\ninterface ParentAccount {\n  id: number;\n  name: string;\n  code: string;\n  account_type: string;\n  display_name: string;\n}\n\ninterface FormData {\n  account_groups: GroupedAccountGroups[];\n  parent_accounts: ParentAccount[];\n  account_types: AccountType[];\n  defaults: {\n    is_active: boolean;\n    opening_balance: number;\n    opening_balance_date: string;\n  };\n  validation_rules: Record<string, string>;\n}\n\nconst LedgerAccountCreateScreen = ({ navigation, route }) => {\n  const [loading, setLoading] = useState(true);\n  const [formData, setFormData] = useState<FormData | null>(null);\n  const [selectedType, setSelectedType] = useState('');\n  const [ledgerAccount, setLedgerAccount] = useState({\n    code: '',\n    name: '',\n    account_type: '',\n    account_group_id: null as number | null,\n    parent_id: null as number | null,\n    opening_balance: 0,\n    opening_balance_date: '',\n    description: '',\n    address: '',\n    phone: '',\n    email: '',\n    is_active: true\n  });\n  const [formErrors, setFormErrors] = useState<Record<string, string>>({});\n\n  useEffect(() => {\n    loadFormData();\n  }, []);\n\n  const loadFormData = async () => {\n    try {\n      setLoading(true);\n      const response = await api.get(\n        `/accounting/ledger-accounts/create`\n      );\n      \n      setFormData(response.data.data);\n      setLedgerAccount(prev => ({\n        ...prev,\n        is_active: response.data.data.defaults.is_active,\n        opening_balance: response.data.data.defaults.opening_balance,\n        opening_balance_date: response.data.data.defaults.opening_balance_date\n      }));\n    } catch (error) {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: error.message || 'Failed to load form data'\n      });\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const handleTypeSelect = (type: string) => {\n    setSelectedType(type);\n    setLedgerAccount(prev => ({\n      ...prev,\n      account_type: type,\n      account_group_id: null,\n      parent_id: null\n    }));\n  };\n\n  // Filter account groups by selected type\n  const availableGroups = formData?.account_groups.find(\n    group => group.nature === selectedType\n  )?.groups || [];\n\n  // Filter parent accounts by selected type\n  const availableParents = formData?.parent_accounts.filter(\n    parent => parent.account_type === selectedType\n  ) || [];\n\n  if (loading) {\n    return <LoadingSpinner />;\n  }\n\n  return (\n    <ScrollView style={styles.container}>\n      {/* Header */}\n      <View style={styles.header}>\n        <TouchableOpacity onPress={() => navigation.goBack()}>\n          <Icon name=\"arrow-back\" size={24} />\n        </TouchableOpacity>\n        <Text style={styles.headerTitle}>Create Ledger Account</Text>\n      </View>\n\n      {/* Account Type Selection (Required First) */}\n      <View style={styles.section}>\n        <Text style={styles.label}>Account Type *</Text>\n        <Text style={styles.helpText}>\n          Select the type of account. This determines its category.\n        </Text>\n        <View style={styles.typeGrid}>\n          {formData?.account_types.map((type) => (\n            <TouchableOpacity\n              key={type.value}\n              onPress={() => handleTypeSelect(type.value)}\n              style={[\n                styles.typeCard,\n                selectedType === type.value && styles.typeCardSelected\n              ]}\n            >\n              <Text style={styles.typeIcon}>{type.icon}</Text>\n              <Text style={styles.typeLabel}>{type.label}</Text>\n              <Text style={styles.typeDesc}>{type.description}</Text>\n              <Text style={styles.balanceType}>\n                {type.balance_type === 'debit' ? 'Dr' : 'Cr'} Balance\n              </Text>\n            </TouchableOpacity>\n          ))}\n        </View>\n        {formErrors.account_type && (\n          <Text style={styles.errorText}>{formErrors.account_type}</Text>\n        )}\n      </View>\n\n      {/* Show rest of form only after type is selected */}\n      {selectedType && (\n        <>\n          {/* Account Code */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Account Code *</Text>\n            <Text style={styles.helpText}>Unique identifier (max 20 characters)</Text>\n            <TextInput\n              style={styles.input}\n              placeholder=\"e.g., ACC001\"\n              value={ledgerAccount.code}\n              onChangeText={(text) => \n                setLedgerAccount(prev => ({ \n                  ...prev, \n                  code: text.toUpperCase() \n                }))\n              }\n              autoCapitalize=\"characters\"\n            />\n            {formErrors.code && (\n              <Text style={styles.errorText}>{formErrors.code}</Text>\n            )}\n          </View>\n\n          {/* Account Name */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Account Name *</Text>\n            <TextInput\n              style={styles.input}\n              placeholder=\"e.g., Cash on Hand\"\n              value={ledgerAccount.name}\n              onChangeText={(text) => \n                setLedgerAccount(prev => ({ ...prev, name: text }))\n              }\n            />\n            {formErrors.name && (\n              <Text style={styles.errorText}>{formErrors.name}</Text>\n            )}\n          </View>\n\n          {/* Account Group */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Account Group *</Text>\n            <Text style={styles.helpText}>\n              Select the group for this account\n            </Text>\n            {availableGroups.length > 0 ? (\n              <Picker\n                selectedValue={ledgerAccount.account_group_id}\n                onValueChange={(value) => \n                  setLedgerAccount(prev => ({ ...prev, account_group_id: value }))\n                }\n                style={styles.picker}\n              >\n                <Picker.Item label=\"Select account group...\" value={null} />\n                {availableGroups.map((group) => (\n                  <Picker.Item\n                    key={group.id}\n                    label={group.display_name}\n                    value={group.id}\n                  />\n                ))}\n              </Picker>\n            ) : (\n              <Text style={styles.infoText}>\n                No groups available for {selectedType}\n              </Text>\n            )}\n            {formErrors.account_group_id && (\n              <Text style={styles.errorText}>{formErrors.account_group_id}</Text>\n            )}\n          </View>\n\n          {/* Parent Account (Optional) */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Parent Account (Optional)</Text>\n            <Text style={styles.helpText}>\n              Create hierarchy by selecting a parent account\n            </Text>\n            {availableParents.length > 0 ? (\n              <Picker\n                selectedValue={ledgerAccount.parent_id}\n                onValueChange={(value) => \n                  setLedgerAccount(prev => ({ ...prev, parent_id: value }))\n                }\n                style={styles.picker}\n              >\n                <Picker.Item label=\"None (Top Level)\" value={null} />\n                {availableParents.map((parent) => (\n                  <Picker.Item\n                    key={parent.id}\n                    label={parent.display_name}\n                    value={parent.id}\n                  />\n                ))}\n              </Picker>\n            ) : (\n              <Text style={styles.infoText}>\n                No parent accounts available\n              </Text>\n            )}\n          </View>\n\n          {/* Opening Balance */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Opening Balance</Text>\n            <TextInput\n              style={styles.input}\n              placeholder=\"0.00\"\n              value={ledgerAccount.opening_balance.toString()}\n              onChangeText={(text) => \n                setLedgerAccount(prev => ({ \n                  ...prev, \n                  opening_balance: parseFloat(text) || 0 \n                }))\n              }\n              keyboardType=\"numeric\"\n            />\n          </View>\n\n          {/* Opening Balance Date */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Opening Balance Date</Text>\n            <DatePicker\n              value={ledgerAccount.opening_balance_date}\n              onChange={(date) => \n                setLedgerAccount(prev => ({ \n                  ...prev, \n                  opening_balance_date: date \n                }))\n              }\n            />\n          </View>\n\n          {/* Description */}\n          <View style={styles.section}>\n            <Text style={styles.label}>Description (Optional)</Text>\n            <TextInput\n              style={[styles.input, styles.textArea]}\n              placeholder=\"Account description...\"\n              value={ledgerAccount.description}\n              onChangeText={(text) => \n                setLedgerAccount(prev => ({ ...prev, description: text }))\n              }\n              multiline\n              numberOfLines={3}\n            />\n          </View>\n\n          {/* Contact Information (Optional for customers/vendors) */}\n          <View style={styles.section}>\n            <Text style={styles.sectionTitle}>Contact Information (Optional)</Text>\n            \n            <Text style={styles.label}>Address</Text>\n            <TextInput\n              style={styles.input}\n              placeholder=\"Physical address\"\n              value={ledgerAccount.address}\n              onChangeText={(text) => \n                setLedgerAccount(prev => ({ ...prev, address: text }))\n              }\n            />\n\n            <Text style={styles.label}>Phone</Text>\n            <TextInput\n              style={styles.input}\n              placeholder=\"Contact phone\"\n              value={ledgerAccount.phone}\n              onChangeText={(text) => \n                setLedgerAccount(prev => ({ ...prev, phone: text }))\n              }\n              keyboardType=\"phone-pad\"\n            />\n\n            <Text style={styles.label}>Email</Text>\n            <TextInput\n              style={styles.input}\n              placeholder=\"Contact email\"\n              value={ledgerAccount.email}\n              onChangeText={(text) => \n                setLedgerAccount(prev => ({ ...prev, email: text }))\n              }\n              keyboardType=\"email-address\"\n            />\n          </View>\n\n          {/* Active Status */}\n          <View style={styles.section}>\n            <View style={styles.switchRow}>\n              <View>\n                <Text style={styles.label}>Active Status</Text>\n                <Text style={styles.helpText}>\n                  Inactive accounts won't appear in dropdowns\n                </Text>\n              </View>\n              <Switch\n                value={ledgerAccount.is_active}\n                onValueChange={(value) => \n                  setLedgerAccount(prev => ({ ...prev, is_active: value }))\n                }\n              />\n            </View>\n          </View>\n\n          {/* Submit Button */}\n          <TouchableOpacity\n            style={styles.submitButton}\n            onPress={handleSubmit}\n          >\n            <Text style={styles.submitButtonText}>Create Ledger Account</Text>\n          </TouchableOpacity>\n        </>\n      )}\n    </ScrollView>\n  );\n};\n```"
+            }
+        },
+        {
+            "name": "2. Create Ledger Account",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "if (pm.response.code === 201) {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.environment.set('ledger_account_id', jsonData.data.ledger_account.id);",
+                            "    console.log('✅ Ledger account created:', jsonData.data.ledger_account.name);",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"code\": \"CASH001\",\n    \"name\": \"Cash on Hand\",\n    \"account_type\": \"asset\",\n    \"account_group_id\": 1,\n    \"parent_id\": null,\n    \"opening_balance\": 5000.00,\n    \"opening_balance_date\": \"2025-01-01\",\n    \"description\": \"Main cash account\",\n    \"address\": \"Main Office\",\n    \"phone\": \"+1234567890\",\n    \"email\": \"accounts@company.com\",\n    \"is_active\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - CREATE LEDGER ACCOUNT\n\n**SUBMIT HANDLER**:\n```typescript\nconst handleSubmit = async () => {\n  try {\n    // Validate\n    const errors = validateLedgerAccount(ledgerAccount);\n    if (Object.keys(errors).length > 0) {\n      setFormErrors(errors);\n      Toast.show({\n        type: 'error',\n        text1: 'Validation Error',\n        text2: 'Please fix the errors in the form'\n      });\n      return;\n    }\n\n    setSubmitting(true);\n\n    // Submit\n    const response = await api.post(\n      `/accounting/ledger-accounts`,\n      {\n        code: ledgerAccount.code.toUpperCase(),\n        name: ledgerAccount.name,\n        account_type: ledgerAccount.account_type,\n        account_group_id: ledgerAccount.account_group_id,\n        parent_id: ledgerAccount.parent_id,\n        opening_balance: ledgerAccount.opening_balance,\n        opening_balance_date: ledgerAccount.opening_balance_date,\n        description: ledgerAccount.description,\n        address: ledgerAccount.address,\n        phone: ledgerAccount.phone,\n        email: ledgerAccount.email,\n        is_active: ledgerAccount.is_active\n      }\n    );\n\n    // Success\n    Toast.show({\n      type: 'success',\n      text1: '✅ Success',\n      text2: response.data.message\n    });\n\n    // Navigate back or to details\n    navigation.goBack();\n    // Or navigate to details:\n    // navigation.navigate('LedgerAccountDetails', { \n    //   id: response.data.data.ledger_account.id \n    // });\n\n  } catch (error) {\n    if (error.response?.status === 422) {\n      // Validation errors from server\n      const serverErrors = error.response.data.errors;\n      setFormErrors(serverErrors);\n      \n      Toast.show({\n        type: 'error',\n        text1: 'Validation Error',\n        text2: Object.values(serverErrors)[0][0]\n      });\n    } else {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: error.message || 'Failed to create ledger account'\n      });\n    }\n  } finally {\n    setSubmitting(false);\n  }\n};\n```\n\n**CLIENT-SIDE VALIDATION**:\n```typescript\nconst validateLedgerAccount = (data) => {\n  const errors = {};\n\n  if (!data.code.trim()) {\n    errors.code = 'Account code is required';\n  } else if (data.code.length > 20) {\n    errors.code = 'Code must not exceed 20 characters';\n  }\n\n  if (!data.name.trim()) {\n    errors.name = 'Account name is required';\n  } else if (data.name.length > 255) {\n    errors.name = 'Name must not exceed 255 characters';\n  }\n\n  if (!data.account_type) {\n    errors.account_type = 'Account type is required';\n  }\n\n  if (!data.account_group_id) {\n    errors.account_group_id = 'Account group is required';\n  }\n\n  if (data.email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(data.email)) {\n    errors.email = 'Invalid email format';\n  }\n\n  return errors;\n};\n```"
+            }
+        },
+        {
+            "name": "3. List Ledger Accounts",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts?page=1&per_page=20&search=&account_type=&account_group_id=&status=&sort=name&direction=asc",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts"
+                    ],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "1",
+                            "description": "Page number"
+                        },
+                        {
+                            "key": "per_page",
+                            "value": "20",
+                            "description": "Items per page (max 100)"
+                        },
+                        {
+                            "key": "search",
+                            "value": "",
+                            "description": "Search by name, code, or description"
+                        },
+                        {
+                            "key": "account_type",
+                            "value": "",
+                            "description": "Filter: asset, liability, equity, income, expense"
+                        },
+                        {
+                            "key": "account_group_id",
+                            "value": "",
+                            "description": "Filter by account group ID"
+                        },
+                        {
+                            "key": "status",
+                            "value": "",
+                            "description": "Filter: active, inactive"
+                        },
+                        {
+                            "key": "level",
+                            "value": "",
+                            "description": "Filter: parent, child"
+                        },
+                        {
+                            "key": "sort",
+                            "value": "name",
+                            "description": "Sort by: name, code, account_type, current_balance, created_at, is_active"
+                        },
+                        {
+                            "key": "direction",
+                            "value": "asc",
+                            "description": "Sort direction: asc, desc"
+                        }
+                    ]
+                },
+                "description": "📱 REACT NATIVE - LEDGER ACCOUNTS LIST SCREEN\n\n```typescript\nconst LedgerAccountsListScreen = ({ navigation }) => {\n  const [accounts, setAccounts] = useState([]);\n  const [loading, setLoading] = useState(false);\n  const [refreshing, setRefreshing] = useState(false);\n  const [page, setPage] = useState(1);\n  const [hasMore, setHasMore] = useState(true);\n  const [filters, setFilters] = useState({\n    search: '',\n    account_type: '',\n    account_group_id: '',\n    status: '',\n    sort: 'name',\n    direction: 'asc'\n  });\n  const [statistics, setStatistics] = useState(null);\n\n  useEffect(() => {\n    loadAccounts(1, true);\n  }, [filters]);\n\n  const loadAccounts = async (pageNum = 1, replace = false) => {\n    if (loading) return;\n\n    try {\n      setLoading(true);\n      \n      const params = {\n        page: pageNum,\n        per_page: 20,\n        ...filters\n      };\n\n      const response = await api.get(\n        `/accounting/ledger-accounts`,\n        { params }\n      );\n\n      const newAccounts = response.data.data.ledger_accounts;\n      \n      if (replace) {\n        setAccounts(newAccounts);\n      } else {\n        setAccounts(prev => [...prev, ...newAccounts]);\n      }\n\n      setStatistics(response.data.data.statistics);\n      setHasMore(response.data.data.pagination.current_page < response.data.data.pagination.last_page);\n      setPage(pageNum);\n\n    } catch (error) {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: error.message || 'Failed to load accounts'\n      });\n    } finally {\n      setLoading(false);\n      setRefreshing(false);\n    }\n  };\n\n  const handleRefresh = () => {\n    setRefreshing(true);\n    loadAccounts(1, true);\n  };\n\n  const handleLoadMore = () => {\n    if (hasMore && !loading) {\n      loadAccounts(page + 1, false);\n    }\n  };\n\n  const renderAccount = ({ item }) => (\n    <TouchableOpacity\n      style={styles.accountCard}\n      onPress={() => navigation.navigate('LedgerAccountDetails', { id: item.id })}\n    >\n      <View style={styles.accountHeader}>\n        <View style={[\n          styles.typeBadge,\n          { backgroundColor: getTypeColor(item.account_type) }\n        ]}>\n          <Text style={styles.typeText}>{item.account_type_label}</Text>\n        </View>\n        <Text style={[\n          styles.statusBadge,\n          item.is_active ? styles.activeBadge : styles.inactiveBadge\n        ]}>\n          {item.is_active ? 'Active' : 'Inactive'}\n        </Text>\n      </View>\n\n      <View style={styles.accountInfo}>\n        <Text style={styles.accountCode}>{item.code}</Text>\n        <Text style={styles.accountName}>{item.name}</Text>\n      </View>\n\n      {item.account_group && (\n        <Text style={styles.groupName}>Group: {item.account_group.name}</Text>\n      )}\n\n      {item.parent && (\n        <Text style={styles.parentName}>Parent: {item.parent.name}</Text>\n      )}\n\n      <View style={styles.accountFooter}>\n        <View>\n          <Text style={styles.balanceLabel}>Current Balance</Text>\n          <Text style={[\n            styles.balanceAmount,\n            item.current_balance >= 0 ? styles.debitBalance : styles.creditBalance\n          ]}>\n            {formatCurrency(Math.abs(item.current_balance))}\n            <Text style={styles.balanceType}>\n              {item.current_balance >= 0 ? ' Dr' : ' Cr'}\n            </Text>\n          </Text>\n        </View>\n        {item.children_count > 0 && (\n          <View style={styles.childrenBadge}>\n            <Icon name=\"account-tree\" size={16} />\n            <Text style={styles.childrenCount}>{item.children_count} sub-accounts</Text>\n          </View>\n        )}\n      </View>\n    </TouchableOpacity>\n  );\n\n  return (\n    <View style={styles.container}>\n      {/* Statistics Cards */}\n      {statistics && (\n        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsContainer}>\n          <StatCard label=\"Total\" value={statistics.total_accounts} color=\"#3b82f6\" />\n          <StatCard label=\"Active\" value={statistics.active_accounts} color=\"#10b981\" />\n          <StatCard label=\"Assets\" value={statistics.by_type.assets} color=\"#059669\" />\n          <StatCard label=\"Liabilities\" value={statistics.by_type.liabilities} color=\"#dc2626\" />\n          <StatCard label=\"Income\" value={statistics.by_type.income} color=\"#3b82f6\" />\n        </ScrollView>\n      )}\n\n      {/* Search and Filters */}\n      <View style={styles.searchContainer}>\n        <TextInput\n          style={styles.searchInput}\n          placeholder=\"Search accounts...\"\n          value={filters.search}\n          onChangeText={(text) => setFilters(prev => ({ ...prev, search: text }))}\n        />\n        <TouchableOpacity \n          style={styles.filterButton}\n          onPress={() => setShowFilters(!showFilters)}\n        >\n          <Icon name=\"filter-list\" size={24} />\n        </TouchableOpacity>\n      </View>\n\n      {/* Account List */}\n      <FlatList\n        data={accounts}\n        renderItem={renderAccount}\n        keyExtractor={(item) => item.id.toString()}\n        onRefresh={handleRefresh}\n        refreshing={refreshing}\n        onEndReached={handleLoadMore}\n        onEndReachedThreshold={0.5}\n        ListEmptyComponent={\n          !loading && <EmptyState message=\"No accounts found\" />\n        }\n        ListFooterComponent={\n          loading && page > 1 && <ActivityIndicator style={styles.loader} />\n        }\n      />\n\n      {/* FAB for Create */}\n      <TouchableOpacity\n        style={styles.fab}\n        onPress={() => navigation.navigate('CreateLedgerAccount')}\n      >\n        <Icon name=\"add\" size={24} color=\"white\" />\n      </TouchableOpacity>\n    </View>\n  );\n};\n```"
+            }
+        },
+        {
+            "name": "4. View Account Details",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/{{ledger_account_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "{{ledger_account_id}}"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - ACCOUNT DETAILS SCREEN\n\n```typescript\nconst LedgerAccountDetailsScreen = ({ route, navigation }) => {\n  const { id } = route.params;\n  const [account, setAccount] = useState(null);\n  const [loading, setLoading] = useState(true);\n  const [activeTab, setActiveTab] = useState('details'); // details, transactions, children\n\n  useEffect(() => {\n    loadAccountDetails();\n  }, [id]);\n\n  const loadAccountDetails = async () => {\n    try {\n      setLoading(true);\n      const response = await api.get(\n        `/accounting/ledger-accounts/${id}`\n      );\n      setAccount(response.data.data);\n    } catch (error) {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: 'Failed to load account details'\n      });\n      navigation.goBack();\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const handleToggleStatus = async () => {\n    try {\n      await api.post(`/accounting/ledger-accounts/${id}/toggle`);\n      loadAccountDetails();\n      Toast.show({\n        type: 'success',\n        text1: 'Success',\n        text2: `Account ${account.ledger_account.is_active ? 'deactivated' : 'activated'}`\n      });\n    } catch (error) {\n      Toast.show({\n        type: 'error',\n        text1: 'Error',\n        text2: 'Failed to toggle status'\n      });\n    }\n  };\n\n  if (loading) return <LoadingSpinner />;\n\n  return (\n    <ScrollView style={styles.container}>\n      {/* Header with Actions */}\n      <View style={styles.header}>\n        <View style={styles.headerLeft}>\n          <TouchableOpacity onPress={() => navigation.goBack()}>\n            <Icon name=\"arrow-back\" size={24} />\n          </TouchableOpacity>\n          <View style={styles.headerInfo}>\n            <Text style={styles.accountCode}>{account.ledger_account.code}</Text>\n            <Text style={styles.accountName}>{account.ledger_account.name}</Text>\n          </View>\n        </View>\n        <Menu>\n          <MenuItem onPress={() => navigation.navigate('EditLedgerAccount', { id })}>\n            Edit\n          </MenuItem>\n          <MenuItem onPress={handleToggleStatus}>\n            {account.ledger_account.is_active ? 'Deactivate' : 'Activate'}\n          </MenuItem>\n          {account.statistics.can_be_deleted && (\n            <MenuItem onPress={handleDelete} danger>\n              Delete\n            </MenuItem>\n          )}\n        </Menu>\n      </View>\n\n      {/* Balance Card */}\n      <View style={styles.balanceCard}>\n        <Text style={styles.balanceLabel}>Current Balance</Text>\n        <Text style={[\n          styles.balanceAmount,\n          account.ledger_account.current_balance >= 0 ? styles.debitBalance : styles.creditBalance\n        ]}>\n          {formatCurrency(Math.abs(account.ledger_account.current_balance))}\n          <Text style={styles.balanceType}>\n            {account.ledger_account.current_balance >= 0 ? ' Dr' : ' Cr'}\n          </Text>\n        </Text>\n      </View>\n\n      {/* Tabs */}\n      <View style={styles.tabs}>\n        <Tab active={activeTab === 'details'} onPress={() => setActiveTab('details')}>Details</Tab>\n        <Tab active={activeTab === 'transactions'} onPress={() => setActiveTab('transactions')}>Transactions</Tab>\n        {account.statistics.children_count > 0 && (\n          <Tab active={activeTab === 'children'} onPress={() => setActiveTab('children')}>Sub-accounts</Tab>\n        )}\n      </View>\n\n      {/* Tab Content */}\n      {activeTab === 'details' && (\n        <View style={styles.detailsTab}>\n          <DetailRow label=\"Account Type\" value={account.ledger_account.account_type_label} />\n          <DetailRow label=\"Account Group\" value={account.ledger_account.account_group?.name} />\n          {account.ledger_account.parent && (\n            <DetailRow label=\"Parent Account\" value={account.ledger_account.parent.name} />\n          )}\n          <DetailRow label=\"Opening Balance\" value={formatCurrency(account.ledger_account.opening_balance)} />\n          <DetailRow label=\"Opening Date\" value={account.ledger_account.opening_balance_date} />\n          {account.ledger_account.description && (\n            <DetailRow label=\"Description\" value={account.ledger_account.description} />\n          )}\n          {account.ledger_account.address && (\n            <DetailRow label=\"Address\" value={account.ledger_account.address} />\n          )}\n          {account.ledger_account.phone && (\n            <DetailRow label=\"Phone\" value={account.ledger_account.phone} />\n          )}\n          {account.ledger_account.email && (\n            <DetailRow label=\"Email\" value={account.ledger_account.email} />\n          )}\n          <DetailRow \n            label=\"Status\" \n            value={account.ledger_account.is_active ? 'Active' : 'Inactive'}\n            badge={true}\n            badgeColor={account.ledger_account.is_active ? '#10b981' : '#ef4444'}\n          />\n        </View>\n      )}\n\n      {activeTab === 'transactions' && (\n        <View style={styles.transactionsTab}>\n          {account.recent_transactions.map((transaction) => (\n            <TransactionCard key={transaction.id} transaction={transaction} />\n          ))}\n          {account.statistics.total_transactions > 10 && (\n            <TouchableOpacity \n              style={styles.viewAllButton}\n              onPress={() => navigation.navigate('AccountTransactions', { id })}\n            >\n              <Text style={styles.viewAllText}>View All Transactions</Text>\n            </TouchableOpacity>\n          )}\n        </View>\n      )}\n\n      {activeTab === 'children' && (\n        <View style={styles.childrenTab}>\n          {account.children.map((child) => (\n            <ChildAccountCard \n              key={child.id} \n              child={child}\n              onPress={() => navigation.push('LedgerAccountDetails', { id: child.id })}\n            />\n          ))}\n        </View>\n      )}\n    </ScrollView>\n  );\n};\n```"
+            }
+        },
+        {
+            "name": "5. Update Ledger Account",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"code\": \"CASH001\",\n    \"name\": \"Cash on Hand - Updated\",\n    \"account_type\": \"asset\",\n    \"account_group_id\": 1,\n    \"parent_id\": null,\n    \"description\": \"Updated description\",\n    \"address\": \"Updated address\",\n    \"phone\": \"+1234567890\",\n    \"email\": \"accounts@company.com\",\n    \"is_active\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/{{ledger_account_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "{{ledger_account_id}}"
+                    ]
+                },
+                "description": "Update an existing ledger account. Note: opening_balance and opening_balance_date cannot be updated after creation."
+            }
+        },
+        {
+            "name": "6. Delete Ledger Account",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/{{ledger_account_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "{{ledger_account_id}}"
+                    ]
+                },
+                "description": "Delete a ledger account. Cannot delete if:\n- Account is a system account\n- Account has transactions\n- Account has child accounts"
+            }
+        },
+        {
+            "name": "7. Toggle Account Status",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/{{ledger_account_id}}/toggle",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "{{ledger_account_id}}",
+                        "toggle"
+                    ]
+                },
+                "description": "Toggle the active status of a ledger account (active ↔ inactive)"
+            }
+        },
+        {
+            "name": "8. Search Accounts (Autocomplete)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/search?search=cash",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "search"
+                    ],
+                    "query": [
+                        {
+                            "key": "search",
+                            "value": "cash",
+                            "description": "Search query (min 2 characters)"
+                        }
+                    ]
+                },
+                "description": "📱 REACT NATIVE - SEARCH AUTOCOMPLETE\n\n```typescript\nconst AccountSearchInput = ({ onSelect }) => {\n  const [search, setSearch] = useState('');\n  const [results, setResults] = useState([]);\n  const [loading, setLoading] = useState(false);\n  const debounceTimeout = useRef(null);\n\n  const searchAccounts = async (query) => {\n    if (query.length < 2) {\n      setResults([]);\n      return;\n    }\n\n    try {\n      setLoading(true);\n      const response = await api.get(\n        `/accounting/ledger-accounts/search`,\n        { params: { search: query } }\n      );\n      setResults(response.data.data.accounts);\n    } catch (error) {\n      console.error('Search error:', error);\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const handleSearchChange = (text) => {\n    setSearch(text);\n    \n    // Debounce search\n    if (debounceTimeout.current) {\n      clearTimeout(debounceTimeout.current);\n    }\n    \n    debounceTimeout.current = setTimeout(() => {\n      searchAccounts(text);\n    }, 300);\n  };\n\n  const handleSelect = (account) => {\n    setSearch(account.display_name);\n    setResults([]);\n    onSelect(account);\n  };\n\n  return (\n    <View style={styles.searchContainer}>\n      <TextInput\n        style={styles.searchInput}\n        placeholder=\"Search accounts...\"\n        value={search}\n        onChangeText={handleSearchChange}\n      />\n      {loading && <ActivityIndicator size=\"small\" />}\n      \n      {results.length > 0 && (\n        <FlatList\n          data={results}\n          keyExtractor={(item) => item.id.toString()}\n          style={styles.resultsList}\n          renderItem={({ item }) => (\n            <TouchableOpacity\n              style={styles.resultItem}\n              onPress={() => handleSelect(item)}\n            >\n              <Text style={styles.resultCode}>{item.code}</Text>\n              <Text style={styles.resultName}>{item.name}</Text>\n              <Text style={styles.resultType}>{item.account_type_label}</Text>\n              <Text style={styles.resultBalance}>\n                {formatCurrency(Math.abs(item.current_balance))}\n              </Text>\n            </TouchableOpacity>\n          )}\n        />\n      )}\n    </View>\n  );\n};\n```"
+            }
+        },
+        {
+            "name": "9. Get Account Balance",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/{{ledger_account_id}}/balance",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "{{ledger_account_id}}",
+                        "balance"
+                    ]
+                },
+                "description": "Get current balance information for an account. Useful for displaying balance in forms or dashboards."
+            }
+        },
+        {
+            "name": "10. Get Child Accounts",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/{{ledger_account_id}}/children",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "{{ledger_account_id}}",
+                        "children"
+                    ]
+                },
+                "description": "Get all active child accounts of a parent account. Useful for displaying account hierarchy."
+            }
+        },
+        {
+            "name": "11. Bulk Actions",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"action\": \"activate\",\n    \"account_ids\": [1, 2, 3, 4]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/ledger-accounts/bulk-action",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "api",
+                        "v1",
+                        "tenant",
+                        "{{tenant_slug}}",
+                        "accounting",
+                        "ledger-accounts",
+                        "bulk-action"
+                    ]
+                },
+                "description": "📱 REACT NATIVE - BULK OPERATIONS\n\n**Available Actions**:\n- `activate`: Activate selected accounts\n- `deactivate`: Deactivate selected accounts  \n- `delete`: Delete selected accounts (with validation)\n\n```typescript\nconst handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {\n  if (selectedAccounts.length === 0) {\n    Toast.show({\n      type: 'info',\n      text1: 'No Selection',\n      text2: 'Please select accounts first'\n    });\n    return;\n  }\n\n  // Confirm delete action\n  if (action === 'delete') {\n    Alert.alert(\n      'Confirm Delete',\n      `Delete ${selectedAccounts.length} account(s)?`,\n      [\n        { text: 'Cancel', style: 'cancel' },\n        { \n          text: 'Delete', \n          style: 'destructive',\n          onPress: () => performBulkAction(action)\n        }\n      ]\n    );\n  } else {\n    performBulkAction(action);\n  }\n};\n\nconst performBulkAction = async (action) => {\n  try {\n    setLoading(true);\n    \n    const response = await api.post(\n      `/accounting/ledger-accounts/bulk-action`,\n      {\n        action,\n        account_ids: selectedAccounts\n      }\n    );\n\n    const { success_count, failed_count, errors } = response.data.data;\n\n    if (failed_count > 0) {\n      // Show partial success with errors\n      Alert.alert(\n        'Partial Success',\n        `${success_count} succeeded, ${failed_count} failed\\n\\n${errors.join('\\n')}`,\n        [{ text: 'OK' }]\n      );\n    } else {\n      Toast.show({\n        type: 'success',\n        text1: 'Success',\n        text2: response.data.message\n      });\n    }\n\n    // Refresh list and clear selection\n    setSelectedAccounts([]);\n    loadAccounts(1, true);\n\n  } catch (error) {\n    Toast.show({\n      type: 'error',\n      text1: 'Error',\n      text2: error.message || 'Bulk action failed'\n    });\n  } finally {\n    setLoading(false);\n  }\n};\n```"
+            }
+        }
+    ]
+}

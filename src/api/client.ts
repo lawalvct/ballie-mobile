@@ -21,13 +21,22 @@ const apiClient = axios.create({
   timeout: 30000,
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token and tenant slug
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await AsyncStorage.getItem("auth_token");
+    const tenantSlug = await AsyncStorage.getItem("tenant_slug");
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add tenant slug to URL path (only if not already present)
+    if (tenantSlug && config.url && !config.url.startsWith("/tenant/")) {
+      // Prepend /tenant/{slug} to all API paths
+      config.url = `/tenant/${tenantSlug}${config.url}`;
+    }
+
     return config;
   },
   (error: AxiosError) => Promise.reject(error)

@@ -8,6 +8,12 @@ import {
   AccountGroupShowScreen,
   AccountGroupEditScreen,
 } from "../features/accounting/accountgroup";
+// Ledger Accounts Feature
+import {
+  LedgerAccountCreateScreen,
+  LedgerAccountEditScreen,
+  LedgerAccountShowScreen,
+} from "../features/accounting/ledgeraccount";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "./types";
 import { BRAND_COLORS } from "../theme/colors";
@@ -21,7 +27,7 @@ function AccountingStack() {
 
   useEffect(() => {
     // Reset to AccountingHome when tab is pressed
-    const unsubscribe = navigation.addListener("tabPress" as any, (e) => {
+    const unsubscribe = navigation.addListener("tabPress" as any, (_e) => {
       // Reset the stack to AccountingHome
       navigation.reset({
         index: 0,
@@ -36,7 +42,7 @@ function AccountingStack() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false, // We'll use custom headers in each screen
-        contentStyle: { backgroundColor: BRAND_COLORS.background },
+        contentStyle: { backgroundColor: "#f5f5f5" },
         animation: "slide_from_right",
       }}>
       {/* Main Accounting Home - shows all accounting modules */}
@@ -73,6 +79,21 @@ function AccountingStack() {
         name="LedgerAccountHome"
         component={LedgerAccountHomeScreen}
         options={{ title: "Ledger Accounts" }}
+      />
+      <Stack.Screen
+        name="LedgerAccountCreate"
+        component={LedgerAccountCreateScreen}
+        options={{ title: "Create Ledger Account" }}
+      />
+      <Stack.Screen
+        name="LedgerAccountEdit"
+        component={LedgerAccountEditScreen}
+        options={{ title: "Edit Ledger Account" }}
+      />
+      <Stack.Screen
+        name="LedgerAccountShow"
+        component={LedgerAccountShowScreen}
+        options={{ title: "Ledger Account Details" }}
       />
       {/*
       <Stack.Screen name="LedgerAccountCreate" component={LedgerAccountCreateScreen} />
