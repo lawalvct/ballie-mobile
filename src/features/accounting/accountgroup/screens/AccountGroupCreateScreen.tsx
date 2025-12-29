@@ -11,34 +11,19 @@ import {
   ActivityIndicator,
   StatusBar,
 } from "react-native";
-import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AccountingStackParamList } from "../../../../navigation/types";
+import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { Picker } from "@react-native-picker/picker";
+import { accountGroupService } from "../services/accountGroupService";
+import type { FormData } from "../types";
 
-interface AccountNature {
-  value: string;
-  label: string;
-  description: string;
-  icon: string;
-}
+type Props = NativeStackScreenProps<
+  AccountingStackParamList,
+  "AccountGroupCreate"
+>;
 
-interface ParentGroup {
-  id: number;
-  name: string;
-  code: string;
-  nature: string;
-  display_name: string;
-}
-
-interface FormData {
-  parent_groups: ParentGroup[];
-  natures: AccountNature[];
-  defaults: {
-    is_active: boolean;
-  };
-  validation_rules: Record<string, string>;
-}
-
-export default function AccountGroupCreateScreen({ navigation }: any) {
+export default function AccountGroupCreateScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
@@ -59,77 +44,11 @@ export default function AccountGroupCreateScreen({ navigation }: any) {
   const loadFormData = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint
-      // const response = await api.get(`/accounting/account-groups/create`);
-      // setFormData(response.data.data);
-
-      // Mock data for now
-      const mockData: FormData = {
-        parent_groups: [
-          {
-            id: 1,
-            name: "Assets",
-            code: "AST",
-            nature: "assets",
-            display_name: "Assets (AST)",
-          },
-          {
-            id: 2,
-            name: "Current Assets",
-            code: "CA",
-            nature: "assets",
-            display_name: "Current Assets (CA)",
-          },
-          {
-            id: 3,
-            name: "Liabilities",
-            code: "LIB",
-            nature: "liabilities",
-            display_name: "Liabilities (LIB)",
-          },
-        ],
-        natures: [
-          {
-            value: "assets",
-            label: "Assets",
-            description: "Resources owned by the business",
-            icon: "💰",
-          },
-          {
-            value: "liabilities",
-            label: "Liabilities",
-            description: "Debts and obligations",
-            icon: "📋",
-          },
-          {
-            value: "equity",
-            label: "Equity",
-            description: "Owner's stake in the business",
-            icon: "🏦",
-          },
-          {
-            value: "income",
-            label: "Income",
-            description: "Revenue and earnings",
-            icon: "📈",
-          },
-          {
-            value: "expenses",
-            label: "Expenses",
-            description: "Costs and expenditures",
-            icon: "💸",
-          },
-        ],
-        defaults: {
-          is_active: true,
-        },
-        validation_rules: {},
-      };
-
-      setFormData(mockData);
+      const data = await accountGroupService.getFormData();
+      setFormData(data);
       setAccountGroup((prev) => ({
         ...prev,
-        is_active: mockData.defaults.is_active,
+        is_active: data.defaults.is_active,
       }));
     } catch (error) {
       console.error("Error loading form data:", error);
@@ -184,17 +103,13 @@ export default function AccountGroupCreateScreen({ navigation }: any) {
     try {
       setSubmitting(true);
 
-      // TODO: Replace with actual API endpoint
-      // const response = await api.post(`/accounting/account-groups`, {
-      //   name: accountGroup.name,
-      //   code: accountGroup.code.toUpperCase(),
-      //   nature: accountGroup.nature,
-      //   parent_id: accountGroup.parent_id,
-      //   is_active: accountGroup.is_active,
-      // });
-
-      // Mock success
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await accountGroupService.create({
+        name: accountGroup.name,
+        code: accountGroup.code.toUpperCase(),
+        nature: accountGroup.nature as any,
+        parent_id: accountGroup.parent_id,
+        is_active: accountGroup.is_active,
+      });
 
       alert("Account group created successfully!");
       navigation.goBack();

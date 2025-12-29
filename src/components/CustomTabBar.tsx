@@ -7,28 +7,24 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 
-interface TabBarProps {
-  activeTab: string;
-  onTabPress: (tab: string) => void;
-}
-
-export default function CustomTabBar({ activeTab, onTabPress }: TabBarProps) {
+export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const [showPointer, setShowPointer] = useState(true);
   const [pointerAnim] = useState(new Animated.Value(0));
 
   const tabs = [
-    { id: "dashboard", label: "Dashboard", icon: "📊" },
-    { id: "accounting", label: "Accounting", icon: "💰" },
-    { id: "inventory", label: "Inventory", icon: "📦" },
-    { id: "pos", label: "POS", icon: "💳" },
-    { id: "crm", label: "CRM", icon: "👥" },
-    { id: "reports", label: "Reports", icon: "📈" },
-    { id: "audit", label: "Audit", icon: "🔍" },
-    { id: "ecommerce", label: "E-commerce", icon: "🛒" },
-    { id: "payroll", label: "Payroll", icon: "💵" },
-    { id: "admins", label: "Admins", icon: "👔" },
-    { id: "statutory", label: "Statutory", icon: "📜" },
+    { id: "Dashboard", label: "Dashboard", icon: "📊" },
+    { id: "Accounting", label: "Accounting", icon: "💰" },
+    { id: "Inventory", label: "Inventory", icon: "📦" },
+    { id: "POS", label: "POS", icon: "💳" },
+    { id: "CRM", label: "CRM", icon: "👥" },
+    { id: "Reports", label: "Reports", icon: "📈" },
+    { id: "Audit", label: "Audit", icon: "🔍" },
+    { id: "Ecommerce", label: "E-commerce", icon: "🛒" },
+    { id: "Payroll", label: "Payroll", icon: "💵" },
+    { id: "Admins", label: "Admins", icon: "👔" },
+    { id: "Statutory", label: "Statutory", icon: "📜" },
   ];
 
   useEffect(() => {
@@ -74,24 +70,23 @@ export default function CustomTabBar({ activeTab, onTabPress }: TabBarProps) {
         contentContainerStyle={styles.scrollContent}
         onScroll={handleScroll}
         scrollEventThrottle={16}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={styles.tab}
-            onPress={() => onTabPress(tab.id)}>
-            <Text
-              style={[styles.icon, activeTab === tab.id && styles.activeIcon]}>
-              {tab.icon}
-            </Text>
-            <Text
-              style={[
-                styles.label,
-                activeTab === tab.id && styles.activeLabel,
-              ]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {tabs.map((tab, index) => {
+          const isFocused = state.index === index;
+
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={styles.tab}
+              onPress={() => navigation.navigate(tab.id)}>
+              <Text style={[styles.icon, isFocused && styles.activeIcon]}>
+                {tab.icon}
+              </Text>
+              <Text style={[styles.label, isFocused && styles.activeLabel]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {/* Scroll Indicator Pointer */}

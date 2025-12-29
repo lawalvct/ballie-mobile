@@ -8,13 +8,20 @@ import {
   TouchableOpacity,
   StatusBar,
 } from "react-native";
-import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
-import AppHeader from "../components/AppHeader";
-import AccountGroupStats from "../components/accountgroup/AccountGroupStats";
-import AccountGroupFilters from "../components/accountgroup/AccountGroupFilters";
-import AccountGroupList from "../components/accountgroup/AccountGroupList";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AccountingStackParamList } from "../../../navigation/types";
+import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
+import AppHeader from "../../../../components/AppHeader";
+import AccountGroupStats from "../components/AccountGroupStats";
+import AccountGroupFilters from "../components/AccountGroupFilters";
+import AccountGroupList from "../components/AccountGroupList";
 
-export default function AccountGroupScreen({ navigation }: any) {
+type Props = NativeStackScreenProps<
+  AccountingStackParamList,
+  "AccountGroupList"
+>;
+
+export default function AccountGroupListScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -32,7 +39,7 @@ export default function AccountGroupScreen({ navigation }: any) {
         <View style={styles.addButtonContainer}>
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => navigation.navigate("accountgroupcreate")}>
+            onPress={() => navigation.navigate("AccountGroupCreate")}>
             <Text style={styles.addButtonText}>+ Add New Account Group</Text>
           </TouchableOpacity>
         </View>

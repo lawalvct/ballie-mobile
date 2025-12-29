@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native";
-import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 
 export default function AccountGroupFilters() {
   const [isExpanded, setIsExpanded] = useState(false);

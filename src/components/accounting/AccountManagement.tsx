@@ -1,8 +1,15 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { AccountingStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 
-export default function AccountManagement({ navigation }: any) {
+type NavigationProp = NativeStackNavigationProp<AccountingStackParamList>;
+
+export default function AccountManagement() {
+  const navigation = useNavigation<NavigationProp>();
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -14,7 +21,7 @@ export default function AccountManagement({ navigation }: any) {
 
       <TouchableOpacity
         style={styles.menuCard}
-        onPress={() => navigation.navigate("accountgroup")}>
+        onPress={() => navigation.navigate("AccountGroupList")}>
         <View style={[styles.menuIcon, { backgroundColor: "#dbeafe" }]}>
           <Text style={styles.menuEmoji}>📁</Text>
         </View>
@@ -27,7 +34,9 @@ export default function AccountManagement({ navigation }: any) {
         <Text style={styles.menuArrow}>›</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuCard}>
+      <TouchableOpacity
+        style={styles.menuCard}
+        onPress={() => navigation.navigate("LedgerAccountList")}>
         <View style={[styles.menuIcon, { backgroundColor: "#fef3c7" }]}>
           <Text style={styles.menuEmoji}>📋</Text>
         </View>

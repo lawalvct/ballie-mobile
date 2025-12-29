@@ -6,9 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { AccountingStackParamList } from "../../../navigation/types";
+import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
+
+type NavigationProp = NativeStackNavigationProp<AccountingStackParamList>;
 
 export default function AccountGroupList() {
+  const navigation = useNavigation<NavigationProp>();
   const accountGroups = [
     {
       id: 1,
@@ -181,10 +187,18 @@ export default function AccountGroupList() {
               </View>
               <View style={[styles.cell, styles.actionsColumn]}>
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity style={styles.actionButton}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() =>
+                      navigation.navigate("AccountGroupShow", { id: group.id })
+                    }>
                     <Text style={styles.actionButtonText}>View</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() =>
+                      navigation.navigate("AccountGroupEdit", { id: group.id })
+                    }>
                     <Text style={styles.actionButtonText}>Edit</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionButton}>
@@ -194,7 +208,8 @@ export default function AccountGroupList() {
                   </TouchableOpacity>
                   {group.hierarchy === "Parent" && (
                     <TouchableOpacity
-                      style={[styles.actionButton, styles.createChildButton]}>
+                      style={[styles.actionButton, styles.createChildButton]}
+                      onPress={() => navigation.navigate("AccountGroupCreate")}>
                       <Text style={styles.createChildText}>+ Child</Text>
                     </TouchableOpacity>
                   )}

@@ -1,14 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BRAND_COLORS } from "../../theme/colors";
+import { BRAND_COLORS } from "../../../../theme/colors";
 
 export default function AccountGroupStats() {
   const stats = [
-    { label: "Total Groups", value: "45", gradient: ["#3b82f6", "#2563eb"] },
+    { label: "Total Groups", value: "46", gradient: ["#3b82f6", "#2563eb"] },
     { label: "Active Groups", value: "42", gradient: ["#10b981", "#059669"] },
-    { label: "Parent Groups", value: "12", gradient: ["#f59e0b", "#d97706"] },
-    { label: "Child Groups", value: "33", gradient: ["#8b5cf6", "#7c3aed"] },
+    { label: "Parent Groups", value: "15", gradient: ["#f59e0b", "#d97706"] },
+    { label: "Child Groups", value: "63", gradient: ["#8b5cf6", "#7c3aed"] },
   ];
 
   return (

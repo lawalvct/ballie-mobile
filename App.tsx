@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, Alert } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
 import Splash1 from "./src/screens/Splash1";
 import Splash2 from "./src/screens/Splash2";
 import LoginScreen from "./src/screens/LoginScreen";
@@ -272,10 +273,10 @@ function AppContent() {
   // If authenticated and onboarding complete, show main navigator
   if (isAuthenticated && !needsOnboarding) {
     return (
-      <>
+      <NavigationContainer>
         <StatusBar style="light" />
         <MainNavigator />
-      </>
+      </NavigationContainer>
     );
   }
 

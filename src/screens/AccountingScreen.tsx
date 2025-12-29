@@ -1,6 +1,8 @@
 ﻿import React from "react";
 import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AccountingStackParamList } from "../navigation/types";
 import AppHeader from "../components/AppHeader";
 import { useAuth } from "../context/AuthContext";
 import AccountingOverview from "../components/accounting/AccountingOverview";
@@ -10,7 +12,9 @@ import VouchersSection from "../components/accounting/VouchersSection";
 import BankingSection from "../components/accounting/BankingSection";
 import ReconciliationSection from "../components/accounting/ReconciliationSection";
 
-export default function AccountingScreen({ navigation }: any) {
+type Props = NativeStackScreenProps<AccountingStackParamList, "AccountingHome">;
+
+export default function AccountingScreen({ navigation }: Props) {
   const { user, tenant } = useAuth();
 
   return (
@@ -25,7 +29,7 @@ export default function AccountingScreen({ navigation }: any) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <AccountingOverview />
         <QuickActions />
-        <AccountManagement navigation={navigation} />
+        <AccountManagement />
         <VouchersSection />
         <BankingSection />
         <ReconciliationSection />

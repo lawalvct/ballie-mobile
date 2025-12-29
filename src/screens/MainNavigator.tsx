@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import type { MainTabParamList } from "../navigation/types";
+
+// Main Feature Screens
 import DashboardScreen from "./DashboardScreen";
-import AccountingScreen from "./AccountingScreen";
 import InventoryScreen from "./InventoryScreen";
 import POSScreen from "./POSScreen";
 import CRMScreen from "./CRMScreen";
@@ -11,73 +13,33 @@ import EcommerceScreen from "./EcommerceScreen";
 import PayrollScreen from "./PayrollScreen";
 import AdminsScreen from "./AdminsScreen";
 import StatutoryScreen from "./StatutoryScreen";
-import AccountGroupScreen from "./AccountGroupScreen";
-import AccountGroupCreateScreen from "./AccountGroupCreateScreen";
+
+// Navigation Stacks
+import AccountingNavigator from "../navigation/AccountingNavigator";
+
+// Custom Tab Bar
 import CustomTabBar from "../components/CustomTabBar";
 
+const Tab = createBottomTabNavigator<MainTabParamList>();
+
 export default function MainNavigator() {
-  const [activeTab, setActiveTab] = useState("dashboard");
-
-  const renderScreen = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return <DashboardScreen />;
-      case "accounting":
-        return <AccountingScreen navigation={{ navigate: setActiveTab }} />;
-      case "inventory":
-        return <InventoryScreen />;
-      case "pos":
-        return <POSScreen />;
-      case "crm":
-        return <CRMScreen />;
-      case "reports":
-        return <ReportsScreen />;
-      case "audit":
-        return <AuditScreen />;
-      case "ecommerce":
-        return <EcommerceScreen />;
-      case "payroll":
-        return <PayrollScreen />;
-      case "admins":
-        return <AdminsScreen />;
-      case "statutory":
-        return <StatutoryScreen />;
-      case "accountgroup":
-        return (
-          <AccountGroupScreen
-            navigation={{
-              navigate: setActiveTab,
-              goBack: () => setActiveTab("accounting"),
-            }}
-          />
-        );
-      case "accountgroupcreate":
-        return (
-          <AccountGroupCreateScreen
-            navigation={{
-              navigate: setActiveTab,
-              goBack: () => setActiveTab("accountgroup"),
-            }}
-          />
-        );
-      default:
-        return <DashboardScreen />;
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>{renderScreen()}</View>
-      <CustomTabBar activeTab={activeTab} onTabPress={setActiveTab} />
-    </View>
+    <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+      }}>
+      <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      <Tab.Screen name="Accounting" component={AccountingNavigator} />
+      <Tab.Screen name="Inventory" component={InventoryScreen} />
+      <Tab.Screen name="POS" component={POSScreen} />
+      <Tab.Screen name="CRM" component={CRMScreen} />
+      <Tab.Screen name="Reports" component={ReportsScreen} />
+      <Tab.Screen name="Audit" component={AuditScreen} />
+      <Tab.Screen name="Ecommerce" component={EcommerceScreen} />
+      <Tab.Screen name="Payroll" component={PayrollScreen} />
+      <Tab.Screen name="Admins" component={AdminsScreen} />
+      <Tab.Screen name="Statutory" component={StatutoryScreen} />
+    </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-  },
-});
