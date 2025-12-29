@@ -8,7 +8,7 @@ import AccountingScreen from "../screens/AccountingScreen";
 import LedgerAccountListScreen from "../screens/LedgerAccountListScreen";
 // Account Groups Feature
 import {
-  AccountGroupListScreen,
+  AccountGroupHomeScreen,
   AccountGroupCreateScreen,
   AccountGroupShowScreen,
   AccountGroupEditScreen,
@@ -34,7 +34,7 @@ export default function AccountingNavigator() {
       {/* Account Groups Module */}
       <Stack.Screen
         name="AccountGroupList"
-        component={AccountGroupListScreen}
+        component={AccountGroupHomeScreen}
         options={{ title: "Account Groups" }}
       />
       <Stack.Screen

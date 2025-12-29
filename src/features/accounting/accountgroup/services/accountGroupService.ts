@@ -52,10 +52,20 @@ export const accountGroupService = {
   list: async (params: ListParams = {}) => {
     try {
       const baseUrl = await getBaseUrl();
-      const queryString = new URLSearchParams(params as any).toString();
+
+      // Filter out undefined and empty string values
+      const cleanParams: Record<string, string> = {};
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          cleanParams[key] = String(value);
+        }
+      });
+
+      const queryString = new URLSearchParams(cleanParams).toString();
       const response = await apiClient.get<any>(
         `${baseUrl}${queryString ? `?${queryString}` : ""}`
       );
+
       return response.data;
     } catch (error) {
       console.error("Error fetching account groups:", error);

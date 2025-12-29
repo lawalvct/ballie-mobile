@@ -19,27 +19,31 @@ import AccountingNavigator from "../navigation/AccountingNavigator";
 
 // Custom Tab Bar
 import CustomTabBar from "../components/CustomTabBar";
+import { DevScreenIndicator } from "../components/DevScreenIndicator";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export default function MainNavigator() {
   return (
-    <Tab.Navigator
-      tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-      }}>
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Accounting" component={AccountingNavigator} />
-      <Tab.Screen name="Inventory" component={InventoryScreen} />
-      <Tab.Screen name="POS" component={POSScreen} />
-      <Tab.Screen name="CRM" component={CRMScreen} />
-      <Tab.Screen name="Reports" component={ReportsScreen} />
-      <Tab.Screen name="Audit" component={AuditScreen} />
-      <Tab.Screen name="Ecommerce" component={EcommerceScreen} />
-      <Tab.Screen name="Payroll" component={PayrollScreen} />
-      <Tab.Screen name="Admins" component={AdminsScreen} />
-      <Tab.Screen name="Statutory" component={StatutoryScreen} />
-    </Tab.Navigator>
+    <>
+      <Tab.Navigator
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+        }}>
+        <Tab.Screen name="Dashboard" component={DashboardScreen} />
+        <Tab.Screen name="Accounting" component={AccountingNavigator} />
+        <Tab.Screen name="Inventory" component={InventoryScreen} />
+        <Tab.Screen name="POS" component={POSScreen} />
+        <Tab.Screen name="CRM" component={CRMScreen} />
+        <Tab.Screen name="Reports" component={ReportsScreen} />
+        <Tab.Screen name="Audit" component={AuditScreen} />
+        <Tab.Screen name="Ecommerce" component={EcommerceScreen} />
+        <Tab.Screen name="Payroll" component={PayrollScreen} />
+        <Tab.Screen name="Admins" component={AdminsScreen} />
+        <Tab.Screen name="Statutory" component={StatutoryScreen} />
+      </Tab.Navigator>
+      <DevScreenIndicator />
+    </>
   );
 }

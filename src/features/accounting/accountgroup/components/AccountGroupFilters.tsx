@@ -5,242 +5,231 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  ScrollView,
 } from "react-native";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
+import { ListParams } from "../types";
 
-export default function AccountGroupFilters() {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("All Statuses");
-  const [selectedNature, setSelectedNature] = useState("All Natures");
-  const [selectedLevel, setSelectedLevel] = useState("All Levels");
+interface AccountGroupFiltersProps {
+  filters: ListParams;
+  setFilters: React.Dispatch<React.SetStateAction<ListParams>>;
+  onSearch: () => void;
+}
 
-  const statuses = ["All Statuses", "Active", "Inactive"];
-  const natures = [
-    "All Natures",
-    "Assets",
-    "Liabilities",
-    "Equity",
-    "Income",
-    "Expenses",
-  ];
-  const levels = ["All Levels", "Parent", "Child"];
-
+export default function AccountGroupFilters({
+  filters,
+  setFilters,
+  onSearch,
+}: AccountGroupFiltersProps) {
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.header}
-        onPress={() => setIsExpanded(!isExpanded)}>
-        <Text style={styles.headerText}>Filters</Text>
-        <Text style={styles.arrow}>{isExpanded ? "▼" : "▶"}</Text>
-      </TouchableOpacity>
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by name or code..."
+          value={filters.search}
+          onChangeText={(text) => setFilters({ ...filters, search: text })}
+          onSubmitEditing={onSearch}
+          placeholderTextColor="#9ca3af"
+        />
+        <TouchableOpacity style={styles.searchButton} onPress={onSearch}>
+          <Text style={styles.searchButtonText}>🔍</Text>
+        </TouchableOpacity>
+      </View>
 
-      {isExpanded && (
-        <View style={styles.filtersContent}>
-          {/* Search */}
-          <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Search</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Search by name..."
-              value={searchText}
-              onChangeText={setSearchText}
-              placeholderTextColor="#9ca3af"
-            />
-          </View>
+      {/* Filter Chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipsContainer}>
+        {/* Nature Filter */}
+        <TouchableOpacity
+          style={[styles.filterChip, filters.nature && styles.filterChipActive]}
+          onPress={() =>
+            setFilters({
+              ...filters,
+              nature:
+                filters.nature === "assets"
+                  ? "liabilities"
+                  : filters.nature === "liabilities"
+                  ? "equity"
+                  : filters.nature === "equity"
+                  ? "income"
+                  : filters.nature === "income"
+                  ? "expenses"
+                  : filters.nature === "expenses"
+                  ? undefined
+                  : "assets",
+            })
+          }>
+          <Text
+            style={[
+              styles.filterChipText,
+              filters.nature && styles.filterChipTextActive,
+            ]}>
+            {filters.nature
+              ? `Nature: ${
+                  filters.nature.charAt(0).toUpperCase() +
+                  filters.nature.slice(1)
+                }`
+              : "All Natures"}
+          </Text>
+        </TouchableOpacity>
 
-          {/* Status */}
-          <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Status</Text>
-            <View style={styles.chipContainer}>
-              {statuses.map((status) => (
-                <TouchableOpacity
-                  key={status}
-                  style={[
-                    styles.chip,
-                    selectedStatus === status && styles.chipSelected,
-                  ]}
-                  onPress={() => setSelectedStatus(status)}>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selectedStatus === status && styles.chipTextSelected,
-                    ]}>
-                    {status}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+        {/* Status Filter */}
+        <TouchableOpacity
+          style={[styles.filterChip, filters.status && styles.filterChipActive]}
+          onPress={() =>
+            setFilters({
+              ...filters,
+              status:
+                filters.status === "active"
+                  ? "inactive"
+                  : filters.status === "inactive"
+                  ? undefined
+                  : "active",
+            })
+          }>
+          <Text
+            style={[
+              styles.filterChipText,
+              filters.status && styles.filterChipTextActive,
+            ]}>
+            {filters.status
+              ? `Status: ${
+                  filters.status.charAt(0).toUpperCase() +
+                  filters.status.slice(1)
+                }`
+              : "All Status"}
+          </Text>
+        </TouchableOpacity>
 
-          {/* Nature */}
-          <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Nature</Text>
-            <View style={styles.chipContainer}>
-              {natures.map((nature) => (
-                <TouchableOpacity
-                  key={nature}
-                  style={[
-                    styles.chip,
-                    selectedNature === nature && styles.chipSelected,
-                  ]}
-                  onPress={() => setSelectedNature(nature)}>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selectedNature === nature && styles.chipTextSelected,
-                    ]}>
-                    {nature}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+        {/* Level Filter */}
+        <TouchableOpacity
+          style={[styles.filterChip, filters.level && styles.filterChipActive]}
+          onPress={() =>
+            setFilters({
+              ...filters,
+              level:
+                filters.level === "parent"
+                  ? "child"
+                  : filters.level === "child"
+                  ? undefined
+                  : "parent",
+            })
+          }>
+          <Text
+            style={[
+              styles.filterChipText,
+              filters.level && styles.filterChipTextActive,
+            ]}>
+            {filters.level
+              ? `Level: ${
+                  filters.level.charAt(0).toUpperCase() + filters.level.slice(1)
+                }`
+              : "All Levels"}
+          </Text>
+        </TouchableOpacity>
 
-          {/* Level */}
-          <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Level</Text>
-            <View style={styles.chipContainer}>
-              {levels.map((level) => (
-                <TouchableOpacity
-                  key={level}
-                  style={[
-                    styles.chip,
-                    selectedLevel === level && styles.chipSelected,
-                  ]}
-                  onPress={() => setSelectedLevel(level)}>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selectedLevel === level && styles.chipTextSelected,
-                    ]}>
-                    {level}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+        {/* Sort */}
+        <TouchableOpacity
+          style={styles.filterChip}
+          onPress={() =>
+            setFilters({
+              ...filters,
+              direction: filters.direction === "asc" ? "desc" : "asc",
+            })
+          }>
+          <Text style={styles.filterChipText}>
+            Sort: {filters.sort} {filters.direction === "asc" ? "↑" : "↓"}
+          </Text>
+        </TouchableOpacity>
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.clearButton}>
-              <Text style={styles.clearButtonText}>Clear</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.applyButton}>
-              <Text style={styles.applyButtonText}>Apply Filters</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+        {/* Clear Filters */}
+        {(filters.search ||
+          filters.status ||
+          filters.nature ||
+          filters.level) && (
+          <TouchableOpacity
+            style={[styles.filterChip, styles.clearChip]}
+            onPress={() =>
+              setFilters({
+                sort: "name",
+                direction: "asc",
+              })
+            }>
+            <Text style={styles.clearChipText}>✕ Clear</Text>
+          </TouchableOpacity>
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: SEMANTIC_COLORS.white,
-    marginHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-  },
-  headerText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
-  },
-  arrow: {
-    fontSize: 12,
-    color: BRAND_COLORS.darkPurple,
-  },
-  filtersContent: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  filterGroup: {
+    paddingHorizontal: 20,
     marginBottom: 16,
   },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: SEMANTIC_COLORS.background,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: BRAND_COLORS.darkPurple,
-  },
-  chipContainer: {
+  searchContainer: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -4,
+    marginBottom: 12,
+    gap: 8,
   },
-  chip: {
-    backgroundColor: SEMANTIC_COLORS.background,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    margin: 4,
-  },
-  chipSelected: {
-    backgroundColor: BRAND_COLORS.darkPurple,
-    borderColor: BRAND_COLORS.darkPurple,
-  },
-  chipText: {
-    fontSize: 13,
-    color: "#6b7280",
-  },
-  chipTextSelected: {
-    color: SEMANTIC_COLORS.white,
-    fontWeight: "600",
-  },
-  actionButtons: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 8,
-  },
-  clearButton: {
+  searchInput: {
     flex: 1,
-    backgroundColor: SEMANTIC_COLORS.background,
+    height: 44,
+    backgroundColor: SEMANTIC_COLORS.white,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  clearButtonText: {
+    paddingHorizontal: 12,
     fontSize: 14,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
   },
-  applyButton: {
-    flex: 2,
+  searchButton: {
+    width: 44,
+    height: 44,
     backgroundColor: BRAND_COLORS.gold,
     borderRadius: 8,
-    paddingVertical: 12,
+    justifyContent: "center",
     alignItems: "center",
   },
-  applyButtonText: {
-    fontSize: 14,
-    fontWeight: "bold",
+  searchButtonText: {
+    fontSize: 18,
+  },
+  chipsContainer: {
+    flexDirection: "row",
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: SEMANTIC_COLORS.background,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    marginRight: 8,
+  },
+  filterChipActive: {
+    backgroundColor: "#d1b05e20",
+    borderColor: BRAND_COLORS.gold,
+  },
+  filterChipText: {
+    fontSize: 13,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+  filterChipTextActive: {
     color: BRAND_COLORS.darkPurple,
+    fontWeight: "600",
+  },
+  clearChip: {
+    backgroundColor: "#fee2e2",
+    borderColor: "#dc2626",
+  },
+  clearChipText: {
+    fontSize: 13,
+    color: "#dc2626",
+    fontWeight: "600",
   },
 });

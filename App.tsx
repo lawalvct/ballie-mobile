@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { authAPI } from "./src/api/endpoints/auth";
 import { onboardingAPI } from "./src/api/endpoints/onboarding";
 import { BRAND_COLORS } from "./src/theme/colors";
+import { updateScreenName } from "./src/components/DevScreenIndicator";
 
 type Screen =
   | "splash1"
@@ -273,7 +274,19 @@ function AppContent() {
   // If authenticated and onboarding complete, show main navigator
   if (isAuthenticated && !needsOnboarding) {
     return (
-      <NavigationContainer>
+      <NavigationContainer
+        onStateChange={(state) => {
+          if (state) {
+            const currentRoute = state.routes[state.index];
+            if (currentRoute.state) {
+              const nestedState = currentRoute.state as any;
+              const nestedRoute = nestedState.routes[nestedState.index];
+              updateScreenName(`${currentRoute.name} → ${nestedRoute.name}`);
+            } else {
+              updateScreenName(currentRoute.name);
+            }
+          }
+        }}>
         <StatusBar style="light" />
         <MainNavigator />
       </NavigationContainer>

@@ -2,13 +2,40 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS } from "../../../../theme/colors";
+import { Statistics } from "../types";
 
-export default function AccountGroupStats() {
+interface AccountGroupStatsProps {
+  statistics: Statistics | null;
+}
+
+export default function AccountGroupStats({
+  statistics,
+}: AccountGroupStatsProps) {
+  if (!statistics) {
+    return null;
+  }
+
   const stats = [
-    { label: "Total Groups", value: "46", gradient: ["#3b82f6", "#2563eb"] },
-    { label: "Active Groups", value: "42", gradient: ["#10b981", "#059669"] },
-    { label: "Parent Groups", value: "15", gradient: ["#f59e0b", "#d97706"] },
-    { label: "Child Groups", value: "63", gradient: ["#8b5cf6", "#7c3aed"] },
+    {
+      label: "Total Groups",
+      value: statistics.total_groups,
+      gradient: ["#3b82f6", "#2563eb"],
+    },
+    {
+      label: "Active Groups",
+      value: statistics.active_groups,
+      gradient: ["#10b981", "#059669"],
+    },
+    {
+      label: "Parent Groups",
+      value: statistics.parent_groups,
+      gradient: ["#f59e0b", "#d97706"],
+    },
+    {
+      label: "Child Groups",
+      value: statistics.child_groups,
+      gradient: ["#8b5cf6", "#7c3aed"],
+    },
   ];
 
   return (

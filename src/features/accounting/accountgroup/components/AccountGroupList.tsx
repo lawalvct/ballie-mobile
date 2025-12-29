@@ -8,122 +8,67 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { AccountingStackParamList } from "../../../navigation/types";
+import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
+import { AccountGroup, PaginationInfo } from "../types";
 
 type NavigationProp = NativeStackNavigationProp<AccountingStackParamList>;
 
-export default function AccountGroupList() {
+interface AccountGroupListProps {
+  accountGroups: AccountGroup[];
+  pagination: PaginationInfo | null;
+  onToggleStatus: (id: number) => void;
+}
+
+export default function AccountGroupList({
+  accountGroups,
+  pagination,
+  onToggleStatus,
+}: AccountGroupListProps) {
   const navigation = useNavigation<NavigationProp>();
-  const accountGroups = [
-    {
-      id: 1,
-      name: "Current Assets",
-      nature: "Assets",
-      hierarchy: "Parent",
-      accountsCount: 24,
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Cash and Bank",
-      nature: "Assets",
-      hierarchy: "Child → Current Assets",
-      accountsCount: 8,
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Fixed Assets",
-      nature: "Assets",
-      hierarchy: "Parent",
-      accountsCount: 18,
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Current Liabilities",
-      nature: "Liabilities",
-      hierarchy: "Parent",
-      accountsCount: 15,
-      status: "Active",
-    },
-    {
-      id: 5,
-      name: "Accounts Payable",
-      nature: "Liabilities",
-      hierarchy: "Child → Current Liabilities",
-      accountsCount: 6,
-      status: "Active",
-    },
-    {
-      id: 6,
-      name: "Revenue",
-      nature: "Income",
-      hierarchy: "Parent",
-      accountsCount: 32,
-      status: "Active",
-    },
-    {
-      id: 7,
-      name: "Operating Expenses",
-      nature: "Expenses",
-      hierarchy: "Parent",
-      accountsCount: 28,
-      status: "Active",
-    },
-    {
-      id: 8,
-      name: "Salary & Wages",
-      nature: "Expenses",
-      hierarchy: "Child → Operating Expenses",
-      accountsCount: 12,
-      status: "Active",
-    },
-    {
-      id: 9,
-      name: "Shareholders Equity",
-      nature: "Equity",
-      hierarchy: "Parent",
-      accountsCount: 9,
-      status: "Active",
-    },
-    {
-      id: 10,
-      name: "Inventory",
-      nature: "Assets",
-      hierarchy: "Child → Current Assets",
-      accountsCount: 5,
-      status: "Inactive",
-    },
-  ];
 
   const getNatureColor = (nature: string) => {
-    switch (nature) {
-      case "Assets":
+    const lowerNature = nature.toLowerCase();
+    switch (lowerNature) {
+      case "assets":
         return "#3b82f6";
-      case "Liabilities":
+      case "liabilities":
         return "#ef4444";
-      case "Equity":
+      case "equity":
         return "#8b5cf6";
-      case "Income":
+      case "income":
         return "#10b981";
-      case "Expenses":
+      case "expenses":
         return "#f59e0b";
       default:
         return "#6b7280";
     }
   };
 
+  const getHierarchyDisplay = (group: AccountGroup) => {
+    if (group.parent) {
+      return `Child → ${group.parent.name}`;
+    }
+    return group.children_count > 0 ? "Parent" : "Standalone";
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Account Groups</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Account Groups</Text>
+        <Text style={styles.subtitle}>
+          {pagination
+            ? `${pagination.from}-${pagination.to} of ${pagination.total}`
+            : `${accountGroups.length} groups`}
+        </Text>
+      </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.table}>
           {/* Table Header */}
           <View style={styles.tableHeader}>
             <Text style={[styles.headerCell, styles.nameColumn]}>Name</Text>
+            <Text style={[styles.headerCell, styles.codeColumn]}>Code</Text>
             <Text style={[styles.headerCell, styles.natureColumn]}>Nature</Text>
             <Text style={[styles.headerCell, styles.hierarchyColumn]}>
               Hierarchy
@@ -138,85 +83,116 @@ export default function AccountGroupList() {
           </View>
 
           {/* Table Rows */}
-          {accountGroups.map((group, index) => (
-            <View
-              key={group.id}
-              style={[styles.tableRow, index % 2 === 1 && styles.tableRowAlt]}>
-              <Text style={[styles.cell, styles.nameColumn, styles.nameText]}>
-                {group.name}
-              </Text>
-              <View style={[styles.cell, styles.natureColumn]}>
-                <View
-                  style={[
-                    styles.natureBadge,
-                    { backgroundColor: getNatureColor(group.nature) + "20" },
-                  ]}>
-                  <Text
-                    style={[
-                      styles.natureText,
-                      { color: getNatureColor(group.nature) },
-                    ]}>
-                    {group.nature}
-                  </Text>
-                </View>
-              </View>
-              <Text style={[styles.cell, styles.hierarchyColumn]}>
-                {group.hierarchy}
-              </Text>
-              <Text style={[styles.cell, styles.countColumn]}>
-                {group.accountsCount}
-              </Text>
-              <View style={[styles.cell, styles.statusColumn]}>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    group.status === "Active"
-                      ? styles.statusActive
-                      : styles.statusInactive,
-                  ]}>
-                  <Text
-                    style={[
-                      styles.statusText,
-                      group.status === "Active"
-                        ? styles.statusTextActive
-                        : styles.statusTextInactive,
-                    ]}>
-                    {group.status}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.cell, styles.actionsColumn]}>
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() =>
-                      navigation.navigate("AccountGroupShow", { id: group.id })
-                    }>
-                    <Text style={styles.actionButtonText}>View</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() =>
-                      navigation.navigate("AccountGroupEdit", { id: group.id })
-                    }>
-                    <Text style={styles.actionButtonText}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton}>
-                    <Text style={[styles.actionButtonText, styles.deactivate]}>
-                      {group.status === "Active" ? "Deactivate" : "Activate"}
-                    </Text>
-                  </TouchableOpacity>
-                  {group.hierarchy === "Parent" && (
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.createChildButton]}
-                      onPress={() => navigation.navigate("AccountGroupCreate")}>
-                      <Text style={styles.createChildText}>+ Child</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+          {accountGroups.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No account groups found</Text>
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={() => navigation.navigate("AccountGroupCreate")}>
+                <Text style={styles.createButtonText}>
+                  + Create First Group
+                </Text>
+              </TouchableOpacity>
             </View>
-          ))}
+          ) : (
+            accountGroups.map((group, index) => (
+              <View
+                key={group.id}
+                style={[
+                  styles.tableRow,
+                  index % 2 === 1 && styles.tableRowAlt,
+                ]}>
+                <Text style={[styles.cell, styles.nameColumn, styles.nameText]}>
+                  {group.name}
+                </Text>
+                <Text style={[styles.cell, styles.codeColumn, styles.codeText]}>
+                  {group.code}
+                </Text>
+                <View style={[styles.cell, styles.natureColumn]}>
+                  <View
+                    style={[
+                      styles.natureBadge,
+                      {
+                        backgroundColor:
+                          getNatureColor(group.nature_label) + "20",
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        styles.natureText,
+                        { color: getNatureColor(group.nature_label) },
+                      ]}>
+                      {group.nature_label}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.cell, styles.hierarchyColumn]}>
+                  {getHierarchyDisplay(group)}
+                </Text>
+                <Text style={[styles.cell, styles.countColumn]}>
+                  {group.ledger_accounts_count}
+                </Text>
+                <View style={[styles.cell, styles.statusColumn]}>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      group.is_active
+                        ? styles.statusActive
+                        : styles.statusInactive,
+                    ]}>
+                    <Text
+                      style={[
+                        styles.statusText,
+                        group.is_active
+                          ? styles.statusTextActive
+                          : styles.statusTextInactive,
+                      ]}>
+                      {group.is_active ? "Active" : "Inactive"}
+                    </Text>
+                  </View>
+                </View>
+                <View style={[styles.cell, styles.actionsColumn]}>
+                  <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() =>
+                        navigation.navigate("AccountGroupShow", {
+                          id: group.id,
+                        })
+                      }>
+                      <Text style={styles.actionButtonText}>View</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() =>
+                        navigation.navigate("AccountGroupEdit", {
+                          id: group.id,
+                        })
+                      }>
+                      <Text style={styles.actionButtonText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => onToggleStatus(group.id)}>
+                      <Text
+                        style={[styles.actionButtonText, styles.deactivate]}>
+                        {group.is_active ? "Deactivate" : "Activate"}
+                      </Text>
+                    </TouchableOpacity>
+                    {!group.parent_id && (
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.createChildButton]}
+                        onPress={() =>
+                          navigation.navigate("AccountGroupCreate")
+                        }>
+                        <Text style={styles.createChildText}>+ Child</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
     </View>
@@ -225,14 +201,24 @@ export default function AccountGroupList() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 20,
     marginBottom: 20,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
     color: BRAND_COLORS.darkPurple,
-    marginBottom: 16,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#6b7280",
   },
   table: {
     backgroundColor: SEMANTIC_COLORS.white,
@@ -243,6 +229,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
+    minWidth: "100%",
   },
   tableHeader: {
     flexDirection: "row",
@@ -273,14 +260,37 @@ const styles = StyleSheet.create({
     color: "#374151",
     justifyContent: "center",
   },
+  emptyState: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#6b7280",
+    marginBottom: 16,
+  },
+  createButton: {
+    backgroundColor: BRAND_COLORS.gold,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  createButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
+  },
   nameColumn: {
     width: 180,
+  },
+  codeColumn: {
+    width: 100,
   },
   natureColumn: {
     width: 120,
   },
   hierarchyColumn: {
-    width: 220,
+    width: 180,
   },
   countColumn: {
     width: 100,
@@ -290,11 +300,16 @@ const styles = StyleSheet.create({
     width: 100,
   },
   actionsColumn: {
-    width: 380,
+    width: 350,
   },
   nameText: {
     fontWeight: "600",
     color: BRAND_COLORS.darkPurple,
+  },
+  codeText: {
+    fontFamily: "monospace",
+    fontSize: 12,
+    color: "#6b7280",
   },
   natureBadge: {
     paddingHorizontal: 10,
@@ -350,7 +365,7 @@ const styles = StyleSheet.create({
     color: "#dc2626",
   },
   createChildButton: {
-    backgroundColor: BRAND_COLORS.gold + "20",
+    backgroundColor: "#d1b05e20",
     borderColor: BRAND_COLORS.gold,
   },
   createChildText: {
