@@ -36,7 +36,7 @@ export default function AccountManagement() {
 
       <TouchableOpacity
         style={styles.menuCard}
-        onPress={() => navigation.navigate("LedgerAccountList")}>
+        onPress={() => navigation.navigate("LedgerAccountHome")}>
         <View style={[styles.menuIcon, { backgroundColor: "#fef3c7" }]}>
           <Text style={styles.menuEmoji}>📋</Text>
         </View>

@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 
-import LedgerAccountListScreen from "../screens/LedgerAccountListScreen";
+import LedgerAccountHomeScreen from "../screens/LedgerAccountHomeScreen";
 // Account Groups Feature
 import {
   AccountGroupHomeScreen,
@@ -70,8 +70,8 @@ function AccountingStack() {
 
       {/* Ledger Accounts Module - Placeholder */}
       <Stack.Screen
-        name="LedgerAccountList"
-        component={LedgerAccountListScreen}
+        name="LedgerAccountHome"
+        component={LedgerAccountHomeScreen}
         options={{ title: "Ledger Accounts" }}
       />
       {/*

@@ -12,10 +12,10 @@ import { BRAND_COLORS } from "../theme/colors";
 
 type Props = NativeStackScreenProps<
   AccountingStackParamList,
-  "LedgerAccountList"
+  "LedgerAccountHome"
 >;
 
-export default function LedgerAccountListScreen({ navigation }: Props) {
+export default function LedgerAccountHomeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>

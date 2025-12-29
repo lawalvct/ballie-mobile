@@ -33,7 +33,7 @@ export type AccountingStackParamList = {
   AccountGroupEdit: { id: number };
 
   // Ledger Accounts Module (placeholder for future)
-  LedgerAccountList: undefined;
+  LedgerAccountHome: undefined;
   LedgerAccountCreate: undefined;
   LedgerAccountShow: { id: number };
   LedgerAccountEdit: { id: number };
