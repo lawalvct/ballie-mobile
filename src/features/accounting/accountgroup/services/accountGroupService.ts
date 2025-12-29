@@ -123,9 +123,7 @@ export const accountGroupService = {
   toggleStatus: async (id: number): Promise<AccountGroup> => {
     try {
       const baseUrl = await getBaseUrl();
-      const response = await apiClient.patch<any>(
-        `${baseUrl}/${id}/toggle-status`
-      );
+      const response = await apiClient.post<any>(`${baseUrl}/${id}/toggle`);
       return response.data.account_group;
     } catch (error) {
       console.error("Error toggling status:", error);

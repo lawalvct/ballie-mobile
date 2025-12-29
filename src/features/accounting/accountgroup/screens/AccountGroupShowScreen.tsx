@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { AccountingStackParamList } from "../../../navigation/types";
+import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { showToast } from "../../../../utils/toast";
 import { accountGroupService } from "../services/accountGroupService";
@@ -137,13 +137,6 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
       </View>
 
       <ScrollView style={styles.content}>
-        {/* Coming Soon Notice */}
-        <View style={styles.comingSoonBanner}>
-          <Text style={styles.comingSoonText}>
-            🚧 Full details view coming soon
-          </Text>
-        </View>
-
         {/* Basic Info */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Basic Information</Text>
@@ -274,20 +267,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  comingSoonBanner: {
-    backgroundColor: "#fef3c7",
-    padding: 16,
-    margin: 20,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: "#f59e0b",
-  },
-  comingSoonText: {
-    fontSize: 14,
-    color: "#92400e",
-    textAlign: "center",
-    fontWeight: "600",
-  },
+  
   card: {
     backgroundColor: SEMANTIC_COLORS.white,
     marginHorizontal: 20,

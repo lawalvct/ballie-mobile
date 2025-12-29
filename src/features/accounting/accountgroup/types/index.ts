@@ -51,6 +51,7 @@ export interface CreateAccountGroupPayload {
 export interface UpdateAccountGroupPayload {
   name?: string;
   code?: string;
+  nature?: "assets" | "liabilities" | "equity" | "income" | "expenses";
   parent_id?: number | null;
   is_active?: boolean;
 }

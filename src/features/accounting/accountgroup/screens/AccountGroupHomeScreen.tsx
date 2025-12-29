@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
+import { useFocusEffect } from "@react-navigation/native";
 import AppHeader from "../../../../components/AppHeader";
 import AccountGroupStats from "../components/AccountGroupStats";
 import AccountGroupFilters from "../components/AccountGroupFilters";
@@ -50,6 +51,13 @@ export default function AccountGroupHomeScreen({ navigation }: Props) {
     filters.sort,
     filters.direction,
   ]);
+
+  // Reload data when screen comes into focus (after edit/create)
+  useFocusEffect(
+    useCallback(() => {
+      loadAccountGroups();
+    }, [filters])
+  );
 
   const loadAccountGroups = async () => {
     try {

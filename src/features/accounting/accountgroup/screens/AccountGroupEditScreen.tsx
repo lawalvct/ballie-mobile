@@ -13,7 +13,7 @@ import {
   Alert,
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { AccountingStackParamList } from "../../../navigation/types";
+import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { Picker } from "@react-native-picker/picker";
 import { showToast } from "../../../../utils/toast";
@@ -103,6 +103,7 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
       await accountGroupService.update(id, {
         name: accountGroup.name,
         code: accountGroup.code.toUpperCase(),
+        nature: originalData?.nature,
         parent_id: accountGroup.parent_id,
         is_active: accountGroup.is_active,
       });
@@ -166,13 +167,6 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Coming Soon Notice */}
-        <View style={styles.comingSoonBanner}>
-          <Text style={styles.comingSoonText}>
-            🚧 Full edit functionality coming soon
-          </Text>
-        </View>
-
         {/* Nature Display (Read-only) */}
         <View style={styles.section}>
           <Text style={styles.label}>Account Nature</Text>
@@ -352,20 +346,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  comingSoonBanner: {
-    backgroundColor: "#fef3c7",
-    padding: 16,
-    margin: 20,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: "#f59e0b",
-  },
-  comingSoonText: {
-    fontSize: 14,
-    color: "#92400e",
-    textAlign: "center",
-    fontWeight: "600",
-  },
+
   section: {
     paddingHorizontal: 20,
     marginTop: 24,
