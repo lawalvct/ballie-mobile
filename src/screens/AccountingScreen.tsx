@@ -1,5 +1,11 @@
-﻿import React from "react";
-import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native";
+﻿import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  RefreshControl,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../navigation/types";
@@ -16,6 +22,14 @@ type Props = NativeStackScreenProps<AccountingStackParamList, "AccountingHome">;
 
 export default function AccountingScreen({ navigation }: Props) {
   const { user, tenant } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simulate refresh - you can add actual data fetching here
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setRefreshing(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -26,7 +40,12 @@ export default function AccountingScreen({ navigation }: Props) {
         userRole={user?.role}
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
         <AccountingOverview />
         <QuickActions />
         <AccountManagement />

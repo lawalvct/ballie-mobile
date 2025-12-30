@@ -26,6 +26,9 @@ export type AccountingStackParamList = {
   // Main Accounting Home
   AccountingHome: undefined;
 
+  // All Accounting Actions
+  AccountingActions: undefined;
+
   // Account Groups Module
   AccountGroupHome: undefined;
   AccountGroupCreate: undefined;

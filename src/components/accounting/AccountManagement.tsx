@@ -14,7 +14,8 @@ export default function AccountManagement() {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Account Management</Text>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("AccountingActions")}>
           <Text style={styles.viewAll}>View All →</Text>
         </TouchableOpacity>
       </View>

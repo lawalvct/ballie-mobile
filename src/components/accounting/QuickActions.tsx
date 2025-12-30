@@ -11,33 +11,33 @@ export default function QuickActions() {
         <TouchableOpacity style={styles.quickActionCard}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#10b981" }]}>
-            <Text style={styles.quickActionEmoji}>📊</Text>
+            <Text style={styles.quickActionEmoji}> 💵 </Text>
           </View>
-          <Text style={styles.quickActionLabel}>Dashboard</Text>
+          <Text style={styles.quickActionLabel}>Sales Invoice</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.quickActionCard}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#f59e0b" }]}>
-            <Text style={styles.quickActionEmoji}>📑</Text>
+            <Text style={styles.quickActionEmoji}>🧾</Text>
           </View>
-          <Text style={styles.quickActionLabel}>Journal Entry</Text>
+          <Text style={styles.quickActionLabel}>Receipt</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.quickActionCard}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#3b82f6" }]}>
-            <Text style={styles.quickActionEmoji}>🏦</Text>
+            <Text style={styles.quickActionEmoji}>🛒</Text>
           </View>
-          <Text style={styles.quickActionLabel}>Reconcile</Text>
+          <Text style={styles.quickActionLabel}>Purchase Invoice</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.quickActionCard}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#8b5cf6" }]}>
-            <Text style={styles.quickActionEmoji}>📈</Text>
+            <Text style={styles.quickActionEmoji}>📊</Text>
           </View>
-          <Text style={styles.quickActionLabel}>Reports</Text>
+          <Text style={styles.quickActionLabel}>Report</Text>
         </TouchableOpacity>
       </View>
     </View>
