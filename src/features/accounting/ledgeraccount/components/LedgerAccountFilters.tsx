@@ -40,7 +40,7 @@ export default function LedgerAccountFilters({
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, search: searchText || undefined }));
-    onSearch();
+    // Don't call onSearch() here - useEffect in parent will handle it when filters update
   };
 
   return (

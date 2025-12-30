@@ -15,3 +15,26 @@ export const showToast = (
     );
   }
 };
+
+export const showConfirm = (
+  title: string,
+  message: string,
+  onConfirm: () => void,
+  options?: {
+    confirmText?: string;
+    cancelText?: string;
+    destructive?: boolean;
+  }
+): void => {
+  Alert.alert(title, message, [
+    {
+      text: options?.cancelText || "Cancel",
+      style: "cancel",
+    },
+    {
+      text: options?.confirmText || "Confirm",
+      style: options?.destructive ? "destructive" : "default",
+      onPress: onConfirm,
+    },
+  ]);
+};
