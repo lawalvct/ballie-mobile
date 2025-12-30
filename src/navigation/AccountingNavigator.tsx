@@ -16,7 +16,10 @@ import {
   LedgerAccountShowScreen,
 } from "../features/accounting/ledgeraccount";
 // Voucher Management Feature
-import { VoucherHomeScreen } from "../features/accounting/voucher";
+import {
+  VoucherHomeScreen,
+  VoucherCreateScreen,
+} from "../features/accounting/voucher";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "./types";
 import { BRAND_COLORS } from "../theme/colors";
@@ -163,7 +166,7 @@ function AccountingStack() {
       />
       <Stack.Screen
         name="VoucherCreate"
-        component={PlaceholderScreen}
+        component={VoucherCreateScreen}
         options={{ title: "Create Voucher" }}
       />
       <Stack.Screen
