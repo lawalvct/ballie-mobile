@@ -125,8 +125,17 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
   const loadFormData = async () => {
     try {
       setLoading(true);
-      const formData = await voucherService.getFormData();
-      setLedgerAccounts(formData.ledger_accounts || []);
+      const response = await voucherService.getFormData();
+
+      // Debug: Log the response structure
+      console.log("Form data response:", JSON.stringify(response, null, 2));
+
+      // The API returns { success, data: { ledger_accounts, voucher_types } }
+      const formData = response.data || response;
+      const accounts = formData.ledger_accounts || [];
+
+      console.log("Ledger accounts:", accounts.length, accounts[0]);
+      setLedgerAccounts(accounts);
     } catch (error: any) {
       console.error("Error loading form data:", error);
       Alert.alert(
@@ -417,7 +426,10 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
                     {ledgerAccounts.map((account) => (
                       <Picker.Item
                         key={account.id}
-                        label={account.display_name}
+                        label={
+                          account.display_name ||
+                          `${account.name} (${account.code})`
+                        }
                         value={account.id}
                       />
                     ))}
