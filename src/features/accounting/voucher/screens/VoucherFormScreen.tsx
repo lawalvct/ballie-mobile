@@ -9,9 +9,9 @@ import {
   StatusBar,
   TextInput,
   ActivityIndicator,
-  Alert,
   Platform,
 } from "react-native";
+import { showToast, showConfirm } from "../../../../utils/toast";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
@@ -138,12 +138,11 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
       setLedgerAccounts(accounts);
     } catch (error: any) {
       console.error("Error loading form data:", error);
-      Alert.alert(
-        "Error",
+      showToast(
         error.response?.data?.message ||
           error.message ||
           "Failed to load form data",
-        [{ text: "OK" }]
+        "error"
       );
     } finally {
       setLoading(false);
@@ -183,17 +182,17 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
         const credit = parseFloat(entry.credit_amount) || 0;
 
         if (debit > 0 && credit > 0) {
-          Alert.alert(
-            "Validation Error",
-            "Each entry must have either debit OR credit, not both"
+          showToast(
+            "Each entry must have either debit OR credit, not both",
+            "error"
           );
           return;
         }
 
         if (debit === 0 && credit === 0) {
-          Alert.alert(
-            "Validation Error",
-            "Each entry must have either debit or credit amount"
+          showToast(
+            "Each entry must have either debit or credit amount",
+            "error"
           );
           return;
         }
@@ -219,27 +218,23 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
       const response = await voucherService.create(payload);
       console.log("Voucher created:", response);
 
-      Alert.alert(
-        "Success",
-        `Voucher ${response.voucher_number} created successfully`,
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.goBack();
-              navigation.goBack(); // Go back twice to return to VoucherHome
-            },
-          },
-        ]
+      showToast(
+        `🎉 Voucher ${response.voucher_number} created successfully`,
+        "success"
       );
+
+      // Wait a bit for toast to show before navigating
+      setTimeout(() => {
+        navigation.goBack();
+        navigation.goBack(); // Go back twice to return to VoucherHome
+      }, 1500);
     } catch (error: any) {
       console.error("Error creating voucher:", error);
-      Alert.alert(
-        "Error",
+      showToast(
         error.response?.data?.message ||
           error.message ||
           "Failed to create voucher",
-        [{ text: "OK" }]
+        "error"
       );
     } finally {
       setSaving(false);
@@ -671,9 +666,12 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     borderRadius: 8,
     overflow: "hidden",
+    marginTop: 4,
   },
   picker: {
-    height: 45,
+    height: 50,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   addButton: {
     backgroundColor: BRAND_COLORS.gold,
