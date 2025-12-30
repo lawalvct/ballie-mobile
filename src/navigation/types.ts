@@ -48,6 +48,12 @@ export type AccountingStackParamList = {
     voucherType?: string;
     duplicateId?: number;
   };
+  VoucherForm: {
+    voucherTypeId: number;
+    voucherTypeCode: string;
+    voucherTypeName: string;
+    onCreated?: () => void;
+  };
   VoucherShow: { id: number };
   VoucherEdit: { id: number; onUpdated?: (id: number) => void };
 

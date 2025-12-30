@@ -1,93 +1,76 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
+  ActivityIndicator,
+  Alert,
   SafeAreaView,
+  ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { VoucherType } from "../types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AccountingStackParamList } from "../../../../navigation/types";
+import { voucherService } from "../services/voucherService";
 
 type Props = NativeStackScreenProps<AccountingStackParamList, "VoucherCreate">;
 
-// Voucher types that users can create
-const VOUCHER_TYPES = [
-  {
-    id: 1,
-    code: "SI",
-    name: "Sales Invoice",
-    emoji: "📄",
-    color: "#d1fae5",
-    description: "Record sales transactions",
-  },
-  {
-    id: 2,
-    code: "PI",
-    name: "Purchase Invoice",
-    emoji: "🧾",
-    color: "#fee2e2",
-    description: "Record purchase transactions",
-  },
-  {
-    id: 3,
-    code: "JE",
-    name: "Journal Entry",
-    emoji: "📝",
-    color: "#e0e7ff",
-    description: "Manual accounting entries",
-  },
-  {
-    id: 4,
-    code: "PE",
-    name: "Payment Entry",
-    emoji: "💳",
-    color: "#ddd6fe",
-    description: "Record payments made",
-  },
-  {
-    id: 5,
-    code: "RE",
-    name: "Receipt",
-    emoji: "💰",
-    color: "#dcfce7",
-    description: "Record receipts received",
-  },
-  {
-    id: 6,
-    code: "CN",
-    name: "Contra",
-    emoji: "🔄",
-    color: "#fef9c3",
-    description: "Bank to bank transfers",
-  },
-  {
-    id: 7,
-    code: "CR",
-    name: "Credit Note",
-    emoji: "📉",
-    color: "#fecaca",
-    description: "Sales returns and adjustments",
-  },
-  {
-    id: 8,
-    code: "DN",
-    name: "Debit Note",
-    emoji: "📈",
-    color: "#fed7aa",
-    description: "Purchase returns and adjustments",
-  },
-];
+// Emoji mapping for voucher types
+const VOUCHER_TYPE_EMOJIS: Record<string, string> = {
+  JV: "📝",
+  PV: "💳",
+  RV: "💰",
+  CV: "🔄",
+  CN: "📉",
+  DN: "📈",
+};
+
+// Color mapping for voucher types
+const VOUCHER_TYPE_COLORS: Record<string, string> = {
+  JV: "#e0e7ff",
+  PV: "#ddd6fe",
+  RV: "#dcfce7",
+  CV: "#fef9c3",
+  CN: "#fecaca",
+  DN: "#fed7aa",
+};
 
 export default function VoucherCreateScreen({ navigation }: Props) {
-  const handleVoucherTypeSelect = (voucherType: (typeof VOUCHER_TYPES)[0]) => {
-    // TODO: Navigate to the actual form screen with the selected type
-    // For now, we'll just show which type was selected
-    console.log("Selected voucher type:", voucherType);
-    // navigation.navigate('VoucherForm', { voucherType: voucherType.code });
+  const [voucherTypes, setVoucherTypes] = useState<VoucherType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadVoucherTypes();
+  }, []);
+
+  const loadVoucherTypes = async () => {
+    try {
+      setLoading(true);
+      const formData = await voucherService.getFormData();
+      setVoucherTypes(formData.voucher_types || []);
+    } catch (error: any) {
+      console.error("Error loading voucher types:", error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load voucher types",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVoucherTypeSelect = (voucherType: VoucherType) => {
+    navigation.navigate("VoucherForm", {
+      voucherTypeId: voucherType.id,
+      voucherTypeCode: voucherType.code,
+      voucherTypeName: voucherType.name,
+    });
   };
 
   return (
@@ -108,41 +91,53 @@ export default function VoucherCreateScreen({ navigation }: Props) {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}>
-        {/* Instructions */}
-        <View style={styles.instructionsContainer}>
-          <Text style={styles.instructionsTitle}>Select Voucher Type</Text>
-          <Text style={styles.instructionsText}>
-            Choose the type of voucher you want to create
-          </Text>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+          <Text style={styles.loadingText}>Loading voucher types...</Text>
         </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}>
+          {/* Instructions */}
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.instructionsTitle}>Select Voucher Type</Text>
+            <Text style={styles.instructionsText}>
+              Choose the type of voucher you want to create
+            </Text>
+          </View>
 
-        {/* Voucher Types Grid */}
-        <View style={styles.vouchersGrid}>
-          {VOUCHER_TYPES.map((voucherType) => (
-            <TouchableOpacity
-              key={voucherType.id}
-              style={styles.voucherCard}
-              onPress={() => handleVoucherTypeSelect(voucherType)}
-              activeOpacity={0.7}>
-              <View
-                style={[
-                  styles.voucherIcon,
-                  { backgroundColor: voucherType.color },
-                ]}>
-                <Text style={styles.voucherEmoji}>{voucherType.emoji}</Text>
-              </View>
-              <Text style={styles.voucherLabel}>{voucherType.name}</Text>
-              <Text style={styles.voucherCode}>{voucherType.code}</Text>
-              <Text style={styles.voucherDescription}>
-                {voucherType.description}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+          {/* Voucher Types Grid */}
+          <View style={styles.vouchersGrid}>
+            {voucherTypes.map((voucherType) => (
+              <TouchableOpacity
+                key={voucherType.id}
+                style={styles.voucherCard}
+                onPress={() => handleVoucherTypeSelect(voucherType)}
+                activeOpacity={0.7}>
+                <View
+                  style={[
+                    styles.voucherIcon,
+                    {
+                      backgroundColor:
+                        VOUCHER_TYPE_COLORS[voucherType.code] || "#e5e7eb",
+                    },
+                  ]}>
+                  <Text style={styles.voucherEmoji}>
+                    {VOUCHER_TYPE_EMOJIS[voucherType.code] || "📄"}
+                  </Text>
+                </View>
+                <Text style={styles.voucherLabel}>{voucherType.name}</Text>
+                <Text style={styles.voucherCode}>{voucherType.code}</Text>
+                <Text style={styles.voucherDescription}>
+                  {voucherType.description}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -177,6 +172,18 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 60,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+    backgroundColor: "#f5f5f5",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: BRAND_COLORS.darkPurple,
   },
   scrollView: {
     flex: 1,

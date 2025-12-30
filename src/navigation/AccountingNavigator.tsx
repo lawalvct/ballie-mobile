@@ -19,6 +19,7 @@ import {
 import {
   VoucherHomeScreen,
   VoucherCreateScreen,
+  VoucherFormScreen,
 } from "../features/accounting/voucher";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "./types";
@@ -168,6 +169,11 @@ function AccountingStack() {
         name="VoucherCreate"
         component={VoucherCreateScreen}
         options={{ title: "Create Voucher" }}
+      />
+      <Stack.Screen
+        name="VoucherForm"
+        component={VoucherFormScreen}
+        options={{ title: "Voucher Form" }}
       />
       <Stack.Screen
         name="VoucherShow"
