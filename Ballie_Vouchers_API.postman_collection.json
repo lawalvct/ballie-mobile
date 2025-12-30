@@ -1,0 +1,645 @@
+{
+	"info": {
+		"_postman_id": "voucher-api-collection",
+		"name": "Ballie Vouchers API",
+		"description": "Complete API documentation for Voucher Management with React Native implementation examples.\n\n## Base URL\n`https://yourdomain.com/api/v1/tenant/{tenant}`\n\n## Authentication\nAll requests require Bearer token authentication:\n```\nAuthorization: Bearer {your_token}\n```\n\n## Voucher Types\n- **JV** - Journal Voucher (General entries)\n- **PV** - Payment Voucher (Cash/Bank payments)\n- **RV** - Receipt Voucher (Cash/Bank receipts)\n- **CV** - Contra Voucher (Bank-to-bank transfers)\n- **CN** - Credit Note (Customer credits)\n- **DN** - Debit Note (Customer debits)\n\n## Key Features\n- Double-entry accounting\n- Automatic balance validation\n- Draft/Posted status workflow\n- Bulk operations\n- Search and filtering",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Get Form Data (Create)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/create?type=jv",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "create"],
+					"query": [
+						{
+							"key": "type",
+							"value": "jv",
+							"description": "Optional: jv, pv, rv, cv, cn, dn"
+						}
+					]
+				},
+				"description": "Get all necessary data to create a voucher including voucher types, ledger accounts, and products.\n\n**Query Parameters:**\n- `type` (optional): Pre-select voucher type (jv, pv, rv, cv, cn, dn)\n\n**Response includes:**\n- Available voucher types\n- Active ledger accounts with current balances\n- Active products\n- Selected type details (if type provided)\n- Default values and validation rules"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/create?type=jv",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "create"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"data\": {\n        \"voucher_types\": [\n            {\n                \"id\": 1,\n                \"name\": \"Journal Voucher\",\n                \"code\": \"JV\",\n                \"description\": \"General journal entries\",\n                \"has_numbering\": true,\n                \"number_prefix\": \"JV-\",\n                \"number_suffix\": \"\",\n                \"next_number\": 1001\n            },\n            {\n                \"id\": 2,\n                \"name\": \"Payment Voucher\",\n                \"code\": \"PV\",\n                \"description\": \"Cash or bank payments\",\n                \"has_numbering\": true,\n                \"number_prefix\": \"PV-\",\n                \"number_suffix\": \"\",\n                \"next_number\": 2001\n            }\n        ],\n        \"ledger_accounts\": [\n            {\n                \"id\": 1,\n                \"name\": \"Cash in Hand\",\n                \"code\": \"1001\",\n                \"display_name\": \"Cash in Hand (1001)\",\n                \"account_type\": \"asset\",\n                \"account_group_id\": 1,\n                \"account_group_name\": \"Current Assets\",\n                \"parent_id\": null,\n                \"level\": 0,\n                \"current_balance\": 50000.00\n            },\n            {\n                \"id\": 2,\n                \"name\": \"Bank Account - ABC Bank\",\n                \"code\": \"1002\",\n                \"display_name\": \"Bank Account - ABC Bank (1002)\",\n                \"account_type\": \"asset\",\n                \"account_group_id\": 1,\n                \"account_group_name\": \"Current Assets\",\n                \"parent_id\": null,\n                \"level\": 0,\n                \"current_balance\": 150000.00\n            }\n        ],\n        \"products\": [\n            {\n                \"id\": 1,\n                \"name\": \"Product A\",\n                \"sku\": \"PRD-001\",\n                \"price\": 100.00,\n                \"cost\": 60.00,\n                \"stock_quantity\": 50\n            }\n        ],\n        \"selected_type\": {\n            \"id\": 1,\n            \"name\": \"Journal Voucher\",\n            \"code\": \"JV\",\n            \"description\": \"General journal entries\"\n        },\n        \"defaults\": {\n            \"voucher_date\": \"2025-12-30\",\n            \"status\": \"draft\"\n        },\n        \"validation_rules\": {\n            \"voucher_type_id\": \"required|exists:voucher_types,id\",\n            \"voucher_date\": \"required|date\",\n            \"voucher_number\": \"nullable|string|max:50\",\n            \"narration\": \"nullable|string|max:1000\",\n            \"entries\": \"required|array|min:2\",\n            \"entries.*.ledger_account_id\": \"required|exists:ledger_accounts,id\",\n            \"entries.*.debit_amount\": \"nullable|numeric|min:0\",\n            \"entries.*.credit_amount\": \"nullable|numeric|min:0\",\n            \"entries.*.description\": \"nullable|string|max:500\"\n        }\n    },\n    \"message\": \"Form data retrieved successfully\"\n}"
+				}
+			]
+		},
+		{
+			"name": "2. Create Voucher",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"voucher_type_id\": 1,\n    \"voucher_date\": \"2025-12-30\",\n    \"voucher_number\": \"JV-1001\",\n    \"narration\": \"Opening balance entry for December 2025\",\n    \"reference_number\": \"REF-2025-001\",\n    \"entries\": [\n        {\n            \"ledger_account_id\": 1,\n            \"debit_amount\": 50000,\n            \"credit_amount\": 0,\n            \"description\": \"Cash received\"\n        },\n        {\n            \"ledger_account_id\": 10,\n            \"debit_amount\": 0,\n            \"credit_amount\": 50000,\n            \"description\": \"Capital introduction\"\n        }\n    ],\n    \"action\": \"save\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers"]
+				},
+				"description": "Create a new voucher with entries.\n\n**Request Body:**\n- `voucher_type_id` (required): ID of the voucher type\n- `voucher_date` (required): Date in YYYY-MM-DD format\n- `voucher_number` (optional): Custom voucher number (auto-generated if not provided)\n- `narration` (optional): Description/notes\n- `reference_number` (optional): External reference\n- `entries` (required): Array of at least 2 entries\n  - `ledger_account_id` (required)\n  - `debit_amount` (optional, default 0)\n  - `credit_amount` (optional, default 0)\n  - `description` (optional)\n- `action` (optional): \"save\" (draft) or \"save_and_post\" (post immediately)\n\n**Validation:**\n- Total debits must equal total credits\n- Each entry must have either debit OR credit (not both)\n- Minimum 2 entries required\n- Amounts must be positive"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"voucher_type_id\": 1,\n    \"voucher_date\": \"2025-12-30\",\n    \"voucher_number\": \"JV-1001\",\n    \"narration\": \"Opening balance entry\",\n    \"entries\": [\n        {\n            \"ledger_account_id\": 1,\n            \"debit_amount\": 50000,\n            \"credit_amount\": 0,\n            \"description\": \"Cash received\"\n        },\n        {\n            \"ledger_account_id\": 10,\n            \"debit_amount\": 0,\n            \"credit_amount\": 50000,\n            \"description\": \"Capital\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers"]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Voucher created successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"voucher_type_id\": 1,\n        \"voucher_type_name\": \"Journal Voucher\",\n        \"voucher_type_code\": \"JV\",\n        \"voucher_number\": \"JV-1001\",\n        \"voucher_date\": \"2025-12-30\",\n        \"narration\": \"Opening balance entry\",\n        \"reference_number\": \"REF-2025-001\",\n        \"total_amount\": 50000.00,\n        \"status\": \"draft\",\n        \"created_at\": \"2025-12-30 10:00:00\",\n        \"updated_at\": \"2025-12-30 10:00:00\",\n        \"posted_at\": null,\n        \"entries\": [\n            {\n                \"id\": 1,\n                \"ledger_account_id\": 1,\n                \"ledger_account_name\": \"Cash in Hand\",\n                \"ledger_account_code\": \"1001\",\n                \"ledger_account_display_name\": \"Cash in Hand (1001)\",\n                \"account_group_name\": \"Current Assets\",\n                \"debit_amount\": 50000.00,\n                \"credit_amount\": 0.00,\n                \"description\": \"Cash received\"\n            },\n            {\n                \"id\": 2,\n                \"ledger_account_id\": 10,\n                \"ledger_account_name\": \"Capital Account\",\n                \"ledger_account_code\": \"3001\",\n                \"ledger_account_display_name\": \"Capital Account (3001)\",\n                \"account_group_name\": \"Equity\",\n                \"debit_amount\": 0.00,\n                \"credit_amount\": 50000.00,\n                \"description\": \"Capital\"\n            }\n        ],\n        \"created_by\": {\n            \"id\": 1,\n            \"name\": \"John Doe\"\n        },\n        \"updated_by\": {\n            \"id\": 1,\n            \"name\": \"John Doe\"\n        },\n        \"posted_by\": {\n            \"id\": null,\n            \"name\": \"N/A\"\n        },\n        \"can_be_edited\": true,\n        \"can_be_deleted\": true,\n        \"can_be_posted\": true,\n        \"can_be_unposted\": false\n    }\n}"
+				},
+				{
+					"name": "Validation Error - Unbalanced",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"voucher_type_id\": 1,\n    \"voucher_date\": \"2025-12-30\",\n    \"entries\": [\n        {\n            \"ledger_account_id\": 1,\n            \"debit_amount\": 50000,\n            \"credit_amount\": 0\n        },\n        {\n            \"ledger_account_id\": 10,\n            \"debit_amount\": 0,\n            \"credit_amount\": 30000\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers"]
+						}
+					},
+					"status": "Unprocessable Entity",
+					"code": 422,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": false,\n    \"message\": \"Validation failed\",\n    \"errors\": {\n        \"entries\": [\n            \"Voucher entries must be balanced. Total debits must equal total credits.\"\n        ]\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "3. List Vouchers",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers?per_page=20&search=JV&voucher_type_id=1&status=draft&date_from=2025-12-01&date_to=2025-12-31&sort_by=voucher_date&sort_direction=desc",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers"],
+					"query": [
+						{
+							"key": "per_page",
+							"value": "20",
+							"description": "Items per page (default: 20)"
+						},
+						{
+							"key": "search",
+							"value": "JV",
+							"description": "Search in voucher number, narration, reference"
+						},
+						{
+							"key": "voucher_type_id",
+							"value": "1",
+							"description": "Filter by voucher type"
+						},
+						{
+							"key": "status",
+							"value": "draft",
+							"description": "Filter by status (draft, posted)"
+						},
+						{
+							"key": "date_from",
+							"value": "2025-12-01",
+							"description": "Start date (YYYY-MM-DD)"
+						},
+						{
+							"key": "date_to",
+							"value": "2025-12-31",
+							"description": "End date (YYYY-MM-DD)"
+						},
+						{
+							"key": "sort_by",
+							"value": "voucher_date",
+							"description": "Sort field (voucher_date, voucher_number, total_amount, etc.)"
+						},
+						{
+							"key": "sort_direction",
+							"value": "desc",
+							"description": "Sort direction (asc, desc)"
+						}
+					]
+				},
+				"description": "List all vouchers with filters and pagination.\n\n**Query Parameters (all optional):**\n- `per_page`: Items per page (default: 20)\n- `search`: Search in voucher number, narration, reference\n- `voucher_type_id`: Filter by voucher type\n- `status`: Filter by status (draft, posted)\n- `date_from`: Start date (YYYY-MM-DD)\n- `date_to`: End date (YYYY-MM-DD)\n- `sort_by`: Sort field (default: voucher_date)\n- `sort_direction`: Sort direction (asc, desc, default: desc)\n\n**Returns:**\n- Paginated voucher list\n- Statistics (totals by status)\n- Pagination metadata"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers?per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"data\": {\n        \"vouchers\": [\n            {\n                \"id\": 1,\n                \"voucher_type_id\": 1,\n                \"voucher_type_name\": \"Journal Voucher\",\n                \"voucher_type_code\": \"JV\",\n                \"voucher_number\": \"JV-1001\",\n                \"voucher_date\": \"2025-12-30\",\n                \"narration\": \"Opening balance entry\",\n                \"reference_number\": \"REF-2025-001\",\n                \"total_amount\": 50000.00,\n                \"status\": \"draft\",\n                \"created_at\": \"2025-12-30 10:00:00\",\n                \"updated_at\": \"2025-12-30 10:00:00\",\n                \"posted_at\": null\n            },\n            {\n                \"id\": 2,\n                \"voucher_type_id\": 2,\n                \"voucher_type_name\": \"Payment Voucher\",\n                \"voucher_type_code\": \"PV\",\n                \"voucher_number\": \"PV-2001\",\n                \"voucher_date\": \"2025-12-29\",\n                \"narration\": \"Rent payment\",\n                \"reference_number\": null,\n                \"total_amount\": 15000.00,\n                \"status\": \"posted\",\n                \"created_at\": \"2025-12-29 09:00:00\",\n                \"updated_at\": \"2025-12-29 09:15:00\",\n                \"posted_at\": \"2025-12-29 09:15:00\"\n            }\n        ],\n        \"pagination\": {\n            \"current_page\": 1,\n            \"last_page\": 5,\n            \"per_page\": 20,\n            \"total\": 100,\n            \"from\": 1,\n            \"to\": 20\n        },\n        \"statistics\": {\n            \"total_vouchers\": 100,\n            \"draft_vouchers\": 35,\n            \"posted_vouchers\": 65,\n            \"total_amount\": 1500000.00\n        }\n    },\n    \"message\": \"Vouchers retrieved successfully\"\n}"
+				}
+			]
+		},
+		{
+			"name": "4. Get Voucher Details",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1"]
+				},
+				"description": "Get detailed information about a specific voucher including all entries and user information."
+			},
+			"response": []
+		},
+		{
+			"name": "5. Update Voucher",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"voucher_type_id\": 1,\n    \"voucher_date\": \"2025-12-30\",\n    \"voucher_number\": \"JV-1001\",\n    \"narration\": \"Updated opening balance entry\",\n    \"reference_number\": \"REF-2025-001-UPDATED\",\n    \"entries\": [\n        {\n            \"ledger_account_id\": 1,\n            \"debit_amount\": 55000,\n            \"credit_amount\": 0,\n            \"description\": \"Cash received - updated\"\n        },\n        {\n            \"ledger_account_id\": 10,\n            \"debit_amount\": 0,\n            \"credit_amount\": 55000,\n            \"description\": \"Capital - updated\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1"]
+				},
+				"description": "Update an existing voucher. Only draft vouchers can be updated.\n\n**Constraints:**\n- Voucher must be in \"draft\" status\n- Same validation rules as create\n- Entries must be balanced"
+			},
+			"response": []
+		},
+		{
+			"name": "6. Delete Voucher",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1"]
+				},
+				"description": "Delete a voucher. Only draft vouchers can be deleted.\n\n**Constraints:**\n- Voucher must be in \"draft\" status\n- All entries will be deleted automatically"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Voucher deleted successfully\"\n}"
+				},
+				{
+					"name": "Error - Posted Voucher",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/2",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "2"]
+						}
+					},
+					"status": "Unprocessable Entity",
+					"code": 422,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": false,\n    \"message\": \"Cannot delete a posted voucher. Please unpost it first.\"\n}"
+				}
+			]
+		},
+		{
+			"name": "7. Post Voucher",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1/post",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1", "post"]
+				},
+				"description": "Post (finalize) a voucher. Posted vouchers cannot be edited or deleted.\n\n**What happens when posting:**\n- Status changes from \"draft\" to \"posted\"\n- posted_at timestamp is set\n- posted_by user is recorded\n- Voucher becomes read-only\n\n**Constraints:**\n- Voucher must be in \"draft\" status\n- Entries must be balanced\n- Must have at least 2 entries"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1/post",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1", "post"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Voucher posted successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"voucher_type_id\": 1,\n        \"voucher_type_name\": \"Journal Voucher\",\n        \"voucher_type_code\": \"JV\",\n        \"voucher_number\": \"JV-1001\",\n        \"voucher_date\": \"2025-12-30\",\n        \"narration\": \"Opening balance entry\",\n        \"reference_number\": \"REF-2025-001\",\n        \"total_amount\": 50000.00,\n        \"status\": \"posted\",\n        \"created_at\": \"2025-12-30 10:00:00\",\n        \"updated_at\": \"2025-12-30 10:15:00\",\n        \"posted_at\": \"2025-12-30 10:15:00\",\n        \"entries\": [...],\n        \"created_by\": {...},\n        \"updated_by\": {...},\n        \"posted_by\": {\n            \"id\": 1,\n            \"name\": \"John Doe\"\n        },\n        \"can_be_edited\": false,\n        \"can_be_deleted\": false,\n        \"can_be_posted\": false,\n        \"can_be_unposted\": true\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "8. Unpost Voucher",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1/unpost",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1", "unpost"]
+				},
+				"description": "Unpost a voucher, reverting it to draft status.\n\n**What happens when unposting:**\n- Status changes from \"posted\" to \"draft\"\n- posted_at timestamp is cleared\n- posted_by user is cleared\n- Voucher becomes editable again\n\n**Constraints:**\n- Voucher must be in \"posted\" status"
+			},
+			"response": []
+		},
+		{
+			"name": "9. Get Duplicate Data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1/duplicate",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1", "duplicate"]
+				},
+				"description": "Get data to create a duplicate of an existing voucher.\n\n**Returns:**\n- Voucher type\n- Current date (for new voucher)\n- Original narration\n- All entries with same accounts and amounts\n- Reference number is cleared\n\n**Use this data to pre-fill create form**"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/1/duplicate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "1", "duplicate"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Duplicate data retrieved successfully\",\n    \"data\": {\n        \"voucher_type_id\": 1,\n        \"voucher_date\": \"2025-12-30\",\n        \"narration\": \"Opening balance entry\",\n        \"reference_number\": null,\n        \"entries\": [\n            {\n                \"ledger_account_id\": 1,\n                \"ledger_account_name\": \"Cash in Hand (1001)\",\n                \"debit_amount\": 50000.00,\n                \"credit_amount\": 0.00,\n                \"description\": \"Cash received\"\n            },\n            {\n                \"ledger_account_id\": 10,\n                \"ledger_account_name\": \"Capital Account (3001)\",\n                \"debit_amount\": 0.00,\n                \"credit_amount\": 50000.00,\n                \"description\": \"Capital\"\n            }\n        ]\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "10. Bulk Actions",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"action\": \"post\",\n    \"voucher_ids\": [1, 2, 3, 4, 5]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/bulk-action",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "bulk-action"]
+				},
+				"description": "Perform bulk actions on multiple vouchers.\n\n**Request Body:**\n- `action` (required): \"post\", \"unpost\", or \"delete\"\n- `voucher_ids` (required): Array of voucher IDs\n\n**Actions:**\n- **post**: Post multiple draft vouchers\n- **unpost**: Unpost multiple posted vouchers\n- **delete**: Delete multiple draft vouchers\n\n**Response includes:**\n- Success count\n- Failed count\n- Array of error messages for failed operations"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"post\",\n    \"voucher_ids\": [1, 2, 3, 4, 5]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/bulk-action",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "bulk-action"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"5 vouchers processed successfully\",\n    \"data\": {\n        \"success_count\": 4,\n        \"failed_count\": 1,\n        \"errors\": [\n            \"Voucher PV-2005 is posted and cannot be deleted\"\n        ]\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "11. Search Vouchers",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/search?q=JV&status=posted&voucher_type_id=1",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "search"],
+					"query": [
+						{
+							"key": "q",
+							"value": "JV",
+							"description": "Search query (voucher number, narration, reference)"
+						},
+						{
+							"key": "status",
+							"value": "posted",
+							"description": "Filter by status (draft, posted)"
+						},
+						{
+							"key": "voucher_type_id",
+							"value": "1",
+							"description": "Filter by voucher type"
+						}
+					]
+				},
+				"description": "Search for vouchers (used for autocomplete/quick search).\n\n**Query Parameters:**\n- `q` (optional): Search term\n- `status` (optional): Filter by status\n- `voucher_type_id` (optional): Filter by type\n\n**Returns:**\n- Maximum 20 results\n- Simplified voucher data with display_name\n- Sorted by date (newest first)"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenant/{{tenant_slug}}/accounting/vouchers/search?q=JV",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenant", "{{tenant_slug}}", "accounting", "vouchers", "search"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"voucher_number\": \"JV-1001\",\n            \"voucher_type\": \"Journal Voucher\",\n            \"voucher_date\": \"2025-12-30\",\n            \"total_amount\": 50000.00,\n            \"status\": \"draft\",\n            \"display_name\": \"JV-1001 - Journal Voucher (2025-12-30)\"\n        },\n        {\n            \"id\": 5,\n            \"voucher_number\": \"JV-1002\",\n            \"voucher_type\": \"Journal Voucher\",\n            \"voucher_date\": \"2025-12-29\",\n            \"total_amount\": 25000.00,\n            \"status\": \"posted\",\n            \"display_name\": \"JV-1002 - Journal Voucher (2025-12-29)\"\n        }\n    ]\n}"
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://yourdomain.com",
+			"type": "string"
+		},
+		{
+			"key": "tenant_slug",
+			"value": "demo-company",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your_bearer_token_here",
+			"type": "string"
+		}
+	]
+}

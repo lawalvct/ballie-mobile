@@ -15,11 +15,62 @@ import {
   LedgerAccountEditScreen,
   LedgerAccountShowScreen,
 } from "../features/accounting/ledgeraccount";
+// Voucher Management Feature
+import { VoucherHomeScreen } from "../features/accounting/voucher";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "./types";
 import { BRAND_COLORS } from "../theme/colors";
 import AccountingScreen from "../screens/AccountingScreen";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useEffect } from "react";
+
+// Temporary placeholder component for unimplemented screens
+const PlaceholderScreen = ({ navigation, route }: any) => (
+  <View style={styles.placeholderContainer}>
+    <Text style={styles.placeholderTitle}>Coming Soon</Text>
+    <Text style={styles.placeholderText}>
+      {route.name} screen is under development
+    </Text>
+    <TouchableOpacity
+      style={styles.placeholderButton}
+      onPress={() => navigation.goBack()}>
+      <Text style={styles.placeholderButtonText}>Go Back</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+const styles = StyleSheet.create({
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#f5f5f5",
+  },
+  placeholderTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: BRAND_COLORS.darkPurple,
+    marginBottom: 12,
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: "#6b7280",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  placeholderButton: {
+    backgroundColor: BRAND_COLORS.gold,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  placeholderButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
+  },
+});
 
 const Stack = createNativeStackNavigator<AccountingStackParamList>();
 
@@ -103,11 +154,28 @@ function AccountingStack() {
         component={LedgerAccountShowScreen}
         options={{ title: "Ledger Account Details" }}
       />
-      {/*
-      <Stack.Screen name="LedgerAccountCreate" component={LedgerAccountCreateScreen} />
-      <Stack.Screen name="LedgerAccountShow" component={LedgerAccountShowScreen} />
-      <Stack.Screen name="LedgerAccountEdit" component={LedgerAccountEditScreen} />
-      */}
+
+      {/* Voucher Management Module */}
+      <Stack.Screen
+        name="VoucherHome"
+        component={VoucherHomeScreen}
+        options={{ title: "Vouchers" }}
+      />
+      <Stack.Screen
+        name="VoucherCreate"
+        component={PlaceholderScreen}
+        options={{ title: "Create Voucher" }}
+      />
+      <Stack.Screen
+        name="VoucherShow"
+        component={PlaceholderScreen}
+        options={{ title: "Voucher Details" }}
+      />
+      <Stack.Screen
+        name="VoucherEdit"
+        component={PlaceholderScreen}
+        options={{ title: "Edit Voucher" }}
+      />
 
       {/* Journal Entries Module - Placeholder for future */}
       {/*

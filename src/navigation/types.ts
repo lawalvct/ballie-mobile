@@ -35,11 +35,21 @@ export type AccountingStackParamList = {
   AccountGroupShow: { id: number };
   AccountGroupEdit: { id: number };
 
-  // Ledger Accounts Module (placeholder for future)
+  // Ledger Accounts Module
   LedgerAccountHome: undefined;
   LedgerAccountCreate: { onCreated?: () => void };
   LedgerAccountShow: { id: number };
   LedgerAccountEdit: { id: number; onUpdated?: (id: number) => void };
+
+  // Voucher Management Module
+  VoucherHome: undefined;
+  VoucherCreate: {
+    onCreated?: () => void;
+    voucherType?: string;
+    duplicateId?: number;
+  };
+  VoucherShow: { id: number };
+  VoucherEdit: { id: number; onUpdated?: (id: number) => void };
 
   // Journal Entries Module (placeholder for future)
   JournalEntryList: undefined;
