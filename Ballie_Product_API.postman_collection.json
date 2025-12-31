@@ -95,6 +95,168 @@
             "response": []
         },
         {
+            "name": "2b. Create Product (With Images)",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "type",
+                            "value": "item",
+                            "type": "text"
+                        },
+                        {
+                            "key": "name",
+                            "value": "Laptop Dell Inspiron 15",
+                            "type": "text"
+                        },
+                        {
+                            "key": "sku",
+                            "value": "LAP-DEL-001",
+                            "type": "text"
+                        },
+                        {
+                            "key": "description",
+                            "value": "15.6 inch laptop with Intel i5 processor",
+                            "type": "text"
+                        },
+                        {
+                            "key": "category_id",
+                            "value": "1",
+                            "type": "text"
+                        },
+                        {
+                            "key": "brand",
+                            "value": "Dell",
+                            "type": "text"
+                        },
+                        {
+                            "key": "hsn_code",
+                            "value": "84713010",
+                            "type": "text"
+                        },
+                        {
+                            "key": "barcode",
+                            "value": "1234567890123",
+                            "type": "text"
+                        },
+                        {
+                            "key": "purchase_rate",
+                            "value": "45000",
+                            "type": "text"
+                        },
+                        {
+                            "key": "sales_rate",
+                            "value": "55000",
+                            "type": "text"
+                        },
+                        {
+                            "key": "mrp",
+                            "value": "60000",
+                            "type": "text"
+                        },
+                        {
+                            "key": "primary_unit_id",
+                            "value": "1",
+                            "type": "text"
+                        },
+                        {
+                            "key": "opening_stock",
+                            "value": "10",
+                            "type": "text"
+                        },
+                        {
+                            "key": "reorder_level",
+                            "value": "5",
+                            "type": "text"
+                        },
+                        {
+                            "key": "maintain_stock",
+                            "value": "true",
+                            "type": "text"
+                        },
+                        {
+                            "key": "stock_asset_account_id",
+                            "value": "101",
+                            "type": "text"
+                        },
+                        {
+                            "key": "sales_account_id",
+                            "value": "201",
+                            "type": "text"
+                        },
+                        {
+                            "key": "purchase_account_id",
+                            "value": "301",
+                            "type": "text"
+                        },
+                        {
+                            "key": "tax_rate",
+                            "value": "18",
+                            "type": "text"
+                        },
+                        {
+                            "key": "is_active",
+                            "value": "true",
+                            "type": "text"
+                        },
+                        {
+                            "key": "is_visible_online",
+                            "value": "true",
+                            "type": "text"
+                        },
+                        {
+                            "key": "is_featured",
+                            "value": "false",
+                            "type": "text"
+                        },
+                        {
+                            "key": "slug",
+                            "value": "laptop-dell-inspiron-15",
+                            "type": "text"
+                        },
+                        {
+                            "key": "meta_title",
+                            "value": "Dell Inspiron 15 Laptop",
+                            "type": "text"
+                        },
+                        {
+                            "key": "meta_description",
+                            "value": "Buy Dell Inspiron 15 laptop online",
+                            "type": "text"
+                        },
+                        {
+                            "key": "image",
+                            "description": "Primary product image (optional)",
+                            "type": "file",
+                            "src": []
+                        },
+                        {
+                            "key": "gallery_images[]",
+                            "description": "Gallery image 1 (optional)",
+                            "type": "file",
+                            "src": []
+                        },
+                        {
+                            "key": "gallery_images[]",
+                            "description": "Gallery image 2 (optional)",
+                            "type": "file",
+                            "src": []
+                        }
+                    ]
+                },
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products"]
+                },
+                "description": "Create a new physical product with image uploads. Use multipart/form-data to include images.\n\n**Image Fields:**\n- `image`: Primary product image (jpeg, png, jpg, gif, webp, max 2MB)\n- `gallery_images[]`: Array of gallery images (max 2MB each)\n\n**Important:** When uploading images, use Content-Type: multipart/form-data (Postman handles this automatically when using form-data body mode)."
+            },
+            "response": []
+        },
+        {
             "name": "3. Create Product (Service)",
             "request": {
                 "method": "POST",
@@ -226,6 +388,88 @@
                     "path": ["{{tenant}}", "inventory", "products", "1"]
                 },
                 "description": "Update product fields (partial update supported)"
+            },
+            "response": []
+        },
+        {
+            "name": "7b. Update Product (With Image Management)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "X-HTTP-Method-Override",
+                        "value": "PUT",
+                        "description": "Override method for multipart form-data"
+                    }
+                ],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "name",
+                            "value": "Laptop Dell Inspiron 15 (Updated with Images)",
+                            "type": "text"
+                        },
+                        {
+                            "key": "sales_rate",
+                            "value": "58000",
+                            "type": "text"
+                        },
+                        {
+                            "key": "mrp",
+                            "value": "62000",
+                            "type": "text"
+                        },
+                        {
+                            "key": "is_featured",
+                            "value": "true",
+                            "type": "text"
+                        },
+                        {
+                            "key": "reorder_level",
+                            "value": "3",
+                            "type": "text"
+                        },
+                        {
+                            "key": "image",
+                            "description": "Replace primary image (optional)",
+                            "type": "file",
+                            "src": []
+                        },
+                        {
+                            "key": "gallery_images[]",
+                            "description": "Add new gallery image 1 (optional)",
+                            "type": "file",
+                            "src": []
+                        },
+                        {
+                            "key": "gallery_images[]",
+                            "description": "Add new gallery image 2 (optional)",
+                            "type": "file",
+                            "src": []
+                        },
+                        {
+                            "key": "remove_image_ids[]",
+                            "value": "10",
+                            "description": "Image ID to remove (optional)",
+                            "type": "text",
+                            "disabled": true
+                        },
+                        {
+                            "key": "remove_image_ids[]",
+                            "value": "11",
+                            "description": "Another image ID to remove (optional)",
+                            "type": "text",
+                            "disabled": true
+                        }
+                    ]
+                },
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/1",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products", "1"]
+                },
+                "description": "Update product with image management capabilities:\n\n**Image Operations:**\n1. **Replace Primary Image**: Upload new `image` file to replace existing primary image\n2. **Add Gallery Images**: Upload `gallery_images[]` array to add new gallery images\n3. **Remove Images**: Provide `remove_image_ids[]` array with image IDs to delete\n\n**Important Notes:**\n- Use POST with `X-HTTP-Method-Override: PUT` header for multipart form-data\n- Old image files are automatically deleted from storage when replaced/removed\n- All image operations are optional\n- Accepted formats: jpeg, png, jpg, gif, webp (max 2MB each)\n- Enable/disable remove_image_ids fields as needed"
             },
             "response": []
         },

@@ -1,5 +1,5 @@
 // Product Create Screen - Create new product
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   StatusBar,
   ActivityIndicator,
   Switch,
+  RefreshControl,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -26,6 +27,7 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
   const { onCreated } = route.params || {};
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
 
   const [product, setProduct] = useState<CreateProductData>({
@@ -45,8 +47,8 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
     maintain_stock: true,
     opening_stock: undefined,
     reorder_level: undefined,
-    purchase_account_id: undefined,
-    sales_account_id: undefined,
+    purchase_account_id: null, // Start with null, will be set from defaults
+    sales_account_id: null, // Start with null, will be set from defaults
     is_active: true,
   });
 
@@ -57,19 +59,18 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
   const loadFormData = async () => {
     try {
       setLoading(true);
-      const data = await productService.getFormData();
-      setFormData(data);
+      const data: FormData = await productService.getFormData();
 
-      // Set defaults if provided
-      if (data.defaults && "default_purchase_account_id" in data.defaults) {
+      // Set default accounts from API response
+      if (data.default_accounts) {
         setProduct((prev) => ({
           ...prev,
-          purchase_account_id:
-            (data.defaults as any).default_purchase_account_id || undefined,
-          sales_account_id:
-            (data.defaults as any).default_sales_account_id || undefined,
+          purchase_account_id: data.default_accounts?.purchase?.id || null,
+          sales_account_id: data.default_accounts?.sales?.id || null,
         }));
       }
+
+      setFormData(data);
     } catch (error: any) {
       console.error("Error loading form data:", error);
       showToast(error.message || "Failed to load form data", "error");
@@ -77,6 +78,12 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
       setLoading(false);
     }
   };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadFormData();
+    setRefreshing(false);
+  }, []);
 
   const handleSubmit = async () => {
     // Validation
@@ -151,7 +158,14 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
 
       <ScrollView
         style={styles.form}
-        contentContainerStyle={styles.formContent}>
+        contentContainerStyle={styles.formContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[BRAND_COLORS.gold]}
+          />
+        }>
         {/* Product Type */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📦 Basic Information</Text>
@@ -396,6 +410,7 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
           <Text style={styles.label}>Purchase Account</Text>
           <View style={styles.pickerContainer}>
             <Picker
+              key={`purchase-${product.purchase_account_id}`}
               selectedValue={product.purchase_account_id}
               onValueChange={(value) =>
                 setProduct({ ...product, purchase_account_id: value })
@@ -416,6 +431,7 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
           <Text style={styles.label}>Sales Account</Text>
           <View style={styles.pickerContainer}>
             <Picker
+              key={`sales-${product.sales_account_id}`}
               selectedValue={product.sales_account_id}
               onValueChange={(value) =>
                 setProduct({ ...product, sales_account_id: value })

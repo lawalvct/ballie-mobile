@@ -66,14 +66,25 @@ export interface FormData {
   categories: ProductCategory[];
   units: ProductUnit[];
   ledger_accounts: LedgerAccount[];
-  defaults: {
-    type: "item" | "service";
-    maintain_stock: boolean;
-    is_active: boolean;
-    tax_rate: number;
-    default_purchase_account_id?: number;
-    default_sales_account_id?: number;
-    default_inventory_account_id?: number;
+  default_accounts?: {
+    stock?: {
+      id: number;
+      name: string;
+    };
+    sales?: {
+      id: number;
+      name: string;
+    };
+    purchase?: {
+      id: number;
+      name: string;
+    };
+  };
+  defaults?: {
+    type?: "item" | "service";
+    maintain_stock?: boolean;
+    is_active?: boolean;
+    tax_rate?: number;
   };
 }
 
