@@ -12,8 +12,11 @@ import {
   ActivityIndicator,
   Switch,
   RefreshControl,
+  Image,
+  Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { InventoryStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
@@ -50,11 +53,113 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
     purchase_account_id: null, // Start with null, will be set from defaults
     sales_account_id: null, // Start with null, will be set from defaults
     is_active: true,
+    image: undefined,
+    gallery_images: [],
   });
 
   useEffect(() => {
     loadFormData();
+    requestPermissions();
   }, []);
+
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Required",
+        "Please grant camera roll permissions to upload images."
+      );
+    }
+  };
+
+  const pickPrimaryImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const fileSize = asset.fileSize || 0;
+
+        // Check file size (max 2MB)
+        if (fileSize > 2 * 1024 * 1024) {
+          showToast("Image size must be less than 2MB", "error");
+          return;
+        }
+
+        const fileName = asset.uri.split("/").pop() || "image.jpg";
+        const fileType = `image/${fileName.split(".").pop()}`;
+
+        setProduct({
+          ...product,
+          image: {
+            uri: asset.uri,
+            name: fileName,
+            type: fileType,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      showToast("Failed to pick image", "error");
+    }
+  };
+
+  const pickGalleryImages = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        const newImages = result.assets
+          .filter((asset) => {
+            const fileSize = asset.fileSize || 0;
+            if (fileSize > 2 * 1024 * 1024) {
+              showToast(
+                `${asset.fileName || "Image"} exceeds 2MB limit`,
+                "error"
+              );
+              return false;
+            }
+            return true;
+          })
+          .map((asset) => {
+            const fileName = asset.uri.split("/").pop() || "image.jpg";
+            const fileType = `image/${fileName.split(".").pop()}`;
+            return {
+              uri: asset.uri,
+              name: fileName,
+              type: fileType,
+            };
+          });
+
+        setProduct({
+          ...product,
+          gallery_images: [...(product.gallery_images || []), ...newImages],
+        });
+      }
+    } catch (error) {
+      console.error("Error picking gallery images:", error);
+      showToast("Failed to pick images", "error");
+    }
+  };
+
+  const removePrimaryImage = () => {
+    setProduct({ ...product, image: undefined });
+  };
+
+  const removeGalleryImage = (index: number) => {
+    const updatedGallery = [...(product.gallery_images || [])];
+    updatedGallery.splice(index, 1);
+    setProduct({ ...product, gallery_images: updatedGallery });
+  };
 
   const loadFormData = async () => {
     try {
@@ -254,6 +359,68 @@ export default function ProductCreateScreen({ navigation, route }: Props) {
             multiline
             numberOfLines={4}
           />
+        </View>
+
+        {/* Product Images */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🖼️ Product Images</Text>
+
+          {/* Primary Image */}
+          <Text style={styles.label}>Primary Image</Text>
+          {product.image ? (
+            <View style={styles.imageContainer}>
+              <Image
+                source={{ uri: product.image.uri }}
+                style={styles.imagePreview}
+              />
+              <TouchableOpacity
+                style={styles.removeImageButton}
+                onPress={removePrimaryImage}>
+                <Text style={styles.removeImageText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.imagePlaceholder}
+              onPress={pickPrimaryImage}>
+              <Text style={styles.imagePlaceholderText}>📷</Text>
+              <Text style={styles.imagePlaceholderLabel}>
+                Tap to select image
+              </Text>
+              <Text style={styles.imagePlaceholderHint}>
+                Max size: 2MB (JPG, PNG, WEBP)
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Gallery Images */}
+          <Text style={[styles.label, { marginTop: 20 }]}>Gallery Images</Text>
+          <View style={styles.galleryContainer}>
+            {product.gallery_images && product.gallery_images.length > 0 && (
+              <View style={styles.galleryGrid}>
+                {product.gallery_images.map((img, index) => (
+                  <View key={index} style={styles.galleryImageContainer}>
+                    <Image
+                      source={{ uri: img.uri }}
+                      style={styles.galleryImagePreview}
+                    />
+                    <TouchableOpacity
+                      style={styles.removeGalleryImageButton}
+                      onPress={() => removeGalleryImage(index)}>
+                      <Text style={styles.removeImageText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.addGalleryButton}
+              onPress={pickGalleryImages}>
+              <Text style={styles.addGalleryButtonText}>
+                + Add Gallery Images
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Pricing */}
@@ -618,5 +785,114 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: BRAND_COLORS.darkPurple,
+  },
+  imageContainer: {
+    position: "relative",
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 8,
+    backgroundColor: "#f3f4f6",
+  },
+  imagePreview: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(239, 68, 68, 0.9)",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  removeImageText: {
+    color: SEMANTIC_COLORS.white,
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "#d1d5db",
+    backgroundColor: "#f9fafb",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  imagePlaceholderText: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  imagePlaceholderLabel: {
+    fontSize: 16,
+    color: "#6b7280",
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  imagePlaceholderHint: {
+    fontSize: 12,
+    color: "#9ca3af",
+  },
+  galleryContainer: {
+    marginTop: 8,
+  },
+  galleryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 12,
+  },
+  galleryImageContainer: {
+    position: "relative",
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#f3f4f6",
+  },
+  galleryImagePreview: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  removeGalleryImageButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "rgba(239, 68, 68, 0.9)",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addGalleryButton: {
+    width: "100%",
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: BRAND_COLORS.gold,
+    backgroundColor: "#fffbeb",
+    alignItems: "center",
+  },
+  addGalleryButtonText: {
+    fontSize: 14,
+    color: BRAND_COLORS.darkPurple,
+    fontWeight: "600",
   },
 });

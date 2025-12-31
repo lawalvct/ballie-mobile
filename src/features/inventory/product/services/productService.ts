@@ -26,8 +26,58 @@ class ProductService {
    * Create a new product
    */
   async create(data: CreateProductData): Promise<Product> {
-    const response = await apiClient.post<Product>(this.baseUrl, data);
-    return response.data;
+    // Check if we have images to upload
+    const hasImages =
+      data.image || (data.gallery_images && data.gallery_images.length > 0);
+
+    if (hasImages) {
+      // Use FormData for multipart upload
+      const formData = new FormData();
+
+      // Add all text fields
+      Object.keys(data).forEach((key) => {
+        if (key !== "image" && key !== "gallery_images") {
+          const value = data[key as keyof CreateProductData];
+          // Always include boolean fields, even if false
+          if (typeof value === "boolean") {
+            formData.append(key, value ? "1" : "0");
+          } else if (value !== undefined && value !== null && value !== "") {
+            formData.append(key, String(value));
+          }
+        }
+      });
+
+      // Add primary image
+      if (data.image) {
+        formData.append("image", {
+          uri: data.image.uri,
+          name: data.image.name,
+          type: data.image.type,
+        } as any);
+      }
+
+      // Add gallery images
+      if (data.gallery_images && data.gallery_images.length > 0) {
+        data.gallery_images.forEach((img) => {
+          formData.append("gallery_images[]", {
+            uri: img.uri,
+            name: img.name,
+            type: img.type,
+          } as any);
+        });
+      }
+
+      const response = await apiClient.post<Product>(this.baseUrl, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    } else {
+      // Use JSON for non-image data
+      const response = await apiClient.post<Product>(this.baseUrl, data);
+      return response.data;
+    }
   }
 
   /**

@@ -116,6 +116,16 @@ export interface CreateProductData {
   slug?: string;
   meta_title?: string;
   meta_description?: string;
+  image?: {
+    uri: string;
+    name: string;
+    type: string;
+  };
+  gallery_images?: Array<{
+    uri: string;
+    name: string;
+    type: string;
+  }>;
 }
 
 export interface ListParams {
