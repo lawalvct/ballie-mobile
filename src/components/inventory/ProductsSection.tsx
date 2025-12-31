@@ -1,6 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { MainTabParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+
+type NavigationProp = NativeStackNavigationProp<MainTabParamList, "Inventory">;
 
 const products = [
   {
@@ -38,6 +43,14 @@ const products = [
 ];
 
 export default function ProductsSection() {
+  const navigation = useNavigation<NavigationProp>();
+
+  const handleViewAll = () => {
+    navigation.navigate("Inventory", {
+      screen: "ProductHome",
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "in-stock":
@@ -68,7 +81,7 @@ export default function ProductsSection() {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Products</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleViewAll}>
           <Text style={styles.viewAll}>View All →</Text>
         </TouchableOpacity>
       </View>

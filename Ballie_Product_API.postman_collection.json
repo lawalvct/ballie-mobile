@@ -1,0 +1,445 @@
+{
+    "info": {
+        "name": "Ballie - Product Management API",
+        "description": "Complete Product Management API for mobile applications. Supports CRUD operations, stock tracking, bulk actions, and advanced filtering.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "_exporter_id": "12345678"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{auth_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "https://yourdomain.com/api/v1/tenant",
+            "type": "string"
+        },
+        {
+            "key": "tenant",
+            "value": "demo-company",
+            "type": "string"
+        },
+        {
+            "key": "auth_token",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. Get Form Data (Create)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/create",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products", "create"]
+                },
+                "description": "Get categories, units, and ledger accounts for product creation form"
+            },
+            "response": [
+                {
+                    "name": "Success Response",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/{{tenant}}/inventory/products/create",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "{{tenant}}",
+                                "inventory",
+                                "products",
+                                "create"
+                            ]
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "_postman_previewlanguage": "json",
+                    "header": [],
+                    "cookie": [],
+                    "body": "{\n    \"success\": true,\n    \"data\": {\n        \"categories\": [\n            {\n                \"id\": 1,\n                \"name\": \"Electronics\",\n                \"description\": \"Electronic products\"\n            }\n        ],\n        \"units\": [\n            {\n                \"id\": 1,\n                \"name\": \"Piece\",\n                \"short_name\": \"pcs\"\n            }\n        ],\n        \"ledger_accounts\": [\n            {\n                \"id\": 101,\n                \"name\": \"Stock in Hand\",\n                \"account_code\": \"1500\",\n                \"account_type\": \"asset\"\n            }\n        ],\n        \"default_accounts\": {\n            \"stock\": {\n                \"id\": 101,\n                \"name\": \"Stock in Hand\"\n            },\n            \"sales\": {\n                \"id\": 201,\n                \"name\": \"Sales\"\n            },\n            \"purchase\": {\n                \"id\": 301,\n                \"name\": \"Purchase\"\n            }\n        }\n    }\n}"
+                }
+            ]
+        },
+        {
+            "name": "2. Create Product (Item)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"type\": \"item\",\n    \"name\": \"Laptop Dell Inspiron 15\",\n    \"sku\": \"LAP-DEL-001\",\n    \"description\": \"15.6 inch laptop with Intel i5 processor\",\n    \"category_id\": 1,\n    \"brand\": \"Dell\",\n    \"hsn_code\": \"84713010\",\n    \"barcode\": \"1234567890123\",\n    \"purchase_rate\": 45000,\n    \"sales_rate\": 55000,\n    \"mrp\": 60000,\n    \"primary_unit_id\": 1,\n    \"opening_stock\": 10,\n    \"reorder_level\": 5,\n    \"maintain_stock\": true,\n    \"stock_asset_account_id\": 101,\n    \"sales_account_id\": 201,\n    \"purchase_account_id\": 301,\n    \"tax_rate\": 18,\n    \"is_active\": true,\n    \"is_visible_online\": true,\n    \"is_featured\": false,\n    \"slug\": \"laptop-dell-inspiron-15\",\n    \"meta_title\": \"Dell Inspiron 15 Laptop\",\n    \"meta_description\": \"Buy Dell Inspiron 15 laptop online\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products"]
+                },
+                "description": "Create a new physical product"
+            },
+            "response": []
+        },
+        {
+            "name": "3. Create Product (Service)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"type\": \"service\",\n    \"name\": \"IT Consultation\",\n    \"description\": \"Hourly IT consultation service\",\n    \"purchase_rate\": 500,\n    \"sales_rate\": 1000,\n    \"primary_unit_id\": 3,\n    \"sales_account_id\": 201,\n    \"tax_rate\": 18,\n    \"is_active\": true,\n    \"maintain_stock\": false\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products"]
+                },
+                "description": "Create a new service"
+            },
+            "response": []
+        },
+        {
+            "name": "4. List Products (All)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products?page=1&per_page=15",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products"],
+                    "query": [
+                        {
+                            "key": "page",
+                            "value": "1"
+                        },
+                        {
+                            "key": "per_page",
+                            "value": "15"
+                        }
+                    ]
+                },
+                "description": "Get paginated list of all products"
+            },
+            "response": []
+        },
+        {
+            "name": "5. List Products (With Filters)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products?search=laptop&type=item&status=active&category_id=1&stock_status=in_stock&sort_by=name&sort_order=asc",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products"],
+                    "query": [
+                        {
+                            "key": "search",
+                            "value": "laptop",
+                            "description": "Search in name, SKU, barcode"
+                        },
+                        {
+                            "key": "type",
+                            "value": "item",
+                            "description": "item or service"
+                        },
+                        {
+                            "key": "status",
+                            "value": "active",
+                            "description": "active or inactive"
+                        },
+                        {
+                            "key": "category_id",
+                            "value": "1",
+                            "description": "Category ID"
+                        },
+                        {
+                            "key": "stock_status",
+                            "value": "in_stock",
+                            "description": "in_stock, low_stock, out_of_stock"
+                        },
+                        {
+                            "key": "sort_by",
+                            "value": "name",
+                            "description": "name, sku, created_at, updated_at"
+                        },
+                        {
+                            "key": "sort_order",
+                            "value": "asc",
+                            "description": "asc or desc"
+                        }
+                    ]
+                },
+                "description": "Get products with multiple filters applied"
+            },
+            "response": []
+        },
+        {
+            "name": "6. Get Product Details",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/1",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products", "1"]
+                },
+                "description": "Get complete details of a specific product"
+            },
+            "response": []
+        },
+        {
+            "name": "7. Update Product",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Laptop Dell Inspiron 15 (Updated)\",\n    \"sales_rate\": 58000,\n    \"mrp\": 62000,\n    \"is_featured\": true,\n    \"reorder_level\": 3\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/1",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products", "1"]
+                },
+                "description": "Update product fields (partial update supported)"
+            },
+            "response": []
+        },
+        {
+            "name": "8. Delete Product",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/1",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products", "1"]
+                },
+                "description": "Delete a product (only if no stock movements exist)"
+            },
+            "response": []
+        },
+        {
+            "name": "9. Toggle Product Status",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/1/toggle-status",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "{{tenant}}",
+                        "inventory",
+                        "products",
+                        "1",
+                        "toggle-status"
+                    ]
+                },
+                "description": "Activate or deactivate a product"
+            },
+            "response": []
+        },
+        {
+            "name": "10. Get Stock Movements",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/1/stock-movements?from_date=2025-12-01&to_date=2025-12-31&per_page=50",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "{{tenant}}",
+                        "inventory",
+                        "products",
+                        "1",
+                        "stock-movements"
+                    ],
+                    "query": [
+                        {
+                            "key": "from_date",
+                            "value": "2025-12-01"
+                        },
+                        {
+                            "key": "to_date",
+                            "value": "2025-12-31"
+                        },
+                        {
+                            "key": "transaction_type",
+                            "value": "purchase",
+                            "disabled": true
+                        },
+                        {
+                            "key": "per_page",
+                            "value": "50"
+                        }
+                    ]
+                },
+                "description": "Get stock movement history with filters"
+            },
+            "response": []
+        },
+        {
+            "name": "11. Bulk Action - Activate",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"action\": \"activate\",\n    \"product_ids\": [1, 2, 3, 4]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/bulk-action",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "{{tenant}}",
+                        "inventory",
+                        "products",
+                        "bulk-action"
+                    ]
+                },
+                "description": "Activate multiple products"
+            },
+            "response": []
+        },
+        {
+            "name": "12. Bulk Action - Deactivate",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"action\": \"deactivate\",\n    \"product_ids\": [1, 2, 3, 4]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/bulk-action",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "{{tenant}}",
+                        "inventory",
+                        "products",
+                        "bulk-action"
+                    ]
+                },
+                "description": "Deactivate multiple products"
+            },
+            "response": []
+        },
+        {
+            "name": "13. Bulk Action - Delete",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"action\": \"delete\",\n    \"product_ids\": [1, 2, 3, 4]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/bulk-action",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "{{tenant}}",
+                        "inventory",
+                        "products",
+                        "bulk-action"
+                    ]
+                },
+                "description": "Delete multiple products (only those without stock movements)"
+            },
+            "response": []
+        },
+        {
+            "name": "14. Search Products (Autocomplete)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/search?q=laptop&limit=10&type=item&active_only=true",
+                    "host": ["{{base_url}}"],
+                    "path": ["{{tenant}}", "inventory", "products", "search"],
+                    "query": [
+                        {
+                            "key": "q",
+                            "value": "laptop",
+                            "description": "Search query"
+                        },
+                        {
+                            "key": "limit",
+                            "value": "10",
+                            "description": "Max results"
+                        },
+                        {
+                            "key": "type",
+                            "value": "item",
+                            "description": "item or service"
+                        },
+                        {
+                            "key": "active_only",
+                            "value": "true",
+                            "description": "Show only active products"
+                        }
+                    ]
+                },
+                "description": "Fast search for autocomplete (invoice line items, etc.)"
+            },
+            "response": []
+        },
+        {
+            "name": "15. Get Product Statistics",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/{{tenant}}/inventory/products/statistics",
+                    "host": ["{{base_url}}"],
+                    "path": [
+                        "{{tenant}}",
+                        "inventory",
+                        "products",
+                        "statistics"
+                    ]
+                },
+                "description": "Get summary statistics (total products, active, low stock, etc.)"
+            },
+            "response": []
+        }
+    ]
+}

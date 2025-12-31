@@ -8,7 +8,7 @@ import type { NavigatorScreenParams } from "@react-navigation/native";
 export type MainTabParamList = {
   Dashboard: undefined;
   Accounting: NavigatorScreenParams<AccountingStackParamList>;
-  Inventory: undefined;
+  Inventory: NavigatorScreenParams<InventoryStackParamList>;
   POS: undefined;
   CRM: undefined;
   Reports: undefined;
@@ -62,6 +62,35 @@ export type AccountingStackParamList = {
   JournalEntryCreate: undefined;
   JournalEntryShow: { id: number };
   JournalEntryEdit: { id: number };
+};
+
+// ============================================================================
+// INVENTORY STACK NAVIGATOR
+// ============================================================================
+export type InventoryStackParamList = {
+  // Main Inventory Home
+  InventoryHome: undefined;
+
+  // All Inventory Actions
+  InventoryActions: undefined;
+
+  // Product Management Module
+  ProductHome: undefined;
+  ProductCreate: { onCreated?: () => void };
+  ProductShow: { id: number };
+  ProductEdit: { id: number; onUpdated?: (id: number) => void };
+  ProductStockMovements: { id: number; productName: string };
+
+  // Category Management Module (placeholder for future)
+  CategoryHome: undefined;
+  CategoryCreate: undefined;
+  CategoryShow: { id: number };
+  CategoryEdit: { id: number };
+
+  // Stock Adjustment Module (placeholder for future)
+  StockAdjustmentHome: undefined;
+  StockAdjustmentCreate: undefined;
+  StockAdjustmentShow: { id: number };
 };
 
 // ============================================================================

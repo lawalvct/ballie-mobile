@@ -1,14 +1,30 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { MainTabParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 
+type NavigationProp = NativeStackNavigationProp<MainTabParamList, "Inventory">;
+
 export default function QuickActions() {
+  const navigation = useNavigation<NavigationProp>();
+
+  const handleAddProduct = () => {
+    navigation.navigate("Inventory", {
+      screen: "ProductCreate",
+      params: {},
+    });
+  };
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Quick Actions</Text>
 
       <View style={styles.quickActionsRow}>
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={handleAddProduct}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#10b981" }]}>
             <Text style={styles.quickActionEmoji}>➕</Text>
