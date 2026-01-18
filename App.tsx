@@ -19,6 +19,7 @@ import { authAPI } from "./src/api/endpoints/auth";
 import { onboardingAPI } from "./src/api/endpoints/onboarding";
 import { BRAND_COLORS } from "./src/theme/colors";
 import { updateScreenName } from "./src/components/DevScreenIndicator";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 type Screen =
   | "splash1"
@@ -398,7 +399,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <SafeAreaProvider>
+        <AppContent />
+      </SafeAreaProvider>
     </AuthProvider>
   );
 }

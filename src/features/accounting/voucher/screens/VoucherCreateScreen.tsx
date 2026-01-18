@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { VoucherType } from "../types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
