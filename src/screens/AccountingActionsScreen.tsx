@@ -48,7 +48,8 @@ export default function AccountingActionsScreen({ navigation }: Props) {
 
           <View style={styles.cardsGrid}>
             <TouchableOpacity
-              style={[styles.actionCard, { backgroundColor: "#3b82f6" }]}>
+              style={[styles.actionCard, { backgroundColor: "#3b82f6" }]}
+              onPress={() => navigation.navigate("VoucherTypeHome")}>
               <View
                 style={[
                   styles.cardIconContainer,

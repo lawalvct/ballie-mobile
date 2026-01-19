@@ -21,6 +21,13 @@ import {
   VoucherCreateScreen,
   VoucherFormScreen,
 } from "../features/accounting/voucher";
+// Voucher Type Management Feature
+import {
+  VoucherTypeHomeScreen,
+  VoucherTypeCreateScreen,
+  VoucherTypeEditScreen,
+  VoucherTypeShowScreen,
+} from "../features/accounting/vouchertype";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "./types";
 import { BRAND_COLORS } from "../theme/colors";
@@ -157,6 +164,28 @@ function AccountingStack() {
         name="LedgerAccountShow"
         component={LedgerAccountShowScreen}
         options={{ title: "Ledger Account Details" }}
+      />
+
+      {/* Voucher Type Management Module */}
+      <Stack.Screen
+        name="VoucherTypeHome"
+        component={VoucherTypeHomeScreen}
+        options={{ title: "Voucher Types" }}
+      />
+      <Stack.Screen
+        name="VoucherTypeCreate"
+        component={VoucherTypeCreateScreen}
+        options={{ title: "Create Voucher Type" }}
+      />
+      <Stack.Screen
+        name="VoucherTypeShow"
+        component={VoucherTypeShowScreen}
+        options={{ title: "Voucher Type Details" }}
+      />
+      <Stack.Screen
+        name="VoucherTypeEdit"
+        component={VoucherTypeEditScreen}
+        options={{ title: "Edit Voucher Type" }}
       />
 
       {/* Voucher Management Module */}

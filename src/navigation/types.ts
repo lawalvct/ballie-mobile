@@ -41,6 +41,12 @@ export type AccountingStackParamList = {
   LedgerAccountShow: { id: number };
   LedgerAccountEdit: { id: number; onUpdated?: (id: number) => void };
 
+  // Voucher Types Module
+  VoucherTypeHome: undefined;
+  VoucherTypeCreate: { onCreated?: () => void };
+  VoucherTypeShow: { id: number };
+  VoucherTypeEdit: { id: number; onUpdated?: (id: number) => void };
+
   // Voucher Management Module
   VoucherHome: undefined;
   VoucherCreate: {
