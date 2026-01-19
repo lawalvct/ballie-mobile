@@ -4,11 +4,17 @@ export interface VoucherType {
   id: number;
   name: string;
   code: string;
+  abbreviation?: string;
+  category?: "accounting" | "inventory" | "POS" | "payroll" | "ecommerce";
   description: string;
   has_numbering: boolean;
   number_prefix: string;
   number_suffix: string;
   next_number: number;
+  numbering_method?: "auto" | "manual";
+  has_reference?: boolean;
+  affects_inventory?: boolean;
+  affects_cashbank?: boolean;
 }
 
 export interface LedgerAccountOption {

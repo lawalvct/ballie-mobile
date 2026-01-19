@@ -15,6 +15,7 @@ import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AccountingStackParamList } from "../../../../navigation/types";
 import { voucherService } from "../services/voucherService";
+import { voucherTypeService } from "../../vouchertype/services/voucherTypeService";
 
 type Props = NativeStackScreenProps<AccountingStackParamList, "VoucherCreate">;
 
@@ -49,8 +50,9 @@ export default function VoucherCreateScreen({ navigation }: Props) {
   const loadVoucherTypes = async () => {
     try {
       setLoading(true);
-      const formData = await voucherService.getFormData();
-      setVoucherTypes(formData.voucher_types || []);
+      // Load only accounting category voucher types
+      const types = await voucherTypeService.search("", "accounting");
+      setVoucherTypes(types || []);
     } catch (error: any) {
       console.error("Error loading voucher types:", error);
       Alert.alert(
@@ -58,7 +60,7 @@ export default function VoucherCreateScreen({ navigation }: Props) {
         error.response?.data?.message ||
           error.message ||
           "Failed to load voucher types",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     } finally {
       setLoading(false);
