@@ -32,6 +32,7 @@ import {
 import InvoiceHomeScreen from "../features/accounting/invoice/screens/InvoiceHomeScreen";
 import InvoiceCreateScreen from "../features/accounting/invoice/screens/InvoiceCreateScreen";
 import InvoiceShowScreen from "../features/accounting/invoice/screens/InvoiceShowScreen";
+import InvoiceEditScreen from "../features/accounting/invoice/screens/InvoiceEditScreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "./types";
 import { BRAND_COLORS } from "../theme/colors";
@@ -237,7 +238,7 @@ function AccountingStack() {
       />
       <Stack.Screen
         name="InvoiceEdit"
-        component={PlaceholderScreen}
+        component={InvoiceEditScreen}
         options={{ title: "Edit Invoice" }}
       />
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,46 +9,46 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { showToast } from "../../../../utils/toast";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { BRAND_COLORS } from "../../../../theme/colors";
+import { showToast } from "../../../../utils/toast";
 import { invoiceService } from "../services/invoiceService";
 import type { AccountingStackParamList } from "../../../../navigation/types";
 import type {
   FormData,
-  CreateInvoicePayload,
+  UpdateInvoicePayload,
   InvoiceItem,
   AdditionalCharge,
-  VoucherType,
   Party,
-  Product,
-  LedgerAccount,
 } from "../types";
 
 type NavigationProp = NativeStackNavigationProp<
   AccountingStackParamList,
-  "InvoiceCreate"
+  "InvoiceEdit"
 >;
 
 type RouteProp = {
   key: string;
   name: string;
   params: {
-    type: "sales" | "purchase";
+    id: number;
+    onUpdated?: (id: number) => void;
   };
 };
 
-export default function InvoiceCreateScreen() {
+export default function InvoiceEditScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProp>();
-  const invoiceType = route.params.type;
+  const invoiceId = route.params.id;
+  const onUpdated = route.params.onUpdated;
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [invoiceType, setInvoiceType] = useState<"sales" | "purchase">("sales");
 
   // Form state
   const [voucherTypeId, setVoucherTypeId] = useState<number | null>(null);
@@ -69,10 +69,9 @@ export default function InvoiceCreateScreen() {
   const [searchingParties, setSearchingParties] = useState(false);
 
   useEffect(() => {
-    loadFormData();
-  }, []);
+    loadInvoiceAndFormData();
+  }, [invoiceId]);
 
-  // Real-time party search with debounce
   useEffect(() => {
     const searchParties = async () => {
       if (!partySearch || partySearch.trim().length < 2) {
@@ -82,16 +81,7 @@ export default function InvoiceCreateScreen() {
 
       try {
         setSearchingParties(true);
-
-        if (
-          !invoiceService ||
-          typeof invoiceService.searchCustomers !== "function"
-        ) {
-          throw new Error("Search service not available");
-        }
-
         const partyType = invoiceType === "sales" ? "customer" : "vendor";
-
         const results = await invoiceService.searchCustomers(
           partySearch,
           partyType,
@@ -109,15 +99,9 @@ export default function InvoiceCreateScreen() {
       }
     };
 
-    // Debounce search by 500ms
     const timeoutId = setTimeout(searchParties, 500);
     return () => clearTimeout(timeoutId);
   }, [partySearch, invoiceType]);
-
-  // Log whenever filteredParties changes
-  useEffect(() => {
-    // Party search results updated
-  }, [filteredParties]);
 
   useEffect(() => {
     if (!partySearch) return;
@@ -138,45 +122,74 @@ export default function InvoiceCreateScreen() {
     }
   }, [partySearch, filteredParties, formData?.parties, partyId]);
 
-  const loadFormData = async () => {
+  const loadInvoiceAndFormData = async () => {
     try {
       setLoading(true);
-      const data = await invoiceService.getFormData(invoiceType);
+      const response = await invoiceService.show(invoiceId);
+      const invoice = response?.invoice;
 
+      if (!invoice) {
+        throw new Error("Failed to load invoice details");
+      }
+
+      const type = invoice.type || "sales";
+      setInvoiceType(type);
+
+      const data = await invoiceService.getFormData(type);
       if (!data) {
-        throw new Error("Failed to load form data - received empty response");
+        throw new Error("Failed to load form data");
       }
 
       setFormData(data);
       setFilteredParties(data.parties || []);
 
-      // Auto-select voucher type based on invoice type
-      if (data.voucher_types && data.voucher_types.length > 0) {
-        const targetVoucherName =
-          invoiceType === "sales" ? "sales" : "purchase";
-        const matchingVoucherType = data.voucher_types.find(
-          (type) =>
-            type && type.name && type.name.toLowerCase() === targetVoucherName,
-        );
+      setVoucherTypeId(invoice.voucher_type_id || null);
+      setVoucherDate(invoice.voucher_date || voucherDate);
+      setPartyId(invoice.party_id || response.party?.id || null);
+      setPartySearch(
+        invoice.party_name || response.party?.name || partySearch || "",
+      );
+      setNarration(invoice.narration || "");
 
-        if (matchingVoucherType) {
-          setVoucherTypeId(matchingVoucherType.id);
-        } else {
-          // Fallback to first voucher type if target not found
-          setVoucherTypeId(data.voucher_types[0].id);
-        }
-      } else {
-        Alert.alert(
-          "Warning",
-          "No voucher types found. Please create voucher types first.",
-        );
-      }
+      const mappedItems: InvoiceItem[] = (invoice.items || []).map((item) => {
+        const discount =
+          (item as any).discount ?? (item as any).discount_percentage ?? 0;
+        const vatRate =
+          (item as any).vat_rate ?? (item as any).tax_percentage ?? 0;
+        const amount = Number(item.amount ?? (item as any).total ?? 0);
+
+        return {
+          id: item.id,
+          product_id: item.product_id ?? item.product?.id ?? null,
+          product: item.product,
+          description: item.description,
+          quantity: Number(item.quantity || 0),
+          unit_id: item.unit_id,
+          rate: Number(item.rate || 0),
+          discount,
+          vat_rate: vatRate,
+          amount,
+        };
+      });
+
+      const mappedCharges: AdditionalCharge[] =
+        (invoice.additional_charges || []).map((charge) => ({
+          id: charge.id,
+          ledger_account_id: charge.ledger_account_id ?? null,
+          ledger_account: charge.ledger_account,
+          ledger_account_name: charge.ledger_account_name,
+          amount: Number(charge.amount || 0),
+          description: charge.description || charge.narration || "",
+        })) || [];
+
+      setItems(mappedItems);
+      setAdditionalCharges(mappedCharges);
     } catch (error: any) {
       Alert.alert(
         "Error",
         error?.response?.data?.message ||
           error?.message ||
-          "Failed to load form data. Please check your connection and try again.",
+          "Failed to load invoice",
       );
       navigation.goBack();
     } finally {
@@ -200,7 +213,6 @@ export default function InvoiceCreateScreen() {
     const updatedItems = [...items];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
 
-    // Calculate amount
     const item = updatedItems[index];
     const subtotal = (item.quantity || 0) * (item.rate || 0);
     const discountAmount = ((item.discount || 0) / 100) * subtotal;
@@ -289,16 +301,16 @@ export default function InvoiceCreateScreen() {
     return true;
   };
 
-  const handleSubmit = async (status: "draft" | "posted") => {
+  const handleUpdate = async () => {
     if (!validateForm()) return;
 
     try {
       setSubmitting(true);
 
-      const payload: CreateInvoicePayload = {
-        voucher_type_id: voucherTypeId!,
+      const payload: UpdateInvoicePayload = {
+        voucher_type_id: voucherTypeId || undefined,
         voucher_date: voucherDate,
-        party_id: partyId!,
+        party_id: partyId || undefined,
         narration: narration || undefined,
         items: items.map((item) => ({
           product_id: item.product_id!,
@@ -315,20 +327,19 @@ export default function InvoiceCreateScreen() {
                 description: charge.description || undefined,
               }))
             : undefined,
-        status,
       };
 
-      const invoice = await invoiceService.create(payload);
+      await invoiceService.update(invoiceId, payload);
 
-      showToast(
-        `✅ Invoice ${status === "draft" ? "saved as draft" : "created and posted"} successfully`,
-        "success",
-      );
-      navigation.navigate("InvoiceShow", { id: invoice.id });
+      showToast("✅ Invoice updated successfully", "success");
+      if (onUpdated) {
+        onUpdated(invoiceId);
+      }
+      navigation.goBack();
     } catch (error: any) {
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Failed to create invoice",
+        error.response?.data?.message || "Failed to update invoice",
       );
     } finally {
       setSubmitting(false);
@@ -339,7 +350,7 @@ export default function InvoiceCreateScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={BRAND_COLORS.darkPurple} />
-        <Text style={styles.loadingText}>Loading form data...</Text>
+        <Text style={styles.loadingText}>Loading invoice...</Text>
       </View>
     );
   }
@@ -362,7 +373,7 @@ export default function InvoiceCreateScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>
-          Create {invoiceType === "sales" ? "Sales" : "Purchase"} Invoice
+          Edit {invoiceType === "sales" ? "Sales" : "Purchase"} Invoice
         </Text>
       </View>
 
@@ -598,22 +609,14 @@ export default function InvoiceCreateScreen() {
                 </View>
               </View>
 
-              <View style={styles.amountRow}>
-                <Text style={styles.amountLabel}>Amount:</Text>
-                <Text style={styles.amountValue}>
-                  {item.amount?.toFixed(2) || "0.00"}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Amount</Text>
+                <Text style={styles.amountText}>
+                  ₦{(item.amount || 0).toFixed(2)}
                 </Text>
               </View>
             </View>
           ))}
-
-          {items.length === 0 && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>
-                No items added yet. Click "Add Item" to start.
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Additional Charges */}
@@ -647,7 +650,7 @@ export default function InvoiceCreateScreen() {
                     {formData?.ledger_accounts.map((account) => (
                       <Picker.Item
                         key={account.id}
-                        label={account.name}
+                        label={`${account.name} (${account.code})`}
                         value={account.id}
                       />
                     ))}
@@ -712,24 +715,13 @@ export default function InvoiceCreateScreen() {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.submitButton, styles.draftButton]}
-            onPress={() => handleSubmit("draft")}
-            disabled={submitting}>
-            {submitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.submitButtonText}>Save as Draft</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
             style={[styles.submitButton, styles.postButton]}
-            onPress={() => handleSubmit("posted")}
+            onPress={handleUpdate}
             disabled={submitting}>
             {submitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>Create & Post</Text>
+              <Text style={styles.submitButtonText}>Save Changes</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -784,27 +776,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
+    marginBottom: 16,
   },
-  addButton: {
-    backgroundColor: BRAND_COLORS.gold,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  addButtonText: {
-    color: BRAND_COLORS.darkPurple,
-    fontSize: 13,
-    fontWeight: "700",
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
   },
   formGroup: {
     marginBottom: 16,
@@ -829,7 +811,7 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.darkPurple,
   },
   textArea: {
-    height: 40,
+    height: 80,
     textAlignVertical: "top",
   },
   pickerContainer: {
@@ -841,28 +823,28 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 50,
-    color: BRAND_COLORS.darkPurple,
   },
   pickerItem: {
-    fontSize: 16,
-    height: 50,
+    fontSize: 14,
+    color: BRAND_COLORS.darkPurple,
+  },
+  searchingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 8,
+  },
+  searchingText: {
+    fontSize: 12,
+    color: "#6b7280",
   },
   dropdown: {
-    position: "absolute",
-    top: 72,
-    left: 0,
-    right: 0,
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#e5e7eb",
     borderRadius: 8,
+    marginTop: 8,
     maxHeight: 200,
-    zIndex: 1000,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   dropdownScroll: {
     maxHeight: 200,
@@ -882,30 +864,26 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginTop: 4,
   },
-  searchingIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
+  noResultsContainer: {
     padding: 12,
     backgroundColor: "#f9fafb",
     borderRadius: 8,
     marginTop: 8,
-    gap: 8,
-  },
-  searchingText: {
-    fontSize: 14,
-    color: "#6b7280",
-  },
-  noResultsContainer: {
-    padding: 16,
-    backgroundColor: "#f9fafb",
-    borderRadius: 8,
-    marginTop: 8,
-    alignItems: "center",
   },
   noResultsText: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#6b7280",
-    textAlign: "center",
+  },
+  addButton: {
+    backgroundColor: BRAND_COLORS.darkPurple,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
   },
   itemCard: {
     backgroundColor: "#f9fafb",
@@ -919,17 +897,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
   },
   removeButton: {
-    fontSize: 20,
+    fontSize: 18,
     color: "#ef4444",
-    fontWeight: "bold",
+    fontWeight: "700",
   },
   row: {
     flexDirection: "row",
@@ -938,32 +916,10 @@ const styles = StyleSheet.create({
   flex1: {
     flex: 1,
   },
-  amountRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-  },
-  amountLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#6b7280",
-  },
-  amountValue: {
-    fontSize: 18,
+  amountText: {
+    fontSize: 16,
     fontWeight: "700",
     color: BRAND_COLORS.gold,
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: "center",
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
   },
   summaryCard: {
     backgroundColor: "#f9fafb",
@@ -975,55 +931,51 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   summaryLabel: {
     fontSize: 14,
-    color: "#6b7280",
+    color: BRAND_COLORS.darkPurple,
+    fontWeight: "600",
   },
   summaryValue: {
     fontSize: 14,
-    fontWeight: "600",
     color: BRAND_COLORS.darkPurple,
+    fontWeight: "700",
   },
   summaryTotal: {
-    paddingTop: 12,
-    borderTopWidth: 2,
-    borderTopColor: BRAND_COLORS.darkPurple,
-    marginBottom: 0,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    paddingTop: 8,
+    marginTop: 8,
   },
   summaryTotalLabel: {
     fontSize: 16,
-    fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
+    fontWeight: "700",
   },
   summaryTotalValue: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 16,
     color: BRAND_COLORS.gold,
+    fontWeight: "700",
   },
   buttonContainer: {
-    flexDirection: "row",
-    gap: 12,
     paddingHorizontal: 20,
-    marginTop: 24,
+    marginTop: 16,
   },
   submitButton: {
-    flex: 1,
-    paddingVertical: 16,
+    backgroundColor: BRAND_COLORS.darkPurple,
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
-  },
-  draftButton: {
-    backgroundColor: "#6b7280",
-  },
-  postButton: {
-    backgroundColor: BRAND_COLORS.gold,
+    marginBottom: 12,
   },
   submitButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  postButton: {
+    backgroundColor: BRAND_COLORS.gold,
   },
 });
