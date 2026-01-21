@@ -11,6 +11,7 @@ import {
   TextInput,
   RefreshControl,
   Platform,
+  Linking,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -340,11 +341,64 @@ export default function InvoiceShowScreen() {
     });
   };
 
-  const handlePrintInvoice = async () => {
-    Alert.alert(
-      "Print Invoice",
-      "Print functionality will be available when the print endpoint is ready.",
-    );
+  const handleShareInvoice = async () => {
+    try {
+      setActionLoading(true);
+      showToast("📤 Preparing to share...", "info");
+
+      if (!invoice) {
+        throw new Error("Invoice data not available");
+      }
+
+      // Get auth token and tenant slug
+      const AsyncStorage =
+        require("@react-native-async-storage/async-storage").default;
+      const token = await AsyncStorage.getItem("auth_token");
+      const tenantSlug = await AsyncStorage.getItem("tenant_slug");
+
+      if (!token || !tenantSlug) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
+      // Create file name based on invoice number
+      const fileName = `Invoice-${invoice.voucher_number || invoiceId}.pdf`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      // Construct the full API URL
+      const apiBaseUrl = "https://ballie.co/api/v1";
+      const pdfUrl = `${apiBaseUrl}/tenant/${tenantSlug}/accounting/invoices/${invoiceId}/pdf`;
+
+      // Download PDF from API
+      const downloadResult = await FileSystem.downloadAsync(pdfUrl, fileUri, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/pdf",
+        },
+      });
+
+      if (downloadResult.status !== 200) {
+        throw new Error(
+          `Failed to download PDF. Server returned status: ${downloadResult.status}`,
+        );
+      }
+
+      // Share the PDF file using expo-sharing
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadResult.uri, {
+          mimeType: "application/pdf",
+          dialogTitle: `Share ${fileName}`,
+          UTI: "com.adobe.pdf",
+        });
+        showToast("✅ Shared successfully", "success");
+      } else {
+        Alert.alert("Success", `PDF saved to: ${downloadResult.uri}`);
+      }
+    } catch (error: any) {
+      console.error("Share Error:", error);
+      Alert.alert("Error", error.message || "Failed to share invoice");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -392,17 +446,45 @@ export default function InvoiceShowScreen() {
         );
       }
 
-      showToast("✅ PDF downloaded successfully", "success");
+      if (Platform.OS === "android") {
+        const permissions =
+          await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
-      // Share the PDF file using expo-sharing
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(downloadResult.uri, {
-          mimeType: "application/pdf",
-          dialogTitle: `Share ${fileName}`,
-          UTI: "com.adobe.pdf",
-        });
+        if (permissions.granted && permissions.directoryUri) {
+          const destinationUri =
+            await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              fileName,
+              "application/pdf",
+            );
+
+          const fileBase64 = await FileSystem.readAsStringAsync(
+            downloadResult.uri,
+            { encoding: FileSystem.EncodingType.Base64 },
+          );
+
+          await FileSystem.writeAsStringAsync(destinationUri, fileBase64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+
+          showToast("✅ PDF downloaded successfully", "success");
+          Alert.alert("PDF Downloaded", "Invoice saved to selected folder.", [
+            { text: "OK" },
+          ]);
+        } else {
+          showToast("✅ PDF downloaded successfully", "success");
+          Alert.alert(
+            "PDF Downloaded",
+            "Invoice saved to app storage. Please allow access to save in Downloads next time.",
+            [{ text: "OK" }],
+          );
+        }
       } else {
-        Alert.alert("Success", `PDF saved to: ${downloadResult.uri}`);
+        showToast("✅ PDF downloaded successfully", "success");
+        Alert.alert("PDF Downloaded", "Invoice saved to Files.", [
+          { text: "Open", onPress: () => Linking.openURL(downloadResult.uri) },
+          { text: "OK" },
+        ]);
       }
     } catch (error: any) {
       console.error("PDF Download Error:", error);
@@ -916,9 +998,9 @@ export default function InvoiceShowScreen() {
               <View style={styles.secondaryActionsRow}>
                 <TouchableOpacity
                   style={styles.secondaryButton}
-                  onPress={handlePrintInvoice}
+                  onPress={handleShareInvoice}
                   disabled={actionLoading}>
-                  <Text style={styles.secondaryButtonText}>🖨️ Print</Text>
+                  <Text style={styles.secondaryButtonText}>📤 Share</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
