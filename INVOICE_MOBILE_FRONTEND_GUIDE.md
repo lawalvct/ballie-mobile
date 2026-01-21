@@ -889,6 +889,11 @@ curl -X POST \
 - `per_page`: Items per page (default: 15)
 - `page`: Page number
 
+**List Response Additions (Mobile):**
+
+- `party_id`: Customer/Vendor ID linked to the invoice
+- `party_name`: Customer/Vendor display name (ready for list UI)
+
 **Sample Request:**
 
 ```bash
@@ -915,6 +920,8 @@ curl -X GET \
                 "reference_number": "PO-2024-001",
                 "narration": "Monthly supply",
                 "total_amount": 2631875.0,
+                "party_id": 49,
+                "party_name": "John Doe Enterprises",
                 "status": "posted",
                 "posted_at": "2026-01-19T10:30:00.000000Z",
                 "created_at": "2026-01-19T10:30:00.000000Z",

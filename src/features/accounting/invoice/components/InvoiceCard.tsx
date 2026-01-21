@@ -8,6 +8,55 @@ interface InvoiceCardProps {
   onPress: () => void;
 }
 
+const formatCurrency = (value: number | string | null | undefined) => {
+  let amount = 0;
+  if (typeof value === "number") {
+    amount = value;
+  } else if (typeof value === "string") {
+    amount = parseFloat(value) || 0;
+  }
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const formatDate = (value: string | null | undefined) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+};
+
+// Extract party name from entries if not available in party_name field
+const getPartyName = (invoice: Invoice): string => {
+  if (invoice.party_name) return invoice.party_name;
+
+  if (invoice.entries && invoice.entries.length > 0) {
+    // For sales invoices, look for the debit entry (customer account)
+    // For purchase invoices, look for the credit entry (vendor account)
+    const relevantEntry = invoice.entries.find((entry) =>
+      invoice.type === "sales"
+        ? entry.debit_amount > 0
+        : entry.credit_amount > 0,
+    );
+    if (relevantEntry) {
+      // Check nested ledger_account object first, then fall back to ledger_account_name
+      return (
+        relevantEntry.ledger_account?.name ||
+        relevantEntry.ledger_account_name ||
+        "Unknown"
+      );
+    }
+  }
+
+  return "Unknown Party";
+};
+
 export default function InvoiceCard({ invoice, onPress }: InvoiceCardProps) {
   const statusColor =
     invoice.status === "posted"
@@ -34,21 +83,23 @@ export default function InvoiceCard({ invoice, onPress }: InvoiceCardProps) {
             </Text>
           </View>
         </View>
-        <Text style={styles.voucherDate}>{invoice.voucher_date}</Text>
+        <Text style={styles.voucherDate}>
+          {formatDate(invoice.voucher_date)}
+        </Text>
       </View>
 
       <View style={styles.cardBody}>
         <View style={styles.infoRow}>
           <Text style={styles.label}>Party:</Text>
           <Text style={styles.value} numberOfLines={1}>
-            {invoice.party_name}
+            {invoice.party_name || "Unknown Party"}
           </Text>
         </View>
 
-        {invoice.voucher_type_name && (
+        {invoice.reference_number && (
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Type:</Text>
-            <Text style={styles.value}>{invoice.voucher_type_name}</Text>
+            <Text style={styles.label}>Ref:</Text>
+            <Text style={styles.value}>{invoice.reference_number}</Text>
           </View>
         )}
 
@@ -63,8 +114,7 @@ export default function InvoiceCard({ invoice, onPress }: InvoiceCardProps) {
         <View style={styles.amountContainer}>
           <Text style={styles.amountLabel}>Total Amount</Text>
           <Text style={styles.amount}>
-            {invoice.type === "sales" ? "+" : "-"}₦
-            {invoice.total_amount?.toLocaleString() || "0.00"}
+            ₦{formatCurrency(invoice.total_amount)}
           </Text>
         </View>
         <View style={styles.arrow}>

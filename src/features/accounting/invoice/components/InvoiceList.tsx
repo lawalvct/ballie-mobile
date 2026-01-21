@@ -22,6 +22,19 @@ interface InvoiceListProps {
   onRefresh?: () => void;
 }
 
+const formatCurrency = (value: number | string | null | undefined) => {
+  let amount = 0;
+  if (typeof value === "number") {
+    amount = value;
+  } else if (typeof value === "string") {
+    amount = parseFloat(value) || 0;
+  }
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 export default function InvoiceList({
   invoices,
   loading,
@@ -68,7 +81,7 @@ export default function InvoiceList({
           <View style={styles.infoRow}>
             <Text style={styles.label}>Party:</Text>
             <Text style={styles.value} numberOfLines={1}>
-              {item.party_name}
+              {item.party_name || "Unknown Party"}
             </Text>
           </View>
 
@@ -90,8 +103,7 @@ export default function InvoiceList({
           <View style={styles.amountContainer}>
             <Text style={styles.amountLabel}>Total Amount</Text>
             <Text style={styles.amount}>
-              {item.type === "sales" ? "+" : "-"}
-              {item.total_amount?.toLocaleString() || "0.00"}
+              ₦{formatCurrency(item.total_amount)}
             </Text>
           </View>
           <View style={styles.arrow}>

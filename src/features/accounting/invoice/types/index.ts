@@ -85,11 +85,18 @@ export interface AdditionalCharge {
 export interface InvoiceEntry {
   id: number;
   ledger_account_id: number;
-  ledger_account_name: string;
-  ledger_account_code: string;
+  ledger_account_name?: string;
+  ledger_account_code?: string;
   debit_amount: number;
   credit_amount: number;
   particulars: string;
+  ledger_account?: {
+    id: number;
+    name: string;
+    code: string;
+    account_type?: string;
+    current_balance?: number;
+  };
 }
 
 export interface Invoice {
@@ -103,7 +110,7 @@ export interface Invoice {
   party_id: number;
   party_name?: string;
   type: "sales" | "purchase";
-  total_amount: number;
+  total_amount: number | string;
   status: "draft" | "posted";
   created_by: number;
   posted_at: string | null;

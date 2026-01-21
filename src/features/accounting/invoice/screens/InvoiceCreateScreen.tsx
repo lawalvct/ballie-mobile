@@ -80,69 +80,30 @@ export default function InvoiceCreateScreen() {
 
       try {
         setSearchingParties(true);
-        console.log("[InvoiceCreateScreen] Searching parties:", partySearch);
-        console.log("[InvoiceCreateScreen] invoiceService:", invoiceService);
-        console.log(
-          "[InvoiceCreateScreen] searchCustomers method:",
-          invoiceService?.searchCustomers,
-        );
 
         if (
           !invoiceService ||
           typeof invoiceService.searchCustomers !== "function"
         ) {
-          console.error(
-            "[InvoiceCreateScreen] invoiceService.searchCustomers is not a function!",
-          );
           throw new Error("Search service not available");
         }
 
         const partyType = invoiceType === "sales" ? "customer" : "vendor";
-        console.log(
-          "[InvoiceCreateScreen] About to call searchCustomers with:",
-          { search: partySearch, type: partyType },
-        );
 
         const results = await invoiceService.searchCustomers(
           partySearch,
           partyType,
         );
 
-        console.log("[InvoiceCreateScreen] Raw results returned:", results);
-        console.log("[InvoiceCreateScreen] Results type:", typeof results);
-        console.log(
-          "[InvoiceCreateScreen] Results is array?",
-          Array.isArray(results),
-        );
-        console.log("[InvoiceCreateScreen] Results length:", results?.length);
-        console.log(
-          "[InvoiceCreateScreen] First result:",
-          JSON.stringify(results?.[0], null, 2),
-        );
-
         if (results && Array.isArray(results) && results.length > 0) {
-          console.log(
-            "[InvoiceCreateScreen] Setting filtered parties with",
-            results.length,
-            "items",
-          );
           setFilteredParties(results);
         } else {
-          console.log(
-            "[InvoiceCreateScreen] No results or invalid results format",
-          );
           setFilteredParties([]);
         }
       } catch (error: any) {
-        console.error("[InvoiceCreateScreen] Error searching parties:", error);
-        console.error("[InvoiceCreateScreen] Error stack:", error?.stack);
-        console.error("[InvoiceCreateScreen] Error message:", error?.message);
         setFilteredParties([]);
       } finally {
         setSearchingParties(false);
-        console.log(
-          "[InvoiceCreateScreen] Search completed, searchingParties set to false",
-        );
       }
     };
 
@@ -153,51 +114,17 @@ export default function InvoiceCreateScreen() {
 
   // Log whenever filteredParties changes
   useEffect(() => {
-    console.log(
-      "[InvoiceCreateScreen] filteredParties changed:",
-      filteredParties,
-    );
-    console.log(
-      "[InvoiceCreateScreen] filteredParties length:",
-      filteredParties.length,
-    );
+    // Party search results updated
   }, [filteredParties]);
 
   const loadFormData = async () => {
     try {
-      console.log("[InvoiceCreateScreen] Starting to load form data...");
-      console.log("[InvoiceCreateScreen] Invoice type:", invoiceType);
-
       setLoading(true);
       const data = await invoiceService.getFormData(invoiceType);
 
-      console.log("[InvoiceCreateScreen] Received form data:", data);
-      console.log("[InvoiceCreateScreen] Data type:", typeof data);
-      console.log("[InvoiceCreateScreen] Data is null?", data === null);
-      console.log(
-        "[InvoiceCreateScreen] Data is undefined?",
-        data === undefined,
-      );
-
       if (!data) {
-        console.error(
-          "[InvoiceCreateScreen] ERROR: Form data is null or undefined!",
-        );
         throw new Error("Failed to load form data - received empty response");
       }
-
-      console.log("[InvoiceCreateScreen] Voucher types:", data.voucher_types);
-      console.log("[InvoiceCreateScreen] Parties:", data.parties);
-      console.log("[InvoiceCreateScreen] Parties count:", data.parties?.length);
-      console.log(
-        "[InvoiceCreateScreen] First party:",
-        JSON.stringify(data.parties?.[0], null, 2),
-      );
-      console.log("[InvoiceCreateScreen] Products:", data.products);
-      console.log(
-        "[InvoiceCreateScreen] Ledger accounts:",
-        data.ledger_accounts,
-      );
 
       setFormData(data);
       setFilteredParties(data.parties || []);
@@ -209,57 +136,18 @@ export default function InvoiceCreateScreen() {
         );
 
         if (salesVoucherType) {
-          console.log(
-            "[InvoiceCreateScreen] Auto-selecting Sales voucher type:",
-            salesVoucherType,
-          );
           setVoucherTypeId(salesVoucherType.id);
         } else {
           // Fallback to first voucher type if "Sales" not found
-          console.log(
-            "[InvoiceCreateScreen] Sales voucher type not found, using first:",
-            data.voucher_types[0],
-          );
           setVoucherTypeId(data.voucher_types[0].id);
         }
       } else {
-        console.warn("[InvoiceCreateScreen] No voucher types available!");
         Alert.alert(
           "Warning",
           "No voucher types found. Please create voucher types first.",
         );
       }
-
-      console.log("[InvoiceCreateScreen] Form data loaded successfully!");
     } catch (error: any) {
-      console.error("[InvoiceCreateScreen] Error loading form data:", error);
-      console.error("[InvoiceCreateScreen] Error type:", typeof error);
-      console.error("[InvoiceCreateScreen] Error name:", error?.name);
-      console.error("[InvoiceCreateScreen] Error response:", error?.response);
-      console.error("[InvoiceCreateScreen] Error message:", error?.message);
-      console.error("[InvoiceCreateScreen] Error stack:", error?.stack);
-      console.error(
-        "[InvoiceCreateScreen] Error response data:",
-        error?.response?.data,
-      );
-      console.error(
-        "[InvoiceCreateScreen] Error response status:",
-        error?.response?.status,
-      );
-      console.error(
-        "[InvoiceCreateScreen] Full error object:",
-        JSON.stringify(
-          {
-            name: error?.name,
-            message: error?.message,
-            response: error?.response?.data,
-            status: error?.response?.status,
-          },
-          null,
-          2,
-        ),
-      );
-
       Alert.alert(
         "Error",
         error?.response?.data?.message ||
