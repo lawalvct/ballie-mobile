@@ -67,10 +67,6 @@ export default function InvoiceHomeScreen() {
 
   const loadInvoices = async (loadMore = false) => {
     try {
-      console.log("[InvoiceHomeScreen] Loading invoices...");
-      console.log("[InvoiceHomeScreen] Filters:", filters);
-      console.log("[InvoiceHomeScreen] Load more:", loadMore);
-
       if (loadMore) {
         setRefreshing(true);
       } else {
@@ -78,11 +74,6 @@ export default function InvoiceHomeScreen() {
       }
 
       const response = await invoiceService.list(filters);
-
-      console.log("[InvoiceHomeScreen] Response received:", response);
-      console.log("[InvoiceHomeScreen] Data array:", response.data);
-      console.log("[InvoiceHomeScreen] Pagination:", response.pagination);
-      console.log("[InvoiceHomeScreen] Statistics:", response.statistics);
 
       if (loadMore) {
         setInvoices([...invoices, ...response.data]);
@@ -92,13 +83,7 @@ export default function InvoiceHomeScreen() {
 
       setPagination(response.pagination);
       setStatistics(response.statistics);
-
-      console.log("[InvoiceHomeScreen] Invoices loaded successfully!");
     } catch (error: any) {
-      console.error("[InvoiceHomeScreen] Error loading invoices:", error);
-      console.error("[InvoiceHomeScreen] Error response:", error.response);
-      console.error("[InvoiceHomeScreen] Error message:", error.message);
-
       Alert.alert(
         "Error",
         error.response?.data?.message ||

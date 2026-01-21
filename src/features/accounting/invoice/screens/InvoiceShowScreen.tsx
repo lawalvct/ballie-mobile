@@ -9,7 +9,6 @@ import {
   Alert,
   Modal,
   TextInput,
-  Linking,
   RefreshControl,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -65,6 +64,23 @@ export default function InvoiceShowScreen() {
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
+  const [showEntries, setShowEntries] = useState(false);
+
+  const formatCurrency = (value: number | null | undefined) => {
+    return Number(value || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return "N/A";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    const month = date.toLocaleString("en-US", { month: "short" });
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${month}. ${day}, ${date.getFullYear()}`;
+  };
 
   useEffect(() => {
     loadInvoice();
@@ -74,11 +90,6 @@ export default function InvoiceShowScreen() {
     try {
       setLoading(true);
       const response = await invoiceService.show(invoiceId);
-      console.log(
-        "[InvoiceShowScreen] Response received:",
-        JSON.stringify(response, null, 2),
-      );
-
       if (!response || !response.invoice) {
         throw new Error("Invalid invoice response received from server");
       }
@@ -87,19 +98,6 @@ export default function InvoiceShowScreen() {
       setParty(response.party);
       setBalanceDue(response.balance_due || 0);
       setTotalPaid(response.total_paid || 0);
-
-      console.log("[InvoiceShowScreen] Parsed values:");
-      console.log("  - Invoice total:", response.invoice?.total_amount);
-      console.log("  - Balance due:", response.balance_due);
-      console.log("  - Total paid:", response.total_paid);
-      console.log(
-        "  - Calculated status:",
-        response.balance_due === 0
-          ? "Paid"
-          : response.balance_due < response.invoice?.total_amount
-            ? "Partially Paid"
-            : "Unpaid",
-      );
 
       // Pre-fill email with party email
       if (response.party?.email) {
@@ -111,7 +109,6 @@ export default function InvoiceShowScreen() {
         setPaymentAmount(response.balance_due.toString());
       }
     } catch (error: any) {
-      console.error("[InvoiceShowScreen] Error loading invoice:", error);
       Alert.alert("Error", error?.message || "Failed to load invoice");
       navigation.goBack();
     } finally {
@@ -124,7 +121,7 @@ export default function InvoiceShowScreen() {
     try {
       await loadInvoice();
     } catch (error) {
-      console.error("[InvoiceShowScreen] Refresh error:", error);
+      // Error handled silently or could show alert if needed
     } finally {
       setRefreshing(false);
     }
@@ -147,7 +144,7 @@ export default function InvoiceShowScreen() {
         setSelectedBankAccount(results[0]);
       }
     } catch (error) {
-      console.error("[InvoiceShowScreen] Bank search error:", error);
+      // Bank search error handled silently
     } finally {
       setBankSearchLoading(false);
     }
@@ -333,6 +330,20 @@ export default function InvoiceShowScreen() {
     }
   };
 
+  const handleEditInvoice = () => {
+    navigation.navigate("InvoiceEdit", {
+      id: invoiceId,
+      onUpdated: () => loadInvoice(),
+    });
+  };
+
+  const handlePrintInvoice = async () => {
+    Alert.alert(
+      "Print Invoice",
+      "Print functionality will be available when the print endpoint is ready.",
+    );
+  };
+
   const handleDownloadPDF = async () => {
     try {
       setActionLoading(true);
@@ -387,6 +398,19 @@ export default function InvoiceShowScreen() {
       : invoice.status === "draft"
         ? "#fef3c7"
         : "#f3f4f6";
+
+  const itemsSubtotal = (invoice.items || []).reduce(
+    (sum, item) => sum + Number(item.amount || 0),
+    0,
+  );
+  const chargesTotal = (invoice.additional_charges || []).reduce(
+    (sum, charge) => sum + Number(charge.amount || 0),
+    0,
+  );
+  const vatAmount = Number((invoice as any)?.vat_amount || 0);
+  const paymentHistory = ((invoice as any)?.payments ||
+    (invoice as any)?.payment_history ||
+    []) as any[];
 
   return (
     <View style={styles.container}>
@@ -512,9 +536,69 @@ export default function InvoiceShowScreen() {
                   <Text style={styles.partyDetailText}>{party.address}</Text>
                 </View>
               )}
+              {party.outstanding_balance !== undefined && (
+                <View style={styles.partyDetailRow}>
+                  <Text style={styles.partyDetailIcon}>💳</Text>
+                  <Text style={styles.partyDetailText}>
+                    Outstanding Balance: ₦
+                    {formatCurrency(party.outstanding_balance)}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         )}
+
+        {/* Invoice Summary */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Invoice Summary</Text>
+            <Text style={styles.sectionTag}>#{invoice.voucher_number}</Text>
+          </View>
+          <View style={styles.summaryGrid}>
+            <View style={styles.summaryRowWide}>
+              <Text style={styles.infoLabel}>Invoice Date:</Text>
+              <Text style={styles.infoValue}>
+                {formatDate(invoice.voucher_date)}
+              </Text>
+            </View>
+            {invoice.reference_number && (
+              <View style={styles.summaryRowWide}>
+                <Text style={styles.infoLabel}>Reference:</Text>
+                <Text style={styles.infoValue}>{invoice.reference_number}</Text>
+              </View>
+            )}
+            <View style={styles.summaryRowWide}>
+              <Text style={styles.infoLabel}>Created By:</Text>
+              <Text style={styles.infoValue}>
+                {invoice.created_by_user?.name || "N/A"}
+              </Text>
+            </View>
+            {invoice.status === "posted" && (
+              <View style={styles.summaryRowWide}>
+                <Text style={styles.infoLabel}>Posted On:</Text>
+                <Text style={styles.infoValue}>
+                  {formatDate(invoice.posted_at)}
+                  {invoice.posted_by_user?.name
+                    ? ` by ${invoice.posted_by_user.name}`
+                    : ""}
+                </Text>
+              </View>
+            )}
+            {party?.payment_terms && (
+              <View style={styles.summaryRowWide}>
+                <Text style={styles.infoLabel}>Payment Terms:</Text>
+                <Text style={styles.infoValue}>{party.payment_terms}</Text>
+              </View>
+            )}
+            <View style={styles.summaryRowWide}>
+              <Text style={styles.infoLabel}>Status:</Text>
+              <Text style={[styles.infoValue, { color: statusColor }]}>
+                {invoice.status.toUpperCase()}
+              </Text>
+            </View>
+          </View>
+        </View>
 
         {/* Basic Information */}
         <View style={styles.section}>
@@ -528,12 +612,22 @@ export default function InvoiceShowScreen() {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Date:</Text>
-              <Text style={styles.infoValue}>{invoice.voucher_date}</Text>
+              <Text style={styles.infoValue}>
+                {formatDate(invoice.voucher_date)}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Party:</Text>
-              <Text style={styles.infoValue}>{invoice.party_name}</Text>
+              <Text style={styles.infoValue}>
+                {invoice.party_name || party?.name || "N/A"}
+              </Text>
             </View>
+            {invoice.reference_number && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Reference:</Text>
+                <Text style={styles.infoValue}>{invoice.reference_number}</Text>
+              </View>
+            )}
             {invoice.narration && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Narration:</Text>
@@ -552,18 +646,29 @@ export default function InvoiceShowScreen() {
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemName}>{item.product_name}</Text>
                   <Text style={styles.itemAmount}>
-                    {Number(item.amount || 0).toFixed(2)}
+                    ₦{formatCurrency(item.amount)}
                   </Text>
                 </View>
                 <View style={styles.itemDetails}>
+                  {item.description &&
+                    item.description !== item.product_name && (
+                      <View style={styles.itemDetailRow}>
+                        <Text style={styles.itemDetailLabel}>Description:</Text>
+                        <Text style={styles.itemDetailValue}>
+                          {item.description}
+                        </Text>
+                      </View>
+                    )}
                   <View style={styles.itemDetailRow}>
                     <Text style={styles.itemDetailLabel}>Quantity:</Text>
-                    <Text style={styles.itemDetailValue}>{item.quantity}</Text>
+                    <Text style={styles.itemDetailValue}>
+                      {item.quantity} {item.unit || ""}
+                    </Text>
                   </View>
                   <View style={styles.itemDetailRow}>
                     <Text style={styles.itemDetailLabel}>Rate:</Text>
                     <Text style={styles.itemDetailValue}>
-                      {Number(item.rate || 0).toFixed(2)}
+                      ₦{formatCurrency(item.rate)}
                     </Text>
                   </View>
                   {(item.discount ?? 0) > 0 && (
@@ -600,7 +705,7 @@ export default function InvoiceShowScreen() {
                       {charge.ledger_account_name}
                     </Text>
                     <Text style={styles.chargeAmount}>
-                      {Number(charge.amount || 0).toFixed(2)}
+                      ₦{formatCurrency(charge.amount)}
                     </Text>
                   </View>
                   {charge.description && (
@@ -613,35 +718,87 @@ export default function InvoiceShowScreen() {
             </View>
           )}
 
+        {/* Payment History */}
+        {paymentHistory.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Payment History</Text>
+            {paymentHistory.map((payment, index) => (
+              <View key={index} style={styles.paymentHistoryCard}>
+                <View style={styles.paymentHistoryRow}>
+                  <Text style={styles.paymentHistoryLabel}>Date</Text>
+                  <Text style={styles.paymentHistoryValue}>
+                    {formatDate(payment.date || payment.voucher_date)}
+                  </Text>
+                </View>
+                <View style={styles.paymentHistoryRow}>
+                  <Text style={styles.paymentHistoryLabel}>Amount</Text>
+                  <Text style={styles.paymentHistoryValue}>
+                    ₦{formatCurrency(payment.amount)}
+                  </Text>
+                </View>
+                {payment.method && (
+                  <View style={styles.paymentHistoryRow}>
+                    <Text style={styles.paymentHistoryLabel}>Method</Text>
+                    <Text style={styles.paymentHistoryValue}>
+                      {payment.method}
+                    </Text>
+                  </View>
+                )}
+                {payment.reference && (
+                  <View style={styles.paymentHistoryRow}>
+                    <Text style={styles.paymentHistoryLabel}>Reference</Text>
+                    <Text style={styles.paymentHistoryValue}>
+                      {payment.reference}
+                    </Text>
+                  </View>
+                )}
+                {payment.notes && (
+                  <Text style={styles.paymentHistoryNotes}>
+                    {payment.notes}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Ledger Entries */}
         {invoice.entries && invoice.entries.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ledger Entries</Text>
-            {invoice.entries.map((entry, index) => (
-              <View key={index} style={styles.entryCard}>
-                <Text style={styles.entryAccount}>
-                  {entry.ledger_account_name}
-                </Text>
-                <View style={styles.entryAmounts}>
-                  <View style={styles.entryAmountBox}>
-                    <Text style={styles.entryAmountLabel}>Debit</Text>
-                    <Text style={styles.entryAmountValue}>
-                      {entry.debit_amount
-                        ? Number(entry.debit_amount).toFixed(2)
-                        : "-"}
-                    </Text>
-                  </View>
-                  <View style={styles.entryAmountBox}>
-                    <Text style={styles.entryAmountLabel}>Credit</Text>
-                    <Text style={styles.entryAmountValue}>
-                      {entry.credit_amount
-                        ? Number(entry.credit_amount).toFixed(2)
-                        : "-"}
-                    </Text>
+            <TouchableOpacity
+              style={styles.sectionHeaderRow}
+              onPress={() => setShowEntries((prev) => !prev)}>
+              <Text style={styles.sectionTitle}>Accounting Entries</Text>
+              <Text style={styles.sectionActionText}>
+                {showEntries ? "Hide" : "Show"}
+              </Text>
+            </TouchableOpacity>
+            {showEntries &&
+              invoice.entries.map((entry, index) => (
+                <View key={index} style={styles.entryCard}>
+                  <Text style={styles.entryAccount}>
+                    {entry.ledger_account_name}
+                  </Text>
+                  <View style={styles.entryAmounts}>
+                    <View style={styles.entryAmountBox}>
+                      <Text style={styles.entryAmountLabel}>Debit</Text>
+                      <Text style={styles.entryAmountValue}>
+                        {entry.debit_amount
+                          ? `₦${formatCurrency(entry.debit_amount)}`
+                          : "-"}
+                      </Text>
+                    </View>
+                    <View style={styles.entryAmountBox}>
+                      <Text style={styles.entryAmountLabel}>Credit</Text>
+                      <Text style={styles.entryAmountValue}>
+                        {entry.credit_amount
+                          ? `₦${formatCurrency(entry.credit_amount)}`
+                          : "-"}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
+              ))}
           </View>
         )}
 
@@ -650,9 +807,32 @@ export default function InvoiceShowScreen() {
           <Text style={styles.sectionTitle}>Summary</Text>
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Amount:</Text>
-              <Text style={styles.summaryValue}>
-                {Number(invoice.total_amount || 0).toFixed(2)}
+              <Text style={styles.summaryLabel}>Items Subtotal:</Text>
+              <Text style={styles.summaryValueSmall}>
+                ₦{formatCurrency(itemsSubtotal)}
+              </Text>
+            </View>
+            {chargesTotal > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Additional Charges:</Text>
+                <Text style={styles.summaryValueSmall}>
+                  ₦{formatCurrency(chargesTotal)}
+                </Text>
+              </View>
+            )}
+            {vatAmount > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>VAT:</Text>
+                <Text style={styles.summaryValueSmall}>
+                  ₦{formatCurrency(vatAmount)}
+                </Text>
+              </View>
+            )}
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Grand Total:</Text>
+              <Text style={styles.summaryValueStrong}>
+                ₦{formatCurrency(invoice.total_amount)}
               </Text>
             </View>
           </View>
@@ -687,6 +867,15 @@ export default function InvoiceShowScreen() {
                   disabled={actionLoading}>
                   <Text style={styles.secondaryButtonText}>📄 PDF</Text>
                 </TouchableOpacity>
+              </View>
+
+              <View style={styles.secondaryActionsRow}>
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={handlePrintInvoice}
+                  disabled={actionLoading}>
+                  <Text style={styles.secondaryButtonText}>🖨️ Print</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[styles.secondaryButton, styles.unpostButton]}
@@ -700,6 +889,13 @@ export default function InvoiceShowScreen() {
 
           {invoice.status === "draft" && (
             <>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.primaryButton]}
+                onPress={handleEditInvoice}
+                disabled={actionLoading}>
+                <Text style={styles.actionButtonText}>✏️ Edit Invoice</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={[styles.actionButton, styles.postButton]}
                 onPress={handlePost}
@@ -1020,6 +1216,22 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.darkPurple,
     marginBottom: 16,
   },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  sectionTag: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "600",
+  },
+  sectionActionText: {
+    fontSize: 13,
+    color: BRAND_COLORS.darkPurple,
+    fontWeight: "600",
+  },
   infoGrid: {
     gap: 12,
   },
@@ -1147,12 +1359,49 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
   },
+  paymentHistoryCard: {
+    backgroundColor: "#f9fafb",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 12,
+  },
+  paymentHistoryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  paymentHistoryLabel: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "600",
+  },
+  paymentHistoryValue: {
+    fontSize: 13,
+    color: BRAND_COLORS.darkPurple,
+    fontWeight: "600",
+  },
+  paymentHistoryNotes: {
+    marginTop: 6,
+    fontSize: 12,
+    color: "#4b5563",
+  },
   summaryCard: {
     backgroundColor: "#f9fafb",
     borderWidth: 2,
     borderColor: BRAND_COLORS.darkPurple,
     borderRadius: 8,
     padding: 16,
+  },
+  summaryGrid: {
+    gap: 12,
+  },
+  summaryRowWide: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   summaryRow: {
     flexDirection: "row",
@@ -1164,7 +1413,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
   },
-  summaryValue: {
+  summaryValueSmall: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: "#e5e7eb",
+    marginVertical: 12,
+  },
+  summaryValueStrong: {
     fontSize: 20,
     fontWeight: "700",
     color: BRAND_COLORS.gold,
