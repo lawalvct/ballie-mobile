@@ -16,6 +16,7 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as FileSystem from "expo-file-system/legacy";
+import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { BRAND_COLORS } from "../../../../theme/colors";
 import { invoiceService } from "../services/invoiceService";
@@ -447,35 +448,24 @@ export default function InvoiceShowScreen() {
       }
 
       if (Platform.OS === "android") {
-        const permissions =
-          await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        const { status, canAskAgain } =
+          await MediaLibrary.requestPermissionsAsync();
 
-        if (permissions.granted && permissions.directoryUri) {
-          const destinationUri =
-            await FileSystem.StorageAccessFramework.createFileAsync(
-              permissions.directoryUri,
-              fileName,
-              "application/pdf",
-            );
-
-          const fileBase64 = await FileSystem.readAsStringAsync(
-            downloadResult.uri,
-            { encoding: FileSystem.EncodingType.Base64 },
-          );
-
-          await FileSystem.writeAsStringAsync(destinationUri, fileBase64, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+        if (status === "granted") {
+          const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
+          await MediaLibrary.createAlbumAsync("Download", asset, false);
 
           showToast("✅ PDF downloaded successfully", "success");
-          Alert.alert("PDF Downloaded", "Invoice saved to selected folder.", [
+          Alert.alert("PDF Downloaded", "Invoice saved to Downloads.", [
             { text: "OK" },
           ]);
         } else {
           showToast("✅ PDF downloaded successfully", "success");
           Alert.alert(
             "PDF Downloaded",
-            "Invoice saved to app storage. Please allow access to save in Downloads next time.",
+            canAskAgain
+              ? "Invoice saved to app storage. Allow storage access to save in Downloads."
+              : "Invoice saved to app storage. Storage access is blocked in system settings.",
             [{ text: "OK" }],
           );
         }
