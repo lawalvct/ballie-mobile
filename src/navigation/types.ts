@@ -63,6 +63,12 @@ export type AccountingStackParamList = {
   VoucherShow: { id: number };
   VoucherEdit: { id: number; onUpdated?: (id: number) => void };
 
+  // Invoice Management Module
+  InvoiceHome: { type: "sales" | "purchase" };
+  InvoiceCreate: { type: "sales" | "purchase"; onCreated?: () => void };
+  InvoiceShow: { id: number };
+  InvoiceEdit: { id: number; onUpdated?: (id: number) => void };
+
   // Journal Entries Module (placeholder for future)
   JournalEntryList: undefined;
   JournalEntryCreate: undefined;

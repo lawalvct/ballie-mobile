@@ -28,6 +28,10 @@ import {
   VoucherTypeEditScreen,
   VoucherTypeShowScreen,
 } from "../features/accounting/vouchertype";
+// Invoice Management Feature
+import InvoiceHomeScreen from "../features/accounting/invoice/screens/InvoiceHomeScreen";
+import InvoiceCreateScreen from "../features/accounting/invoice/screens/InvoiceCreateScreen";
+import InvoiceShowScreen from "../features/accounting/invoice/screens/InvoiceShowScreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "./types";
 import { BRAND_COLORS } from "../theme/colors";
@@ -213,6 +217,28 @@ function AccountingStack() {
         name="VoucherEdit"
         component={PlaceholderScreen}
         options={{ title: "Edit Voucher" }}
+      />
+
+      {/* Invoice Management Module */}
+      <Stack.Screen
+        name="InvoiceHome"
+        component={InvoiceHomeScreen}
+        options={{ title: "Invoices" }}
+      />
+      <Stack.Screen
+        name="InvoiceCreate"
+        component={InvoiceCreateScreen}
+        options={{ title: "Create Invoice" }}
+      />
+      <Stack.Screen
+        name="InvoiceShow"
+        component={InvoiceShowScreen}
+        options={{ title: "Invoice Details" }}
+      />
+      <Stack.Screen
+        name="InvoiceEdit"
+        component={PlaceholderScreen}
+        options={{ title: "Edit Invoice" }}
       />
 
       {/* Journal Entries Module - Placeholder for future */}

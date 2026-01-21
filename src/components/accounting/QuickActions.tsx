@@ -1,14 +1,23 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import type { AccountingStackParamList } from "../../navigation/types";
+
+type NavigationProp = StackNavigationProp<AccountingStackParamList>;
 
 export default function QuickActions() {
+  const navigation = useNavigation<NavigationProp>();
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Quick Actions</Text>
 
       <View style={styles.quickActionsRow}>
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={() => navigation.navigate("InvoiceHome", { type: "sales" })}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#10b981" }]}>
             <Text style={styles.quickActionEmoji}> 💵 </Text>
@@ -24,7 +33,11 @@ export default function QuickActions() {
           <Text style={styles.quickActionLabel}>Receipt</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={() =>
+            navigation.navigate("InvoiceHome", { type: "purchase" })
+          }>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#3b82f6" }]}>
             <Text style={styles.quickActionEmoji}>🛒</Text>
