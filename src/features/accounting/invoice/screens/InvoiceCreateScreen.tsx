@@ -129,16 +129,19 @@ export default function InvoiceCreateScreen() {
       setFormData(data);
       setFilteredParties(data.parties || []);
 
-      // Auto-select "Sales" voucher type if available
+      // Auto-select voucher type based on invoice type
       if (data.voucher_types && data.voucher_types.length > 0) {
-        const salesVoucherType = data.voucher_types.find(
-          (type) => type && type.name && type.name.toLowerCase() === "sales",
+        const targetVoucherName =
+          invoiceType === "sales" ? "sales" : "purchase";
+        const matchingVoucherType = data.voucher_types.find(
+          (type) =>
+            type && type.name && type.name.toLowerCase() === targetVoucherName,
         );
 
-        if (salesVoucherType) {
-          setVoucherTypeId(salesVoucherType.id);
+        if (matchingVoucherType) {
+          setVoucherTypeId(matchingVoucherType.id);
         } else {
-          // Fallback to first voucher type if "Sales" not found
+          // Fallback to first voucher type if target not found
           setVoucherTypeId(data.voucher_types[0].id);
         }
       } else {
