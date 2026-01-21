@@ -10,9 +10,12 @@ import {
   Modal,
   TextInput,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import { BRAND_COLORS } from "../../../../theme/colors";
 import { invoiceService } from "../services/invoiceService";
 import { showToast } from "../../../../utils/toast";
@@ -349,20 +352,61 @@ export default function InvoiceShowScreen() {
       setActionLoading(true);
       showToast("📄 Generating PDF...", "info");
 
-      // Note: PDF download in React Native requires additional setup
-      // This is a placeholder for the actual implementation
-      Alert.alert(
-        "PDF Download",
-        "PDF download functionality will be implemented with file system access",
-      );
+      if (!invoice) {
+        throw new Error("Invoice data not available");
+      }
 
-      // TODO: Implement actual PDF download with react-native-fs or expo-file-system
-      // const pdfBlob = await invoiceService.downloadPDF(invoiceId);
+      // Get auth token and tenant slug
+      const AsyncStorage =
+        require("@react-native-async-storage/async-storage").default;
+      const token = await AsyncStorage.getItem("auth_token");
+      const tenantSlug = await AsyncStorage.getItem("tenant_slug");
+
+      if (!token || !tenantSlug) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
+      // Create file name based on invoice number
+      const fileName = `Invoice-${invoice.voucher_number || invoiceId}.pdf`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      // Construct the full API URL
+      const apiBaseUrl = "https://ballie.co/api/v1";
+      const pdfUrl = `${apiBaseUrl}/tenant/${tenantSlug}/accounting/invoices/${invoiceId}/pdf`;
+
+      console.log("Downloading PDF from:", pdfUrl);
+
+      // Download PDF from API
+      const downloadResult = await FileSystem.downloadAsync(pdfUrl, fileUri, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/pdf",
+        },
+      });
+
+      console.log("Download result:", downloadResult);
+
+      if (downloadResult.status !== 200) {
+        throw new Error(
+          `Failed to download PDF. Server returned status: ${downloadResult.status}`,
+        );
+      }
+
+      showToast("✅ PDF downloaded successfully", "success");
+
+      // Share the PDF file using expo-sharing
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadResult.uri, {
+          mimeType: "application/pdf",
+          dialogTitle: `Share ${fileName}`,
+          UTI: "com.adobe.pdf",
+        });
+      } else {
+        Alert.alert("Success", `PDF saved to: ${downloadResult.uri}`);
+      }
     } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Failed to download PDF",
-      );
+      console.error("PDF Download Error:", error);
+      Alert.alert("Error", error.message || "Failed to download PDF");
     } finally {
       setActionLoading(false);
     }
