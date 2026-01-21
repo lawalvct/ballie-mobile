@@ -4,6 +4,17 @@
 
 This comprehensive guide provides all the information needed to build the mobile app invoice management features, including field descriptions, business logic, API endpoints, and screen architecture.
 
+### Date Format Guidelines
+
+**API Communication:** Always use ISO format `YYYY-MM-DD` (e.g., `2026-01-21`) when sending/receiving dates from the API.
+
+**Display to Users:** Format dates as `MMM. DD, YYYY` (e.g., `Jan. 21, 2026`) for better readability on mobile screens.
+
+**Example:**
+
+- API sends: `"voucher_date": "2026-01-21"`
+- Display shows: `Jan. 21, 2026`
+
 ---
 
 ## Table of Contents
@@ -11,11 +22,14 @@ This comprehensive guide provides all the information needed to build the mobile
 1. [Mobile App Screen Architecture](#mobile-app-screen-architecture)
 2. [Create Invoice Page - Fields & Logic](#create-invoice-page---fields--logic)
 3. [API Endpoints with Sample Payloads](#api-endpoints-with-sample-payloads)
-4. [Business Rules & Validations](#business-rules--validations)
-5. [Stock Management Logic](#stock-management-logic)
-6. [Accounting Entry Logic](#accounting-entry-logic)
-7. [VAT Calculation Logic](#vat-calculation-logic)
-8. [Error Handling](#error-handling)
+4. [Invoice Details/Show Screen](#invoice-detailsshow-screen)
+5. [API Endpoints Summary](#api-endpoints-summary)
+6. [Business Rules & Validations](#business-rules--validations)
+7. [Stock Management Logic](#stock-management-logic)
+8. [Accounting Entry Logic](#accounting-entry-logic)
+9. [VAT Calculation Logic](#vat-calculation-logic)
+10. [Error Handling](#error-handling)
+11. [Testing Checklist](#testing-checklist)
 
 ---
 
@@ -48,6 +62,48 @@ This comprehensive guide provides all the information needed to build the mobile
     │   │   └── Subtotal Display
     │   ├── Additional Charges Section (Optional)
     │   │   ├── Add Charge Button
+    │   │   ├── Charge List (Account, Amount, Narration)
+    │   │   └── Charges Total
+    │   ├── VAT Section (Toggle)
+    │   │   ├── VAT Rate Input
+    │   │   ├── VAT Applies To Selection
+    │   │   └── VAT Amount Display
+    │   ├── Grand Total Display
+    │   ├── Narration/Notes
+    │   └── Action Buttons (Save Draft, Post, Post & New)
+    │
+    ├── Invoice Details Screen ⭐ NEW
+    │   ├── Header (Back, Action Menu)
+    │   ├── Payment Status Card
+    │   │   ├── Balance Due Display
+    │   │   ├── Progress Bar
+    │   │   └── Payment Status Label
+    │   ├── Party Information Card
+    │   ├── Invoice Summary Card
+    │   ├── Invoice Items Section
+    │   │   ├── Items List
+    │   │   └── Totals Breakdown
+    │   ├── Payment History Section
+    │   ├── Accounting Entries (Expandable)
+    │   └── Action Buttons
+    │       ├── Record Payment (Posted only)
+    │       ├── Email Invoice
+    │       ├── Print Invoice
+    │       ├── Download PDF
+    │       ├── Unpost Invoice (Posted only)
+    │       ├── Edit Invoice (Draft only)
+    │       ├── Post Invoice (Draft only)
+    │       └── Delete Invoice (Draft only)
+    │
+    └── Payment Modal/Bottom Sheet
+        ├── Date Picker
+        ├── Amount Input
+        ├── Bank Account Selector
+        ├── Reference Input
+        ├── Notes Textarea
+        └── Submit Button
+```
+
     │   │   └── Charge List (Account, Amount, Narration)
     │   ├── VAT Section (Toggle)
     │   │   ├── Enable VAT Switch
@@ -104,7 +160,8 @@ This comprehensive guide provides all the information needed to build the mobile
     └── Quick Add Screens
         ├── Quick Add Product (Modal/Bottom Sheet)
         └── Quick Add Customer/Vendor (Modal/Bottom Sheet)
-```
+
+````
 
 ---
 
@@ -170,14 +227,28 @@ This comprehensive guide provides all the information needed to build the mobile
 - **Required:** Yes
 - **Label:** Changes based on type (Customer for sales, Vendor for purchase)
 - **Source:** GET `/api/v1/tenant/{tenant}/accounting/invoices/search-customers?search={query}&type={customer|vendor}`
-- **Display:** Name, Phone, Email, Outstanding Balance
+- **Display:** Name, Phone, Mobile, Email, Outstanding Balance, Address
+- **Response Fields:**
+    - `id` - Customer/Vendor ID (use for form submission)
+    - `ledger_account_id` - Associated ledger account ID
+    - `name` - Full name (auto-generated from first_name + last_name for individuals, or company_name for businesses)
+    - `customer_type` / `vendor_type` - "individual" or "business"
+    - `email` - Email address
+    - `phone` - Primary phone number
+    - `mobile` - Mobile phone number
+    - `outstanding_balance` - Current balance owed (numeric)
+    - `currency` - Currency code (e.g., "NGN")
+    - `payment_terms` - Payment terms (e.g., "Net 30")
+    - `address` - Full formatted address string
+- **Search Fields:** Searches across first_name, last_name, company_name, email, phone, and mobile
 - **Logic:**
     - Links to ledger account for accounting entries
     - For sales: Debits customer account
     - For purchase: Credits vendor account
 - **Features:**
-    - Real-time search
-    - Shows outstanding balance
+    - Real-time search as user types
+    - Shows outstanding balance for credit decisions
+    - Displays full name regardless of customer/vendor type
     - Quick add new customer/vendor button
 
 ---
@@ -282,7 +353,7 @@ Each item contains:
 
 ```javascript
 subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-```
+````
 
 **Display:** Currency formatted at bottom of items section
 
@@ -534,7 +605,7 @@ curl -X GET \
                 "phone": "08012345678",
                 "ledger_account_id": 45,
                 "outstanding_balance": 15000.0,
-                "is_active": true
+                "status": "active"
             },
             {
                 "id": 2,
@@ -543,7 +614,7 @@ curl -X GET \
                 "phone": "08098765432",
                 "ledger_account_id": 46,
                 "outstanding_balance": 0.0,
-                "is_active": true
+                "status": "active"
             }
         ],
         "products": [
@@ -1191,29 +1262,29 @@ curl -X GET \
     "data": [
         {
             "id": 1,
-            "name": "John Doe Enterprises",
+            "ledger_account_id": 45,
+            "name": "John Doe",
+            "customer_type": "individual",
             "email": "john@example.com",
             "phone": "08012345678",
-            "address": "123 Business Street, Lagos",
-            "city": "Lagos",
-            "state": "Lagos State",
-            "country": "Nigeria",
+            "mobile": "08012345678",
             "outstanding_balance": 2631875.0,
-            "is_active": true,
-            "ledger_account_id": 45,
-            "ledger_account": {
-                "id": 45,
-                "name": "John Doe Enterprises",
-                "code": "1020-001"
-            }
+            "currency": "NGN",
+            "payment_terms": "Net 30",
+            "address": "123 Business Street, Lagos, Lagos State, 10001, Nigeria"
         },
         {
             "id": 5,
+            "ledger_account_id": 49,
             "name": "Johnson Trading Co",
+            "customer_type": "business",
             "email": "johnson@example.com",
             "phone": "08055667788",
+            "mobile": null,
             "outstanding_balance": 150000.0,
-            "ledger_account_id": 49
+            "currency": "NGN",
+            "payment_terms": "Net 15",
+            "address": "456 Trade Avenue, Lagos, Nigeria"
         }
     ]
 }
@@ -1331,6 +1402,383 @@ curl -X GET \
     ]
 }
 ```
+
+---
+
+### 12. Email Invoice
+
+**Endpoint:** `POST /{invoice}/email`
+
+**Purpose:** Send invoice PDF via email to customer/vendor
+
+**Sample Request:**
+
+```bash
+curl -X POST \
+  'https://yourapp.com/api/v1/tenant/demo-company/accounting/invoices/125/email' \
+  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -d '{
+    "to": "customer@example.com",
+    "subject": "Invoice SV-0001 from Demo Company",
+    "message": "Please find attached your invoice.",
+    "cc": ["accounts@example.com"],
+    "attach_pdf": true
+  }'
+```
+
+**Request Body:**
+
+- `to` (required): Recipient email address
+- `subject` (optional): Email subject (auto-generated if not provided)
+- `message` (optional): Email body message
+- `cc` (optional): Array of CC email addresses
+- `attach_pdf` (optional): Whether to attach PDF (default: true)
+
+**Sample Response (200 OK):**
+
+```json
+{
+    "success": true,
+    "message": "Invoice emailed successfully",
+    "data": {
+        "sent_to": "customer@example.com",
+        "sent_at": "2026-01-21T10:30:00Z"
+    }
+}
+```
+
+**Status:** ✅ **IMPLEMENTED** - Backend endpoint is ready to use
+
+---
+
+### 13. Download Invoice PDF
+
+**Endpoint:** `GET /{invoice}/pdf`
+
+**Purpose:** Download invoice as PDF file
+
+**Sample Request:**
+
+```bash
+curl -X GET \
+  'https://yourapp.com/api/v1/tenant/demo-company/accounting/invoices/125/pdf' \
+  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...' \
+  -H 'Accept: application/pdf'
+```
+
+**Sample Response (200 OK):**
+
+Returns PDF file with headers:
+
+- `Content-Type: application/pdf`
+- `Content-Disposition: attachment; filename="Invoice-SV-0001.pdf"`
+
+**Status:** ✅ **IMPLEMENTED** - Backend endpoint is ready to use
+
+---
+
+### 14. Record Payment Against Invoice
+
+**Endpoint:** `POST /{invoice}/record-payment`
+
+**Purpose:** Record a payment/receipt against an invoice to reduce balance due
+
+**Sample Request:**
+
+```bash
+curl -X POST \
+  'https://yourapp.com/api/v1/tenant/demo-company/accounting/invoices/125/record-payment' \
+  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -d '{
+    "date": "2026-01-21",
+    "amount": 50000,
+    "bank_account_id": 15,
+    "reference": "BANK-TRF-001",
+    "notes": "Bank transfer payment"
+  }'
+```
+
+**Request Body:**
+
+- `date` (required): Payment date (YYYY-MM-DD)
+- `amount` (required): Payment amount (must be > 0)
+- `bank_account_id` (required): ID of bank/cash account receiving payment
+- `reference` (optional): Payment reference number
+- `notes` (optional): Additional notes about the payment
+
+**Sample Response (201 Created):**
+
+```json
+{
+    "success": true,
+    "message": "Payment recorded successfully",
+    "data": {
+        "payment_voucher": {
+            "id": 156,
+            "voucher_number": "RV-0045",
+            "voucher_type": {
+                "id": 5,
+                "name": "Receipt Voucher",
+                "code": "RV"
+            },
+            "voucher_date": "2026-01-21",
+            "amount": 50000,
+            "reference": "BANK-TRF-001",
+            "notes": "Bank transfer payment"
+        },
+        "invoice": {
+            "id": 125,
+            "voucher_number": "SV-0001",
+            "total_amount": 100000,
+            "total_paid": 50000,
+            "balance_due": 50000,
+            "payment_status": "Partially Paid"
+        }
+    }
+}
+```
+
+**Validation Errors (422):**
+
+```json
+{
+    "success": false,
+    "message": "Validation failed",
+    "errors": {
+        "amount": ["Payment amount cannot exceed balance due of ₦50,000.00"],
+        "bank_account_id": ["The selected bank account is invalid"]
+    }
+}
+```
+
+**Status:** ✅ **IMPLEMENTED** - Backend endpoint is ready to use
+
+---
+
+## Invoice Details/Show Screen
+
+This screen displays complete invoice information with actions for the user to perform.
+
+### Screen Sections
+
+#### 1. Header Section
+
+**Display:**
+
+- Invoice number with voucher type prefix (e.g., "Invoice SV-0001")
+- Back button
+- Status badge (Draft/Posted)
+- Action menu (3-dot menu with options)
+
+#### 2. Payment Status Card (Top Priority)
+
+**Display:**
+
+- Balance Due amount (large, bold) - ₦50,000.00
+- Payment progress bar
+    - Shows percentage paid
+    - Color-coded: Red (Unpaid), Yellow (Partial), Green (Paid)
+- Payment status label: "Unpaid" | "Partially Paid" | "Fully Paid"
+- Amount paid vs total: "₦50,000 of ₦100,000"
+
+**Example:**
+
+```
+┌─────────────────────────────────┐
+│    Payment Status               │
+├─────────────────────────────────┤
+│                                 │
+│    ₦50,000.00                  │
+│    Balance Due                  │
+│                                 │
+│    [████████░░] 50%            │
+│                                 │
+│    Partially Paid               │
+│    ₦50,000 of ₦100,000         │
+│                                 │
+└─────────────────────────────────┘
+```
+
+#### 3. Party (Customer/Vendor) Information Card
+
+**Display:**
+
+- Section title: "Customer Information" or "Vendor Information"
+- Name (bold)
+- Email
+- Phone
+- Mobile
+- Full Address
+
+#### 4. Invoice Summary Card
+
+**Display:**
+
+- Invoice Date: Jan. 21, 2026
+- Reference Number (if exists)
+- Created By: User Name
+- Posted On: Jan. 21, 2026 by User Name (if posted)
+- Payment Terms: Net 30
+- Status: Draft/Posted
+
+#### 5. Invoice Items Section
+
+**Display as table/list:**
+
+- S/N | Description | Qty | Rate | Amount
+- Each item row with:
+    - Product name (bold)
+    - Description (if different from product name)
+    - Quantity with unit (e.g., "5 Pcs")
+    - Rate (₦6,000.00)
+    - Amount (₦30,000.00)
+
+**Bottom totals:**
+
+- Subtotal: ₦85,000.00
+- Additional Charges (if any):
+    - Transport: ₦5,000.00
+    - Handling: ₦2,500.00
+- VAT (if applicable): ₦7,500.00
+- **Grand Total: ₦100,000.00** (bold, larger font)
+
+#### 6. Payment History Section (if payments exist)
+
+**Display as list of cards:**
+
+- Payment date: Jan. 20, 2026
+- Amount: ₦50,000.00
+- Payment method: Bank Transfer
+- Reference: BANK-TRF-001
+- Notes: Bank transfer payment
+
+#### 7. Accounting Entries Section (Collapsible/Expandable)
+
+**Display as table:**
+
+- Account Name | Debit | Credit
+- Shows double-entry bookkeeping entries
+- Useful for accounting staff
+
+#### 8. Action Buttons
+
+**For Posted Invoices:**
+
+- 🧾 **Record Payment** (primary button, prominent)
+- 📧 **Email Invoice** (secondary button)
+- 🖨️ **Print Invoice** (opens print view)
+- 📄 **Download PDF** (downloads PDF file)
+- 🔄 **Unpost Invoice** (if user has permission)
+
+**For Draft Invoices:**
+
+- ✏️ **Edit Invoice**
+- 📮 **Post Invoice** (primary button)
+- 🗑️ **Delete Invoice**
+
+### API Response for Show Screen
+
+The show endpoint returns:
+
+```json
+{
+    "success": true,
+    "message": "Invoice retrieved successfully",
+    "data": {
+        "invoice": {
+            "id": 125,
+            "voucher_number": "SV-0001",
+            "voucher_date": "2026-01-21",
+            "reference_number": "PO-2024-001",
+            "narration": "Monthly supply",
+            "total_amount": 100000,
+            "status": "posted",
+            "created_at": "2026-01-21T08:30:00Z",
+            "posted_at": "2026-01-21T09:00:00Z",
+            "voucher_type": {
+                "id": 3,
+                "name": "Sales Invoice",
+                "code": "SALES",
+                "prefix": "SV-"
+            },
+            "items": [...],
+            "entries": [...],
+            "created_by": {
+                "id": 5,
+                "name": "John Doe"
+            },
+            "posted_by": {
+                "id": 5,
+                "name": "John Doe"
+            }
+        },
+        "party": {
+            "id": 49,
+            "type": "customer",
+            "name": "Acme Corporation",
+            "email": "info@acme.com",
+            "phone": "08012345678",
+            "mobile": "08098765432",
+            "address": "123 Business Street, Lagos, Lagos State, 10001, Nigeria",
+            "outstanding_balance": 150000
+        },
+        "balance_due": 50000,
+        "total_paid": 50000
+    }
+}
+```
+
+### Action Implementations
+
+#### Record Payment Action Flow
+
+1. User taps "Record Payment" button
+2. Show payment modal/bottom sheet with:
+    - Date picker (default: today)
+    - Amount input (default: balance due, max: balance due)
+    - Bank/Cash account selector (searchable dropdown)
+    - Reference number input (optional)
+    - Notes textarea (optional)
+3. Validate amount ≤ balance due
+4. POST to `/api/v1/tenant/{tenant}/accounting/invoices/{invoice}/record-payment`
+5. Show success message
+6. Refresh invoice details to show updated balance
+
+#### Email Invoice Action Flow
+
+1. User taps "Email Invoice" button
+2. Show email modal/bottom sheet with:
+    - To: (pre-filled with party email)
+    - CC: (optional, multi-email input)
+    - Subject: (pre-filled, editable)
+    - Message: (pre-filled template, editable)
+    - Attach PDF checkbox (default: checked)
+3. POST to `/api/v1/tenant/{tenant}/accounting/invoices/{invoice}/email`
+4. Show sending indicator
+5. Show success/error message
+
+#### Download PDF Action Flow
+
+1. User taps "Download PDF" button
+2. Show loading indicator
+3. GET `/api/v1/tenant/{tenant}/accounting/invoices/{invoice}/pdf`
+4. Save file to device downloads folder
+5. Show success notification with option to open PDF
+
+#### Unpost Invoice Action Flow
+
+1. User taps "Unpost Invoice" button
+2. Show confirmation dialog:
+    - "Are you sure you want to unpost this invoice?"
+    - "This will reverse stock movements and allow editing."
+3. If confirmed, POST to `/api/v1/tenant/{tenant}/accounting/invoices/{invoice}/unpost`
+4. Show success message
+5. Update invoice status to "Draft"
+6. Update UI to show edit/delete options
 
 ---
 
@@ -1584,6 +2032,47 @@ vat_amount = (2,425,000 + 25,000) * 0.075 = ₦ 183,750
 
 ---
 
+## API Endpoints Summary
+
+### ✅ Available Endpoints (Ready to Use)
+
+| Endpoint                    | Method | Purpose                            | Status     |
+| --------------------------- | ------ | ---------------------------------- | ---------- |
+| `/create`                   | GET    | Get form data for creating invoice | ✅ Working |
+| `/`                         | POST   | Create new invoice                 | ✅ Working |
+| `/`                         | GET    | List invoices with filters         | ✅ Working |
+| `/{invoice}`                | GET    | Get invoice details                | ✅ Working |
+| `/{invoice}`                | PUT    | Update draft invoice               | ✅ Working |
+| `/{invoice}`                | DELETE | Delete draft invoice               | ✅ Working |
+| `/{invoice}/post`           | POST   | Post draft invoice                 | ✅ Working |
+| `/{invoice}/unpost`         | POST   | Unpost posted invoice              | ✅ Working |
+| `/search-customers`         | GET    | Search customers/vendors           | ✅ Working |
+| `/search-products`          | GET    | Search products                    | ✅ Working |
+| `/search-ledger-accounts`   | GET    | Search ledger accounts             | ✅ Working |
+| `/{invoice}/pdf`            | GET    | Download invoice PDF               | ✅ Working |
+| `/{invoice}/email`          | POST   | Email invoice to customer          | ✅ Working |
+| `/{invoice}/record-payment` | POST   | Record payment against invoice     | ✅ Working |
+
+### ⚠️ Pending Endpoints (To Be Implemented)
+
+| Endpoint           | Method | Purpose                    | Priority  | Notes                              |
+| ------------------ | ------ | -------------------------- | --------- | ---------------------------------- |
+| `/{invoice}/print` | GET    | Get printable invoice HTML | 🟡 Medium | Web view exists, needs API wrapper |
+
+### Implementation Status
+
+✅ **All high-priority endpoints have been implemented!**
+
+The following endpoints are now available in the API:
+
+- `POST /{invoice}/email` - Email invoice with PDF attachment
+- `GET /{invoice}/pdf` - Download invoice as PDF
+- `POST /{invoice}/record-payment` - Record payment and create receipt voucher
+
+All endpoints follow the API specifications documented above and return proper JSON responses.
+
+---
+
 ## Testing Checklist
 
 ### Functional Testing
@@ -1594,6 +2083,9 @@ vat_amount = (2,425,000 + 25,000) * 0.075 = ₦ 183,750
 - [ ] Delete draft invoice
 - [ ] Post draft invoice
 - [ ] Unpost posted invoice
+- [ ] Record payment against invoice
+- [ ] Email invoice to customer
+- [ ] Download invoice PDF
 - [ ] Stock updates correctly
 - [ ] Customer balance updates
 - [ ] VAT calculations accurate
@@ -1604,20 +2096,26 @@ vat_amount = (2,425,000 + 25,000) * 0.075 = ₦ 183,750
 ### UI Testing
 
 - [ ] All fields display correctly
+- [ ] Payment status card shows correctly
+- [ ] Progress bar animates smoothly
 - [ ] Calculations update in real-time
 - [ ] Error messages appear
 - [ ] Loading states show
 - [ ] Success messages display
 - [ ] Navigation works
 - [ ] Responsive on all screens
+- [ ] Invoice details screen renders properly
+- [ ] Action buttons work correctly
 
 ### Performance Testing
 
 - [ ] Form loads quickly
+- [ ] Invoice details load quickly
 - [ ] Calculations are instant
 - [ ] Search is responsive
 - [ ] Large invoices handle well
 - [ ] API responses are fast
+- [ ] PDF generation is quick
 
 ---
 
@@ -1631,6 +2129,6 @@ For additional help:
 
 ---
 
-**Version:** 1.0
-**Last Updated:** January 19, 2026
+**Version:** 2.0
+**Last Updated:** January 21, 2026
 **Maintained By:** Backend Development Team

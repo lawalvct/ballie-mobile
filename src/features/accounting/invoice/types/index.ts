@@ -13,17 +13,18 @@ export interface VoucherType {
 
 export interface Party {
   id: number;
+  ledger_account_id: number;
   name: string;
+  customer_type?: "individual" | "business";
   email: string | null;
   phone: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
+  mobile: string | null;
   outstanding_balance: number;
-  status: "active" | "inactive";
-  ledger_account_id: number;
-  ledger_account: {
+  currency?: string;
+  payment_terms?: string;
+  address: string | null;
+  status?: "active" | "inactive";
+  ledger_account?: {
     id: number;
     name: string;
     code: string;

@@ -67,12 +67,14 @@ export default function InvoiceStats({ statistics, type }: InvoiceStatsProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: 20,
     marginTop: 20,
     gap: 12,
+    justifyContent: "space-between",
   },
   statCard: {
-    flex: 1,
+    width: "48%", // Approximately half width minus gap
     padding: 16,
     borderRadius: 16,
     alignItems: "center",
@@ -81,6 +83,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
+    marginBottom: 12,
   },
   statIcon: {
     fontSize: 28,

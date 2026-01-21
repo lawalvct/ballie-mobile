@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { BRAND_COLORS } from "../../../../theme/colors";
 import type { Invoice } from "../types";
@@ -17,6 +18,8 @@ interface InvoiceListProps {
   onLoadMore?: () => void;
   hasMore?: boolean;
   ListHeaderComponent?: () => React.ReactElement;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
 export default function InvoiceList({
@@ -26,6 +29,8 @@ export default function InvoiceList({
   onLoadMore,
   hasMore,
   ListHeaderComponent,
+  refreshing = false,
+  onRefresh,
 }: InvoiceListProps) {
   const renderInvoiceCard = ({ item }: { item: Invoice }) => {
     const statusColor =
@@ -145,6 +150,16 @@ export default function InvoiceList({
       ListFooterComponent={renderFooter}
       onEndReached={hasMore && !loading ? onLoadMore : undefined}
       onEndReachedThreshold={0.5}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[BRAND_COLORS.darkPurple]}
+            tintColor={BRAND_COLORS.darkPurple}
+          />
+        ) : undefined
+      }
     />
   );
 }

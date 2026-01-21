@@ -17,8 +17,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/ballie.png",
-        "backgroundColor": "#3c2c64",
-        "monochromeImage": "./assets/images/ballie.png"
+        "backgroundColor": "#3c2c64"
       },
       "splash": {
         "image": "./assets/images/ballie.png",

@@ -4,10 +4,12 @@ import type {
   FormData,
   ListParams,
   ListResponse,
+  Invoice,
   InvoiceDetails,
   CreateInvoicePayload,
   UpdateInvoicePayload,
   Statistics,
+  PaginationInfo,
   Party,
   Product,
   LedgerAccount,
@@ -98,15 +100,17 @@ class InvoiceService {
       success: boolean;
       data: InvoiceDetails;
     }>(this.baseUrl, data);
-    return response.data.data;
+    return (response as any).data;
   }
 
   /**
    * List invoices with filters and pagination
    */
-  async list(
-    params: ListParams = {},
-  ): Promise<ListResponse & { statistics: Statistics }> {
+  async list(params: ListParams = {}): Promise<{
+    data: Invoice[];
+    pagination: PaginationInfo;
+    statistics: Statistics | null;
+  }> {
     // Clean params: remove undefined, null, empty string
     const cleanParams = Object.fromEntries(
       Object.entries(params).filter(
@@ -117,26 +121,61 @@ class InvoiceService {
     const response = await apiClient.get<{
       success: boolean;
       data: ListResponse;
-      statistics: Statistics;
+      statistics?: Statistics;
     }>(this.baseUrl, {
       params: cleanParams,
     });
 
+    const responseData = response as any;
+    const listData = (responseData?.data as ListResponse) || {};
+    const stats = responseData?.statistics ?? null;
+
     return {
-      ...response.data.data,
-      statistics: response.data.statistics,
+      data: listData?.data || [],
+      pagination: {
+        current_page: listData?.current_page || 1,
+        last_page: listData?.last_page || 1,
+        per_page: listData?.per_page || (cleanParams.per_page as number) || 20,
+        total: listData?.total || 0,
+        from: listData?.from || 0,
+        to: listData?.to || 0,
+      },
+      statistics: stats,
     };
   }
 
   /**
    * Get invoice details by ID
    */
-  async show(id: number): Promise<InvoiceDetails> {
+  async show(id: number): Promise<{
+    invoice: InvoiceDetails;
+    party: Party;
+    balance_due: number;
+    total_paid: number;
+  }> {
     const response = await apiClient.get<{
       success: boolean;
-      data: { invoice: InvoiceDetails; party: Party };
+      data: {
+        invoice: InvoiceDetails;
+        party: Party;
+        balance_due: number;
+        total_paid: number;
+      };
     }>(`${this.baseUrl}/${id}`);
-    return response.data.data.invoice;
+    console.log(
+      "[invoiceService.show] Raw response:",
+      JSON.stringify(response, null, 2),
+    );
+    const payload = response as any;
+    const result = payload?.data ?? payload ?? null;
+    if (!result || !result.invoice) {
+      throw new Error("Invalid invoice payload received from server");
+    }
+    console.log(
+      "[invoiceService.show] Returning:",
+      JSON.stringify(result, null, 2),
+    );
+    return result;
   }
 
   /**
@@ -150,7 +189,7 @@ class InvoiceService {
       success: boolean;
       data: InvoiceDetails;
     }>(`${this.baseUrl}/${id}`, data);
-    return response.data.data;
+    return (response as any).data;
   }
 
   /**
@@ -168,7 +207,7 @@ class InvoiceService {
       success: boolean;
       data: InvoiceDetails;
     }>(`${this.baseUrl}/${id}/post`);
-    return response.data.data;
+    return (response as any).data;
   }
 
   /**
@@ -179,7 +218,7 @@ class InvoiceService {
       success: boolean;
       data: InvoiceDetails;
     }>(`${this.baseUrl}/${id}/unpost`);
-    return response.data.data;
+    return (response as any).data;
   }
 
   /**
@@ -195,7 +234,8 @@ class InvoiceService {
         params: { search, type },
       },
     );
-    return response.data.data;
+
+    return (response as any).data;
   }
 
   /**
@@ -211,7 +251,7 @@ class InvoiceService {
     }>(`${this.baseUrl}/search-products`, {
       params: { search, type },
     });
-    return response.data.data;
+    return (response as any).data;
   }
 
   /**
@@ -224,7 +264,73 @@ class InvoiceService {
     }>(`${this.baseUrl}/search-ledger-accounts`, {
       params: { search },
     });
-    return response.data.data;
+    return (response as any).data;
+  }
+
+  /**
+   * Download invoice as PDF
+   */
+  async downloadPDF(id: number): Promise<Blob> {
+    const response = await apiClient.get(`${this.baseUrl}/${id}/pdf`, {
+      responseType: "blob",
+    });
+    return response.data;
+  }
+
+  /**
+   * Email invoice to customer/vendor
+   */
+  async emailInvoice(
+    id: number,
+    data: {
+      to: string;
+      subject?: string;
+      message?: string;
+      cc?: string[];
+      attach_pdf?: boolean;
+    },
+  ): Promise<void> {
+    await apiClient.post(`${this.baseUrl}/${id}/email`, data);
+  }
+
+  /**
+   * Record payment against invoice
+   */
+  async recordPayment(
+    id: number,
+    data: {
+      date: string;
+      amount: number;
+      bank_account_id: number;
+      reference?: string;
+      notes?: string;
+    },
+  ): Promise<{
+    payment_voucher: any;
+    invoice: {
+      id: number;
+      voucher_number: string;
+      total_amount: number;
+      total_paid: number;
+      balance_due: number;
+      payment_status: string;
+    };
+  }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: {
+        payment_voucher: any;
+        invoice: {
+          id: number;
+          voucher_number: string;
+          total_amount: number;
+          total_paid: number;
+          balance_due: number;
+          payment_status: string;
+        };
+      };
+    }>(`${this.baseUrl}/${id}/record-payment`, data);
+    return (response as any).data;
   }
 }
 

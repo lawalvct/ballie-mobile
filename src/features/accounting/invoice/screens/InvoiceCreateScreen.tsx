@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import { showToast } from "../../../../utils/toast";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Picker } from "@react-native-picker/picker";
@@ -63,21 +64,104 @@ export default function InvoiceCreateScreen() {
   // Search states
   const [partySearch, setPartySearch] = useState("");
   const [filteredParties, setFilteredParties] = useState<Party[]>([]);
+  const [searchingParties, setSearchingParties] = useState(false);
 
   useEffect(() => {
     loadFormData();
   }, []);
 
+  // Real-time party search with debounce
   useEffect(() => {
-    if (formData?.parties) {
-      const filtered = formData.parties.filter(
-        (party) =>
-          party.name.toLowerCase().includes(partySearch.toLowerCase()) ||
-          party.email?.toLowerCase().includes(partySearch.toLowerCase()),
-      );
-      setFilteredParties(filtered);
-    }
-  }, [partySearch, formData]);
+    const searchParties = async () => {
+      if (!partySearch || partySearch.trim().length < 2) {
+        setFilteredParties([]);
+        return;
+      }
+
+      try {
+        setSearchingParties(true);
+        console.log("[InvoiceCreateScreen] Searching parties:", partySearch);
+        console.log("[InvoiceCreateScreen] invoiceService:", invoiceService);
+        console.log(
+          "[InvoiceCreateScreen] searchCustomers method:",
+          invoiceService?.searchCustomers,
+        );
+
+        if (
+          !invoiceService ||
+          typeof invoiceService.searchCustomers !== "function"
+        ) {
+          console.error(
+            "[InvoiceCreateScreen] invoiceService.searchCustomers is not a function!",
+          );
+          throw new Error("Search service not available");
+        }
+
+        const partyType = invoiceType === "sales" ? "customer" : "vendor";
+        console.log(
+          "[InvoiceCreateScreen] About to call searchCustomers with:",
+          { search: partySearch, type: partyType },
+        );
+
+        const results = await invoiceService.searchCustomers(
+          partySearch,
+          partyType,
+        );
+
+        console.log("[InvoiceCreateScreen] Raw results returned:", results);
+        console.log("[InvoiceCreateScreen] Results type:", typeof results);
+        console.log(
+          "[InvoiceCreateScreen] Results is array?",
+          Array.isArray(results),
+        );
+        console.log("[InvoiceCreateScreen] Results length:", results?.length);
+        console.log(
+          "[InvoiceCreateScreen] First result:",
+          JSON.stringify(results?.[0], null, 2),
+        );
+
+        if (results && Array.isArray(results) && results.length > 0) {
+          console.log(
+            "[InvoiceCreateScreen] Setting filtered parties with",
+            results.length,
+            "items",
+          );
+          setFilteredParties(results);
+        } else {
+          console.log(
+            "[InvoiceCreateScreen] No results or invalid results format",
+          );
+          setFilteredParties([]);
+        }
+      } catch (error: any) {
+        console.error("[InvoiceCreateScreen] Error searching parties:", error);
+        console.error("[InvoiceCreateScreen] Error stack:", error?.stack);
+        console.error("[InvoiceCreateScreen] Error message:", error?.message);
+        setFilteredParties([]);
+      } finally {
+        setSearchingParties(false);
+        console.log(
+          "[InvoiceCreateScreen] Search completed, searchingParties set to false",
+        );
+      }
+    };
+
+    // Debounce search by 500ms
+    const timeoutId = setTimeout(searchParties, 500);
+    return () => clearTimeout(timeoutId);
+  }, [partySearch, invoiceType]);
+
+  // Log whenever filteredParties changes
+  useEffect(() => {
+    console.log(
+      "[InvoiceCreateScreen] filteredParties changed:",
+      filteredParties,
+    );
+    console.log(
+      "[InvoiceCreateScreen] filteredParties length:",
+      filteredParties.length,
+    );
+  }, [filteredParties]);
 
   const loadFormData = async () => {
     try {
@@ -104,6 +188,11 @@ export default function InvoiceCreateScreen() {
 
       console.log("[InvoiceCreateScreen] Voucher types:", data.voucher_types);
       console.log("[InvoiceCreateScreen] Parties:", data.parties);
+      console.log("[InvoiceCreateScreen] Parties count:", data.parties?.length);
+      console.log(
+        "[InvoiceCreateScreen] First party:",
+        JSON.stringify(data.parties?.[0], null, 2),
+      );
       console.log("[InvoiceCreateScreen] Products:", data.products);
       console.log(
         "[InvoiceCreateScreen] Ledger accounts:",
@@ -113,13 +202,26 @@ export default function InvoiceCreateScreen() {
       setFormData(data);
       setFilteredParties(data.parties || []);
 
-      // Auto-select first voucher type if available
+      // Auto-select "Sales" voucher type if available
       if (data.voucher_types && data.voucher_types.length > 0) {
-        console.log(
-          "[InvoiceCreateScreen] Auto-selecting voucher type:",
-          data.voucher_types[0],
+        const salesVoucherType = data.voucher_types.find(
+          (type) => type && type.name && type.name.toLowerCase() === "sales",
         );
-        setVoucherTypeId(data.voucher_types[0].id);
+
+        if (salesVoucherType) {
+          console.log(
+            "[InvoiceCreateScreen] Auto-selecting Sales voucher type:",
+            salesVoucherType,
+          );
+          setVoucherTypeId(salesVoucherType.id);
+        } else {
+          // Fallback to first voucher type if "Sales" not found
+          console.log(
+            "[InvoiceCreateScreen] Sales voucher type not found, using first:",
+            data.voucher_types[0],
+          );
+          setVoucherTypeId(data.voucher_types[0].id);
+        }
       } else {
         console.warn("[InvoiceCreateScreen] No voucher types available!");
         Alert.alert(
@@ -306,18 +408,11 @@ export default function InvoiceCreateScreen() {
 
       const invoice = await invoiceService.create(payload);
 
-      Alert.alert(
-        "Success",
-        `Invoice ${status === "draft" ? "saved as draft" : "created and posted"} successfully`,
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.navigate("InvoiceShow", { id: invoice.id });
-            },
-          },
-        ],
+      showToast(
+        `✅ Invoice ${status === "draft" ? "saved as draft" : "created and posted"} successfully`,
+        "success",
       );
+      navigation.navigate("InvoiceShow", { id: invoice.id });
     } catch (error: any) {
       Alert.alert(
         "Error",
@@ -365,13 +460,19 @@ export default function InvoiceCreateScreen() {
               <Picker
                 selectedValue={voucherTypeId}
                 onValueChange={setVoucherTypeId}
-                style={styles.picker}>
-                <Picker.Item label="Select Voucher Type" value={null} />
+                style={styles.picker}
+                itemStyle={styles.pickerItem}>
+                <Picker.Item
+                  label="Select Voucher Type"
+                  value={null}
+                  color="#9ca3af"
+                />
                 {formData?.voucher_types.map((type) => (
                   <Picker.Item
                     key={type.id}
                     label={type.name}
                     value={type.id}
+                    color={BRAND_COLORS.darkPurple}
                   />
                 ))}
               </Picker>
@@ -402,10 +503,19 @@ export default function InvoiceCreateScreen() {
               onChangeText={setPartySearch}
               placeholder={`Search ${
                 invoiceType === "sales" ? "customer" : "supplier"
-              }...`}
+              } (min 2 chars)...`}
               placeholderTextColor="#9ca3af"
             />
-            {partySearch && filteredParties.length > 0 && (
+            {searchingParties && (
+              <View style={styles.searchingIndicator}>
+                <ActivityIndicator
+                  size="small"
+                  color={BRAND_COLORS.darkPurple}
+                />
+                <Text style={styles.searchingText}>Searching...</Text>
+              </View>
+            )}
+            {partySearch && filteredParties.length > 0 && !searchingParties && (
               <View style={styles.dropdown}>
                 <ScrollView style={styles.dropdownScroll}>
                   {filteredParties.map((party) => (
@@ -414,13 +524,17 @@ export default function InvoiceCreateScreen() {
                       style={styles.dropdownItem}
                       onPress={() => {
                         setPartyId(party.id);
-                        setPartySearch(party.name);
+                        setPartySearch(party.name || "");
                         setFilteredParties([]);
                       }}>
-                      <Text style={styles.dropdownItemText}>{party.name}</Text>
-                      {party.email && (
+                      <Text style={styles.dropdownItemText}>
+                        {party.name || "Unnamed Party"}
+                      </Text>
+                      {(party.email || party.phone || party.mobile) && (
                         <Text style={styles.dropdownItemSubtext}>
-                          {party.email}
+                          {[party.email, party.phone || party.mobile]
+                            .filter(Boolean)
+                            .join(" • ")}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -428,6 +542,17 @@ export default function InvoiceCreateScreen() {
                 </ScrollView>
               </View>
             )}
+            {partySearch &&
+              partySearch.length >= 2 &&
+              filteredParties.length === 0 &&
+              !searchingParties && (
+                <View style={styles.noResultsContainer}>
+                  <Text style={styles.noResultsText}>
+                    No {invoiceType === "sales" ? "customers" : "suppliers"}{" "}
+                    found
+                  </Text>
+                </View>
+              )}
           </View>
 
           <View style={styles.formGroup}>
@@ -439,7 +564,7 @@ export default function InvoiceCreateScreen() {
               placeholder="Add notes or description..."
               placeholderTextColor="#9ca3af"
               multiline
-              numberOfLines={3}
+              numberOfLines={2}
             />
           </View>
         </View>
@@ -774,7 +899,7 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.darkPurple,
   },
   textArea: {
-    height: 80,
+    height: 40,
     textAlignVertical: "top",
   },
   pickerContainer: {
@@ -785,7 +910,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   picker: {
-    height: 44,
+    height: 50,
+    color: BRAND_COLORS.darkPurple,
+  },
+  pickerItem: {
+    fontSize: 16,
+    height: 50,
   },
   dropdown: {
     position: "absolute",
@@ -821,6 +951,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6b7280",
     marginTop: 4,
+  },
+  searchingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    marginTop: 8,
+    gap: 8,
+  },
+  searchingText: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+  noResultsContainer: {
+    padding: 16,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    marginTop: 8,
+    alignItems: "center",
+  },
+  noResultsText: {
+    fontSize: 14,
+    color: "#6b7280",
+    textAlign: "center",
   },
   itemCard: {
     backgroundColor: "#f9fafb",
