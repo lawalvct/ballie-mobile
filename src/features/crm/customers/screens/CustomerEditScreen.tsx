@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -165,15 +167,33 @@ export default function CustomerEditScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={BRAND_COLORS.darkPurple} />
-        <Text style={styles.loadingText}>Loading customer...</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={BRAND_COLORS.darkPurple}
+        />
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Edit Customer</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+          <Text style={styles.loadingText}>Loading customer...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={BRAND_COLORS.darkPurple}
+      />
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -181,11 +201,15 @@ export default function CustomerEditScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Edit Customer</Text>
+        <Text style={styles.subtitle}>Update customer information</Text>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer Type</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionIcon}>👤</Text>
+            <Text style={styles.sectionTitle}>Customer Type</Text>
+          </View>
           <View style={styles.segmentedRow}>
             <TouchableOpacity
               style={[
@@ -219,7 +243,10 @@ export default function CustomerEditScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionIcon}>📞</Text>
+            <Text style={styles.sectionTitle}>Contact Information</Text>
+          </View>
           {customerType === "business" ? (
             <View style={styles.formGroup}>
               <Text style={styles.label}>Company Name</Text>
@@ -292,7 +319,10 @@ export default function CustomerEditScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Address</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionIcon}>📍</Text>
+            <Text style={styles.sectionTitle}>Address</Text>
+          </View>
           <View style={styles.formGroup}>
             <Text style={styles.label}>Address Line 1</Text>
             <TextInput
@@ -360,7 +390,10 @@ export default function CustomerEditScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Financial Settings</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionIcon}>💰</Text>
+            <Text style={styles.sectionTitle}>Financial Settings</Text>
+          </View>
           <View style={styles.row}>
             <View style={[styles.formGroup, styles.flex1]}>
               <Text style={styles.label}>Currency</Text>
@@ -397,7 +430,10 @@ export default function CustomerEditScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Opening Balance</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionIcon}>💵</Text>
+            <Text style={styles.sectionTitle}>Opening Balance</Text>
+          </View>
           <View style={styles.formGroup}>
             <Text style={styles.label}>Amount</Text>
             <TextInput
@@ -469,7 +505,10 @@ export default function CustomerEditScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notes</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionIcon}>📝</Text>
+            <Text style={styles.sectionTitle}>Notes</Text>
+          </View>
           <TextInput
             style={[styles.input, styles.textArea]}
             value={notes}
@@ -496,82 +535,163 @@ export default function CustomerEditScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: {
+    flex: 1,
+    backgroundColor: BRAND_COLORS.darkPurple,
+  },
   header: {
     backgroundColor: BRAND_COLORS.darkPurple,
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 24,
     paddingBottom: 20,
   },
-  backButton: { marginBottom: 12 },
-  backButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
-  title: { fontSize: 24, fontWeight: "bold", color: "#fff" },
-  content: { flex: 1 },
+  backButton: {
+    marginBottom: 12,
+    paddingVertical: 8,
+  },
+  backButtonText: {
+    color: BRAND_COLORS.gold,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  content: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
   section: {
     backgroundColor: "#fff",
+    marginHorizontal: 20,
     marginTop: 16,
     paddingHorizontal: 20,
     paddingVertical: 20,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionIcon: {
+    fontSize: 20,
+    marginRight: 10,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
+  },
+  formGroup: {
     marginBottom: 16,
   },
-  formGroup: { marginBottom: 16 },
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
+    color: "#374151",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
     borderColor: "#e5e7eb",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
     color: BRAND_COLORS.darkPurple,
   },
-  textArea: { height: 80, textAlignVertical: "top" },
-  row: { flexDirection: "row", gap: 12 },
-  flex1: { flex: 1 },
-  segmentedRow: { flexDirection: "row", gap: 10 },
+  textArea: {
+    height: 100,
+    textAlignVertical: "top",
+    paddingTop: 12,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  flex1: {
+    flex: 1,
+  },
+  segmentedRow: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: "#f9fafb",
+    padding: 4,
+    borderRadius: 10,
+  },
   segmentedButton: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "transparent",
   },
   segmentedActive: {
-    backgroundColor: "#fff7e6",
-    borderColor: BRAND_COLORS.gold,
+    backgroundColor: BRAND_COLORS.gold,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  segmentedText: { fontSize: 13, color: "#6b7280", fontWeight: "600" },
-  segmentedTextActive: { color: BRAND_COLORS.darkPurple },
-  buttonContainer: { paddingHorizontal: 20, marginTop: 16 },
+  segmentedText: {
+    fontSize: 14,
+    color: "#6b7280",
+    fontWeight: "600",
+  },
+  segmentedTextActive: {
+    color: BRAND_COLORS.darkPurple,
+    fontWeight: "700",
+  },
+  buttonContainer: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
   submitButton: {
     backgroundColor: BRAND_COLORS.gold,
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   submitButtonText: {
     color: BRAND_COLORS.darkPurple,
     fontSize: 16,
     fontWeight: "700",
+    letterSpacing: 0.5,
   },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, color: "#6b7280" },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: BRAND_COLORS.darkPurple,
+  },
 });

@@ -1,4 +1,5 @@
 import apiClient from "../../../../api/client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type {
   CustomerCreatePayload,
   CustomerUpdatePayload,
@@ -126,6 +127,42 @@ class CustomerService {
 
     const payload = response as any;
     return payload?.data || payload;
+  }
+
+  async exportStatementPDF(
+    id: number,
+    startDate: string,
+    endDate: string,
+  ): Promise<string> {
+    // Returns the download URL for the PDF
+    const token = await AsyncStorage.getItem("auth_token");
+    const tenantSlug = await AsyncStorage.getItem("tenant_slug");
+
+    const baseUrl = apiClient.defaults.baseURL;
+    const params = new URLSearchParams({
+      start_date: startDate,
+      end_date: endDate,
+    });
+
+    return `${baseUrl}/tenant/${tenantSlug}${this.baseUrl}/${id}/statement/pdf?${params.toString()}&access_token=${token}`;
+  }
+
+  async exportStatementExcel(
+    id: number,
+    startDate: string,
+    endDate: string,
+  ): Promise<string> {
+    // Returns the download URL for the Excel file
+    const token = await AsyncStorage.getItem("auth_token");
+    const tenantSlug = await AsyncStorage.getItem("tenant_slug");
+
+    const baseUrl = apiClient.defaults.baseURL;
+    const params = new URLSearchParams({
+      start_date: startDate,
+      end_date: endDate,
+    });
+
+    return `${baseUrl}/tenant/${tenantSlug}${this.baseUrl}/${id}/statement/excel?${params.toString()}&access_token=${token}`;
   }
 }
 

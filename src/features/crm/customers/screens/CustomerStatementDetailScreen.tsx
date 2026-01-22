@@ -6,7 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  StatusBar,
+  RefreshControl,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -41,6 +45,7 @@ export default function CustomerStatementDetailScreen() {
 
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<CustomerStatementDetail | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [startDate, setStartDate] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       .toISOString()
@@ -70,29 +75,55 @@ export default function CustomerStatementDetailScreen() {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadDetail();
+    setRefreshing(false);
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={BRAND_COLORS.darkPurple}
+      />
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Statement</Text>
+        <Text style={styles.title}>Customer Statement</Text>
+        <Text style={styles.subtitle}>Transaction history and balance</Text>
       </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.filtersRow}>
-          <TouchableOpacity
-            onPress={() => setShowStartPicker(true)}
-            style={styles.filterButton}>
-            <Text style={styles.filterText}>From: {startDate}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setShowEndPicker(true)}
-            style={styles.filterButton}>
-            <Text style={styles.filterText}>To: {endDate}</Text>
-          </TouchableOpacity>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[BRAND_COLORS.darkPurple]}
+            tintColor={BRAND_COLORS.darkPurple}
+          />
+        }>
+        <View style={styles.filtersSection}>
+          <Text style={styles.filtersTitle}>Date Range</Text>
+          <View style={styles.filtersRow}>
+            <TouchableOpacity
+              onPress={() => setShowStartPicker(true)}
+              style={styles.filterButton}>
+              <Text style={styles.filterLabel}>📅 From</Text>
+              <Text style={styles.filterValue}>{startDate}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowEndPicker(true)}
+              style={styles.filterButton}>
+              <Text style={styles.filterLabel}>📅 To</Text>
+              <Text style={styles.filterValue}>{endDate}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {showStartPicker && (
@@ -126,50 +157,102 @@ export default function CustomerStatementDetailScreen() {
         ) : (
           detail && (
             <>
-              <View style={styles.summaryCard}>
+              <LinearGradient
+                colors={["#8B5CF6", "#6D28D9"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.summaryCard}>
                 <Text style={styles.summaryTitle}>
                   {detail.customer?.company_name ||
                     detail.customer?.display_name ||
                     "Customer"}
                 </Text>
-                <Text style={styles.summaryText}>
-                  Opening: ₦{formatCurrency(detail.opening_balance)}
-                </Text>
-                <Text style={styles.summaryText}>
-                  Debits: ₦{formatCurrency(detail.total_debits)}
-                </Text>
-                <Text style={styles.summaryText}>
-                  Credits: ₦{formatCurrency(detail.total_credits)}
-                </Text>
-                <Text style={styles.summaryTextStrong}>
-                  Closing: ₦{formatCurrency(detail.closing_balance)}
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryItem}>
+                    <Text style={styles.summaryLabel}>Opening</Text>
+                    <Text style={styles.summaryValue}>
+                      ₦{formatCurrency(detail.opening_balance)}
+                    </Text>
+                  </View>
+                  <View style={styles.summaryItem}>
+                    <Text style={styles.summaryLabel}>Debits</Text>
+                    <Text style={styles.summaryValue}>
+                      ₦{formatCurrency(detail.total_debits)}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryItem}>
+                    <Text style={styles.summaryLabel}>Credits</Text>
+                    <Text style={styles.summaryValue}>
+                      ₦{formatCurrency(detail.total_credits)}
+                    </Text>
+                  </View>
+                  <View style={styles.summaryItem}>
+                    <Text style={styles.summaryLabel}>Closing</Text>
+                    <Text style={[styles.summaryValue, styles.closingBalance]}>
+                      ₦{formatCurrency(detail.closing_balance)}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+
+              <View style={styles.transactionsHeader}>
+                <Text style={styles.transactionsTitle}>📝 Transactions</Text>
+                <Text style={styles.transactionsCount}>
+                  {detail.transactions.length} entries
                 </Text>
               </View>
 
               <View style={styles.listSection}>
-                {detail.transactions.map((tx, idx) => (
-                  <View key={idx} style={styles.txRow}>
-                    <View style={styles.txLeft}>
-                      <Text style={styles.txDate}>{tx.date}</Text>
+                {detail.transactions.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyIcon}>📄</Text>
+                    <Text style={styles.emptyTitle}>No Transactions</Text>
+                    <Text style={styles.emptyText}>
+                      No transactions found for this period
+                    </Text>
+                  </View>
+                ) : (
+                  detail.transactions.map((tx, idx) => (
+                    <View key={idx} style={styles.txCard}>
+                      <View style={styles.txHeader}>
+                        <Text style={styles.txDate}>{tx.date}</Text>
+                        {tx.debit && tx.debit > 0 ? (
+                          <View style={styles.debitBadge}>
+                            <Text style={styles.debitText}>DR</Text>
+                          </View>
+                        ) : (
+                          <View style={styles.creditBadge}>
+                            <Text style={styles.creditText}>CR</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={styles.txParticulars}>{tx.particulars}</Text>
                       {tx.voucher_number && (
-                        <Text style={styles.txMeta}>
-                          {tx.voucher_type} • {tx.voucher_number}
-                        </Text>
+                        <View style={styles.txMetaRow}>
+                          <Text style={styles.txMeta}>{tx.voucher_type}</Text>
+                          <Text style={styles.txMeta}>•</Text>
+                          <Text style={styles.txMeta}>{tx.voucher_number}</Text>
+                        </View>
                       )}
-                    </View>
-                    <View style={styles.txRight}>
-                      <Text style={styles.txAmount}>
-                        ₦{formatCurrency(tx.debit || tx.credit || 0)}
-                      </Text>
+                      <View style={styles.txFooter}>
+                        <Text style={styles.txAmountLabel}>Amount</Text>
+                        <Text style={styles.txAmount}>
+                          ₦{formatCurrency(tx.debit || tx.credit || 0)}
+                        </Text>
+                      </View>
                       {tx.running_balance !== undefined && (
-                        <Text style={styles.txBalance}>
-                          Bal: ₦{formatCurrency(tx.running_balance)}
-                        </Text>
+                        <View style={styles.txBalanceRow}>
+                          <Text style={styles.txBalanceLabel}>Balance</Text>
+                          <Text style={styles.txBalance}>
+                            ₦{formatCurrency(tx.running_balance)}
+                          </Text>
+                        </View>
                       )}
                     </View>
-                  </View>
-                ))}
+                  ))
+                )}
               </View>
             </>
           )
@@ -177,80 +260,269 @@ export default function CustomerStatementDetailScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: {
+    flex: 1,
+    backgroundColor: BRAND_COLORS.darkPurple,
+  },
   header: {
     backgroundColor: BRAND_COLORS.darkPurple,
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 24,
     paddingBottom: 20,
   },
-  backButton: { marginBottom: 12 },
-  backButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
-  title: { fontSize: 22, fontWeight: "700", color: "#fff" },
-  content: { flex: 1 },
+  backButton: {
+    marginBottom: 12,
+    paddingVertical: 8,
+  },
+  backButtonText: {
+    color: BRAND_COLORS.gold,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  content: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  filtersSection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  filtersTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
+    marginBottom: 12,
+  },
   filtersRow: {
     flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    gap: 12,
   },
   filterButton: {
     flex: 1,
     backgroundColor: "#fff",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#e5e7eb",
-    borderRadius: 8,
-    padding: 10,
-  },
-  filterText: { fontSize: 12, color: BRAND_COLORS.darkPurple },
-  loadingContainer: { alignItems: "center", padding: 40 },
-  loadingText: { marginTop: 12, color: "#6b7280" },
-  summaryCard: {
-    backgroundColor: "#fff",
-    marginTop: 16,
-    marginHorizontal: 20,
-    padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  filterLabel: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "600",
+    marginBottom: 6,
+  },
+  filterValue: {
+    fontSize: 14,
+    color: BRAND_COLORS.darkPurple,
+    fontWeight: "700",
+  },
+  loadingContainer: {
+    alignItems: "center",
+    padding: 60,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: BRAND_COLORS.darkPurple,
+  },
+  summaryCard: {
+    marginTop: 20,
+    marginHorizontal: 20,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   summaryTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 16,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  summaryItem: {
+    flex: 1,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.8)",
+    fontWeight: "500",
+    marginBottom: 6,
+  },
+  summaryValue: {
     fontSize: 16,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  closingBalance: {
+    fontSize: 18,
+    color: BRAND_COLORS.gold,
+  },
+  transactionsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 12,
+  },
+  transactionsTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: BRAND_COLORS.darkPurple,
+  },
+  transactionsCount: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "600",
+  },
+  listSection: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  emptyContainer: {
+    padding: 60,
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginTop: 20,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
     fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
     marginBottom: 8,
   },
-  summaryText: { fontSize: 12, color: "#6b7280", marginBottom: 4 },
-  summaryTextStrong: {
+  emptyText: {
     fontSize: 14,
-    color: BRAND_COLORS.gold,
-    fontWeight: "700",
-    marginTop: 6,
+    color: "#6b7280",
+    textAlign: "center",
   },
-  listSection: { paddingHorizontal: 20, paddingTop: 16 },
-  txRow: {
+  txCard: {
     backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  txHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
   },
-  txLeft: { flex: 1, paddingRight: 10 },
-  txDate: { fontSize: 11, color: "#6b7280" },
+  txDate: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "600",
+  },
+  debitBadge: {
+    backgroundColor: "#fef2f2",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#fca5a5",
+  },
+  debitText: {
+    fontSize: 11,
+    color: "#dc2626",
+    fontWeight: "700",
+  },
+  creditBadge: {
+    backgroundColor: "#f0fdf4",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#86efac",
+  },
+  creditText: {
+    fontSize: 11,
+    color: "#16a34a",
+    fontWeight: "700",
+  },
   txParticulars: {
-    fontSize: 13,
+    fontSize: 15,
     color: BRAND_COLORS.darkPurple,
     fontWeight: "600",
-    marginTop: 4,
+    marginBottom: 8,
   },
-  txMeta: { fontSize: 11, color: "#9ca3af", marginTop: 4 },
-  txRight: { alignItems: "flex-end" },
-  txAmount: { fontSize: 13, fontWeight: "700", color: BRAND_COLORS.gold },
-  txBalance: { fontSize: 11, color: "#6b7280", marginTop: 4 },
+  txMetaRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  txMeta: {
+    fontSize: 12,
+    color: "#9ca3af",
+  },
+  txFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+  },
+  txAmountLabel: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "600",
+  },
+  txAmount: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: BRAND_COLORS.gold,
+  },
+  txBalanceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  txBalanceLabel: {
+    fontSize: 11,
+    color: "#6b7280",
+  },
+  txBalance: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+  },
 });

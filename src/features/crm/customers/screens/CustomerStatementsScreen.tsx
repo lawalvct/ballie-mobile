@@ -6,7 +6,16 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  StatusBar,
+  RefreshControl,
+  Share,
+  Alert,
+  Linking,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BRAND_COLORS } from "../../../../theme/colors";
@@ -36,6 +45,7 @@ export default function CustomerStatementsScreen() {
   const navigation = useNavigation<NavigationProp>();
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState<CustomerStatementListItem[]>([]);
   const [stats, setStats] = useState<CustomerStatementsStats | null>(null);
   const [pagination, setPagination] =
@@ -62,8 +72,111 @@ export default function CustomerStatementsScreen() {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  const handleExport = async (item: CustomerStatementListItem) => {
+    Alert.alert(
+      "Export Statement",
+      `Export statement for ${item.display_name} as PDF or Excel?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "PDF",
+          onPress: () => downloadStatement(item, "pdf"),
+        },
+        {
+          text: "Excel",
+          onPress: () => downloadStatement(item, "excel"),
+        },
+      ],
+    );
+  };
+
+  const downloadStatement = async (
+    item: CustomerStatementListItem,
+    format: "pdf" | "excel",
+  ) => {
+    try {
+      // Get current date range (last 30 days)
+      const endDate = new Date().toISOString().split("T")[0];
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+
+      // Get download URL
+      const url =
+        format === "pdf"
+          ? await customerService.exportStatementPDF(
+              item.id,
+              startDate,
+              endDate,
+            )
+          : await customerService.exportStatementExcel(
+              item.id,
+              startDate,
+              endDate,
+            );
+
+      // Set file extension and name
+      const extension = format === "pdf" ? "pdf" : "csv";
+      const fileName = `${item.display_name.replace(/\s+/g, "_")}_statement_${startDate}_to_${endDate}.${extension}`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      // Download file
+      Alert.alert("Downloading...", `Exporting ${format.toUpperCase()} file`);
+
+      if (!FileSystem.downloadAsync || !FileSystem.documentDirectory) {
+        await Linking.openURL(url);
+        return;
+      }
+
+      const downloadResult = await FileSystem.downloadAsync(url, fileUri);
+
+      if (downloadResult.status === 200) {
+        // Share/Open the file
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(downloadResult.uri, {
+            mimeType: format === "pdf" ? "application/pdf" : "text/csv",
+            dialogTitle: `${item.display_name} Statement`,
+          });
+        } else {
+          Alert.alert(
+            "Success",
+            `Statement exported successfully to:\n${downloadResult.uri}`,
+          );
+        }
+      } else {
+        throw new Error("Download failed");
+      }
+    } catch (error: any) {
+      console.error("Export error:", error);
+      Alert.alert(
+        "Export Failed",
+        error.message || "Failed to export statement. Please try again.",
+      );
+    }
+  };
+
+  const handleShare = async (item: CustomerStatementListItem) => {
+    try {
+      const message = `Customer Statement\n${item.display_name}\nBalance: ₦${formatCurrency(item.running_balance)}\nType: ${item.balance_type}`;
+      await Share.share({ message });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={BRAND_COLORS.darkPurple}
+      />
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -71,9 +184,20 @@ export default function CustomerStatementsScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Customer Statements</Text>
+        <Text style={styles.subtitle}>View balances and statements</Text>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[BRAND_COLORS.darkPurple]}
+            tintColor={BRAND_COLORS.darkPurple}
+          />
+        }>
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={BRAND_COLORS.darkPurple} />
@@ -83,102 +207,273 @@ export default function CustomerStatementsScreen() {
           <>
             {stats && (
               <View style={styles.statsRow}>
-                <View style={styles.statCard}>
+                <LinearGradient
+                  colors={["#8B5CF6", "#6D28D9"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.statCard}>
                   <Text style={styles.statValue}>{stats.total_customers}</Text>
                   <Text style={styles.statLabel}>Customers</Text>
-                </View>
-                <View style={styles.statCard}>
+                </LinearGradient>
+                <LinearGradient
+                  colors={["#10B981", "#059669"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.statCard}>
                   <Text style={styles.statValue}>
                     ₦{formatCurrency(stats.total_receivable)}
                   </Text>
                   <Text style={styles.statLabel}>Receivable</Text>
-                </View>
-                <View style={styles.statCard}>
+                </LinearGradient>
+                <LinearGradient
+                  colors={["#EF4444", "#DC2626"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.statCard}>
                   <Text style={styles.statValue}>
                     ₦{formatCurrency(stats.total_payable)}
                   </Text>
                   <Text style={styles.statLabel}>Payable</Text>
-                </View>
+                </LinearGradient>
               </View>
             )}
 
             <View style={styles.listSection}>
-              {items.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.card}
-                  onPress={() =>
-                    navigation.navigate("CustomerStatementDetail", {
-                      id: item.id,
-                    })
-                  }>
-                  <View style={styles.cardLeft}>
-                    <Text style={styles.cardTitle}>{item.display_name}</Text>
-                    <Text style={styles.cardSub}>{item.balance_type}</Text>
-                  </View>
-                  <Text style={styles.cardValue}>
-                    ₦{formatCurrency(item.running_balance)}
+              {items.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyIcon}>📊</Text>
+                  <Text style={styles.emptyTitle}>No Statements</Text>
+                  <Text style={styles.emptyText}>
+                    No customer statements found
                   </Text>
-                </TouchableOpacity>
-              ))}
+                </View>
+              ) : (
+                items.map((item) => (
+                  <View key={item.id} style={styles.card}>
+                    <View style={styles.cardContent}>
+                      <View style={styles.cardLeft}>
+                        <Text style={styles.cardTitle}>
+                          {item.display_name}
+                        </Text>
+                        <View style={styles.balanceTypeBadge}>
+                          <Text style={styles.balanceTypeText}>
+                            {item.balance_type}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.cardRight}>
+                        <Text style={styles.cardLabel}>Balance</Text>
+                        <Text style={styles.cardValue}>
+                          ₦{formatCurrency(item.running_balance)}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.cardActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() =>
+                          navigation.navigate("CustomerStatementDetail", {
+                            id: item.id,
+                          })
+                        }>
+                        <Text style={styles.actionButtonText}>📄 View</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => handleExport(item)}>
+                        <Text style={styles.actionButtonText}>📥 Export</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.whatsappButton]}
+                        onPress={() => handleShare(item)}>
+                        <Text style={styles.actionButtonText}>WhatsApp</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
+              )}
             </View>
           </>
         )}
+        <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: {
+    flex: 1,
+    backgroundColor: BRAND_COLORS.darkPurple,
+  },
   header: {
     backgroundColor: BRAND_COLORS.darkPurple,
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 24,
     paddingBottom: 20,
   },
-  backButton: { marginBottom: 12 },
-  backButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
-  title: { fontSize: 22, fontWeight: "700", color: "#fff" },
-  content: { flex: 1 },
-  loadingContainer: { alignItems: "center", padding: 40 },
-  loadingText: { marginTop: 12, color: "#6b7280" },
+  backButton: {
+    marginBottom: 12,
+    paddingVertical: 8,
+  },
+  backButtonText: {
+    color: BRAND_COLORS.gold,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  content: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  loadingContainer: {
+    alignItems: "center",
+    padding: 60,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: BRAND_COLORS.darkPurple,
+  },
   statsRow: {
     flexDirection: "row",
     gap: 12,
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 20,
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statValue: {
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.9)",
+    fontWeight: "600",
+  },
+  listSection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  emptyContainer: {
+    padding: 60,
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginTop: 20,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
     fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
+    marginBottom: 8,
   },
-  statLabel: { fontSize: 11, color: "#6b7280" },
-  listSection: { paddingHorizontal: 20, paddingTop: 16 },
+  emptyText: {
+    fontSize: 14,
+    color: "#6b7280",
+    textAlign: "center",
+  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardContent: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
+    marginBottom: 16,
   },
-  cardLeft: { flex: 1 },
+  cardLeft: {
+    flex: 1,
+    paddingRight: 12,
+  },
   cardTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
     color: BRAND_COLORS.darkPurple,
+    marginBottom: 8,
   },
-  cardSub: { fontSize: 11, color: "#6b7280", marginTop: 4 },
-  cardValue: { fontSize: 14, fontWeight: "700", color: BRAND_COLORS.gold },
+  balanceTypeBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  balanceTypeText: {
+    fontSize: 11,
+    color: "#6b7280",
+    fontWeight: "600",
+    textTransform: "capitalize",
+  },
+  cardRight: {
+    alignItems: "flex-end",
+    minWidth: 100,
+  },
+  cardLabel: {
+    fontSize: 11,
+    color: "#6b7280",
+    marginBottom: 4,
+    textAlign: "right",
+  },
+  cardValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: BRAND_COLORS.darkPurple,
+    textAlign: "right",
+  },
+  cardActions: {
+    flexDirection: "row",
+    gap: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: BRAND_COLORS.darkPurple,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  whatsappButton: {
+    backgroundColor: "#25D366",
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
 });
