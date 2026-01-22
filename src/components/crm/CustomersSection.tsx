@@ -1,5 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { CRMStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 
 const customers = [
@@ -27,6 +30,9 @@ const customers = [
 ];
 
 export default function CustomersSection() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<CRMStackParamList>>();
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -43,7 +49,8 @@ export default function CustomersSection() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: "#e0e7ff" }]}>
+          style={[styles.actionButton, { backgroundColor: "#e0e7ff" }]}
+          onPress={() => navigation.navigate("CustomerHome")}>
           <Text style={styles.actionEmoji}>📋</Text>
           <Text style={styles.actionText}>Manage</Text>
         </TouchableOpacity>

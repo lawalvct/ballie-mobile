@@ -3,6 +3,19 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
 
 // ============================================================================
+// CRM STACK NAVIGATOR
+// ============================================================================
+export type CRMStackParamList = {
+  CRMHome: undefined;
+  CustomerHome: undefined;
+  CustomerCreate: undefined;
+  CustomerShow: { id: number };
+  CustomerEdit: { id: number };
+  CustomerStatements: undefined;
+  CustomerStatementDetail: { id: number };
+};
+
+// ============================================================================
 // MAIN TAB NAVIGATOR
 // ============================================================================
 export type MainTabParamList = {
@@ -10,7 +23,7 @@ export type MainTabParamList = {
   Accounting: NavigatorScreenParams<AccountingStackParamList>;
   Inventory: NavigatorScreenParams<InventoryStackParamList>;
   POS: undefined;
-  CRM: undefined;
+  CRM: NavigatorScreenParams<CRMStackParamList>;
   Reports: undefined;
   Audit: undefined;
   Ecommerce: undefined;
