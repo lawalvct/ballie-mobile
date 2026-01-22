@@ -1,6 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { CRMStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+
+type NavigationProp = NativeStackNavigationProp<CRMStackParamList>;
 
 const vendors = [
   {
@@ -27,23 +32,28 @@ const vendors = [
 ];
 
 export default function VendorsSection() {
+  const navigation = useNavigation<NavigationProp>();
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Vendors</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("VendorHome")}>
           <Text style={styles.viewAll}>View All →</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate("VendorHome")}>
           <Text style={styles.actionEmoji}>➕</Text>
           <Text style={styles.actionText}>Add Vendor</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: "#ddd6fe" }]}>
+          style={[styles.actionButton, { backgroundColor: "#ddd6fe" }]}
+          onPress={() => navigation.navigate("VendorHome")}>
           <Text style={styles.actionEmoji}>📋</Text>
           <Text style={styles.actionText}>Manage</Text>
         </TouchableOpacity>

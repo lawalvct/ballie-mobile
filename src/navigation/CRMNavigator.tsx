@@ -8,6 +8,12 @@ import CustomerShowScreen from "../features/crm/customers/screens/CustomerShowSc
 import CustomerEditScreen from "../features/crm/customers/screens/CustomerEditScreen";
 import CustomerStatementsScreen from "../features/crm/customers/screens/CustomerStatementsScreen";
 import CustomerStatementDetailScreen from "../features/crm/customers/screens/CustomerStatementDetailScreen";
+import VendorHomeScreen from "../features/crm/vendors/screens/VendorHomeScreen";
+import VendorCreateScreen from "../features/crm/vendors/screens/VendorCreateScreen";
+import VendorShowScreen from "../features/crm/vendors/screens/VendorShowScreen";
+import VendorEditScreen from "../features/crm/vendors/screens/VendorEditScreen";
+import VendorStatementsScreen from "../features/crm/vendors/screens/VendorStatementsScreen";
+import VendorStatementDetailScreen from "../features/crm/vendors/screens/VendorStatementDetailScreen";
 
 const Stack = createNativeStackNavigator<CRMStackParamList>();
 
@@ -31,6 +37,18 @@ export default function CRMNavigator() {
       <Stack.Screen
         name="CustomerStatementDetail"
         component={CustomerStatementDetailScreen}
+      />
+      <Stack.Screen name="VendorHome" component={VendorHomeScreen} />
+      <Stack.Screen name="VendorCreate" component={VendorCreateScreen} />
+      <Stack.Screen name="VendorShow" component={VendorShowScreen} />
+      <Stack.Screen name="VendorEdit" component={VendorEditScreen} />
+      <Stack.Screen
+        name="VendorStatements"
+        component={VendorStatementsScreen}
+      />
+      <Stack.Screen
+        name="VendorStatementDetail"
+        component={VendorStatementDetailScreen}
       />
     </Stack.Navigator>
   );

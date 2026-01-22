@@ -12,13 +12,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { showToast, showConfirm } from "../../../../utils/toast";
-import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AccountingStackParamList } from "../../../../navigation/types";
 import { voucherService } from "../services/voucherService";
 import { LedgerAccountOption } from "../types";
+import VoucherEntriesSection from "../components/VoucherEntriesSection";
 
 type Props = NativeStackScreenProps<AccountingStackParamList, "VoucherForm">;
 
@@ -376,122 +376,17 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        {/* Entries Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              Entries <Text style={styles.required}>*</Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => dispatch({ type: "ADD_ENTRY" })}>
-              <Text style={styles.addButtonText}>+ Add Entry</Text>
-            </TouchableOpacity>
-          </View>
-
-          {formState.entries.map((entry, index) => (
-            <View key={index} style={styles.entryCard}>
-              <View style={styles.entryHeader}>
-                <Text style={styles.entryTitle}>Entry {index + 1}</Text>
-                {formState.entries.length > 2 && (
-                  <TouchableOpacity
-                    onPress={() => dispatch({ type: "REMOVE_ENTRY", index })}>
-                    <Text style={styles.removeButton}>Remove</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>
-                  Ledger Account <Text style={styles.required}>*</Text>
-                </Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={entry.ledger_account_id || ""}
-                    onValueChange={(value) =>
-                      dispatch({
-                        type: "UPDATE_ENTRY",
-                        index,
-                        field: "ledger_account_id",
-                        value: value === "" ? undefined : Number(value),
-                      })
-                    }
-                    style={styles.picker}>
-                    <Picker.Item label="Select Account" value="" />
-                    {ledgerAccounts.map((account) => (
-                      <Picker.Item
-                        key={account.id}
-                        label={
-                          account.display_name ||
-                          `${account.name} (${account.code})`
-                        }
-                        value={account.id}
-                      />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-
-              <View style={styles.amountRow}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.label}>Debit Amount</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={entry.debit_amount}
-                    onChangeText={(value) =>
-                      dispatch({
-                        type: "UPDATE_ENTRY",
-                        index,
-                        field: "debit_amount",
-                        value,
-                      })
-                    }
-                    placeholder="0.00"
-                    placeholderTextColor="#9ca3af"
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-
-                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.label}>Credit Amount</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={entry.credit_amount}
-                    onChangeText={(value) =>
-                      dispatch({
-                        type: "UPDATE_ENTRY",
-                        index,
-                        field: "credit_amount",
-                        value,
-                      })
-                    }
-                    placeholder="0.00"
-                    placeholderTextColor="#9ca3af"
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Description</Text>
-                <TextInput
-                  style={styles.input}
-                  value={entry.description}
-                  onChangeText={(value) =>
-                    dispatch({
-                      type: "UPDATE_ENTRY",
-                      index,
-                      field: "description",
-                      value,
-                    })
-                  }
-                  placeholder="Entry description (optional)"
-                  placeholderTextColor="#9ca3af"
-                />
-              </View>
-            </View>
-          ))}
-        </View>
+        <VoucherEntriesSection
+          entries={formState.entries}
+          ledgerAccounts={ledgerAccounts}
+          onAddEntry={() => dispatch({ type: "ADD_ENTRY" })}
+          onRemoveEntry={(index) =>
+            dispatch({ type: "REMOVE_ENTRY", index })
+          }
+          onUpdateEntry={(index, field, value) =>
+            dispatch({ type: "UPDATE_ENTRY", index, field, value })
+          }
+        />
 
         {/* Balance Summary */}
         <View style={styles.balanceCard}>

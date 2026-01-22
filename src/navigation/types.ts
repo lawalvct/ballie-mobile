@@ -13,6 +13,12 @@ export type CRMStackParamList = {
   CustomerEdit: { id: number };
   CustomerStatements: undefined;
   CustomerStatementDetail: { id: number };
+  VendorHome: undefined;
+  VendorCreate: undefined;
+  VendorShow: { id: number };
+  VendorEdit: { id: number };
+  VendorStatements: undefined;
+  VendorStatementDetail: { id: number };
 };
 
 // ============================================================================
