@@ -323,7 +323,10 @@ export default function AccountingActionsScreen({ navigation }: Props) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionCard, { backgroundColor: "#8b5cf6" }]}>
+              style={[styles.actionCard, { backgroundColor: "#8b5cf6" }]}
+              onPress={() =>
+                navigation.navigate({ name: "ReconciliationHome", params: undefined })
+              }>
               <View
                 style={[
                   styles.cardIconContainer,

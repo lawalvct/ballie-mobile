@@ -47,6 +47,11 @@ import {
   BankEditScreen,
   BankStatementScreen,
 } from "../features/accounting/bank";
+import {
+  ReconciliationHomeScreen,
+  ReconciliationCreateScreen,
+  ReconciliationShowScreen,
+} from "../features/accounting/reconciliation";
 
 // Temporary placeholder component for unimplemented screens
 const PlaceholderScreen = ({ navigation, route }: any) => (
@@ -275,6 +280,23 @@ function AccountingStack() {
         name="BankStatement"
         component={BankStatementScreen}
         options={{ title: "Bank Statement" }}
+      />
+
+      {/* Bank Reconciliation Module */}
+      <Stack.Screen
+        name="ReconciliationHome"
+        component={ReconciliationHomeScreen}
+        options={{ title: "Reconciliations" }}
+      />
+      <Stack.Screen
+        name="ReconciliationCreate"
+        component={ReconciliationCreateScreen}
+        options={{ title: "Start Reconciliation" }}
+      />
+      <Stack.Screen
+        name="ReconciliationShow"
+        component={ReconciliationShowScreen}
+        options={{ title: "Reconciliation" }}
       />
 
       {/* Journal Entries Module - Placeholder for future */}

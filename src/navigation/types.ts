@@ -89,6 +89,11 @@ export type AccountingStackParamList = {
   BankEdit: { id: number; onUpdated?: () => void };
   BankStatement: { id: number };
 
+  // Bank Reconciliation Module
+  ReconciliationHome: undefined;
+  ReconciliationCreate: undefined;
+  ReconciliationShow: { id: number };
+
   // Invoice Management Module
   InvoiceHome: { type: "sales" | "purchase" };
   InvoiceCreate: { type: "sales" | "purchase"; onCreated?: () => void };
