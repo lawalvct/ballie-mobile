@@ -16,7 +16,7 @@ export default function AccountManagement() {
         <Text style={styles.sectionTitle}>Account Management</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate("AccountingActions")}>
-          <Text style={styles.viewAll}>View All →</Text>
+          <Text style={styles.viewAll}>More Actions →</Text>
         </TouchableOpacity>
       </View>
 

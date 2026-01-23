@@ -1,15 +1,25 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
+import {
+  useNavigation,
+  NavigationProp,
+  CompositeNavigationProp,
+} from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
-import type { AccountingStackParamList } from "../../navigation/types";
+import type {
+  AccountingStackParamList,
+  MainTabParamList,
+} from "../../navigation/types";
 import { voucherTypeService } from "../../features/accounting/vouchertype/services/voucherTypeService";
 
-type NavigationProp = StackNavigationProp<AccountingStackParamList>;
+type RootNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<AccountingStackParamList>,
+  NavigationProp<MainTabParamList>
+>;
 
 export default function QuickActions() {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<RootNavigationProp>();
 
   const handleReceiptPress = async () => {
     try {
@@ -80,7 +90,9 @@ export default function QuickActions() {
           <Text style={styles.quickActionLabel}>Purchase Invoice</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={() => navigation.navigate("Reports")}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#8b5cf6" }]}>
             <Text style={styles.quickActionEmoji}>📊</Text>

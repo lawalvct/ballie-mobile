@@ -83,7 +83,9 @@ export default function AccountingActionsScreen({ navigation }: Props) {
           <View style={styles.cardsGrid}>
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#3b82f6" }]}
-              onPress={() => navigation.navigate("VoucherTypeHome")}>
+              onPress={() =>
+                navigation.navigate({ name: "VoucherTypeHome", params: undefined })
+              }>
               <View
                 style={[
                   styles.cardIconContainer,
@@ -102,7 +104,9 @@ export default function AccountingActionsScreen({ navigation }: Props) {
 
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#10b981" }]}
-              onPress={() => navigation.navigate("VoucherCreate")}>
+              onPress={() =>
+                navigation.navigate({ name: "VoucherCreate", params: {} })
+              }>
               <View
                 style={[
                   styles.cardIconContainer,
@@ -121,7 +125,9 @@ export default function AccountingActionsScreen({ navigation }: Props) {
 
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#8b5cf6" }]}
-              onPress={() => navigation.navigate("VoucherHome")}>
+              onPress={() =>
+                navigation.navigate({ name: "VoucherHome", params: undefined })
+              }>
               <View
                 style={[
                   styles.cardIconContainer,
@@ -255,7 +261,9 @@ export default function AccountingActionsScreen({ navigation }: Props) {
           <View style={styles.cardsGrid}>
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#eab308" }]}
-              onPress={() => navigation.navigate("LedgerAccountHome")}>
+              onPress={() =>
+                navigation.navigate({ name: "LedgerAccountHome", params: undefined })
+              }>
               <View
                 style={[
                   styles.cardIconContainer,
@@ -274,7 +282,9 @@ export default function AccountingActionsScreen({ navigation }: Props) {
 
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#ef4444" }]}
-              onPress={() => navigation.navigate("AccountGroupHome")}>
+              onPress={() =>
+                navigation.navigate({ name: "AccountGroupHome", params: undefined })
+              }>
               <View
                 style={[
                   styles.cardIconContainer,
@@ -292,7 +302,10 @@ export default function AccountingActionsScreen({ navigation }: Props) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionCard, { backgroundColor: "#10b981" }]}>
+              style={[styles.actionCard, { backgroundColor: "#10b981" }]}
+              onPress={() =>
+                navigation.navigate({ name: "BankHome", params: undefined })
+              }>
               <View
                 style={[
                   styles.cardIconContainer,
