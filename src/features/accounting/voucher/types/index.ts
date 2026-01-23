@@ -40,6 +40,8 @@ export interface VoucherEntry {
   debit_amount: number;
   credit_amount: number;
   description: string;
+  particulars?: string;
+  document_url?: string | null;
 }
 
 export interface Voucher {
@@ -136,6 +138,12 @@ export interface CreateVoucherData {
     debit_amount: number;
     credit_amount: number;
     description?: string;
+    particulars?: string;
+    document?: {
+      uri: string;
+      name: string;
+      type: string;
+    };
   }>;
   action?: "save" | "save_and_post";
 }

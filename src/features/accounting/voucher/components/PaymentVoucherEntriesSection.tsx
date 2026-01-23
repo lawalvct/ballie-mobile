@@ -25,6 +25,8 @@ type VoucherEntry = {
 type Props = {
   entries: VoucherEntry[];
   ledgerAccounts: LedgerAccountOption[];
+  bankAccountId: number | undefined;
+  onBankAccountChange: (value: number | undefined) => void;
   onAddEntry: () => void;
   onRemoveEntry: (index: number) => void;
   onUpdateEntry: (
@@ -43,34 +45,49 @@ type Props = {
   onPickDocument: (index: number) => void;
   onTakePhoto: (index: number) => void;
   onRemoveDocument: (index: number) => void;
+  totalDebits: number;
 };
 
-export default function VoucherEntriesSection({
+const isBankCashAccount = (account: LedgerAccountOption) => {
+  const accountType = (account.account_type || "").toLowerCase();
+  const name = (account.display_name || account.name || "").toLowerCase();
+  const isAsset = accountType.includes("asset");
+  const isBankCash = name.includes("bank") || name.includes("cash");
+  return isAsset && isBankCash;
+};
+
+export default function PaymentVoucherEntriesSection({
   entries,
   ledgerAccounts,
+  bankAccountId,
+  onBankAccountChange,
   onAddEntry,
   onRemoveEntry,
   onUpdateEntry,
   onPickDocument,
   onTakePhoto,
   onRemoveDocument,
+  totalDebits,
 }: Props) {
+  const bankCashAccounts = ledgerAccounts.filter(isBankCashAccount);
+  const paymentAccounts = ledgerAccounts.filter(
+    (account) => !isBankCashAccount(account),
+  );
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
-          Entries <Text style={styles.required}>*</Text>
-        </Text>
+        <Text style={styles.sectionTitle}>Payment Entries</Text>
         <TouchableOpacity style={styles.addButton} onPress={onAddEntry}>
-          <Text style={styles.addButtonText}>+ Add Entry</Text>
+          <Text style={styles.addButtonText}>+ Add Payment</Text>
         </TouchableOpacity>
       </View>
 
       {entries.map((entry, index) => (
         <View key={index} style={styles.entryCard}>
           <View style={styles.entryHeader}>
-            <Text style={styles.entryTitle}>Entry {index + 1}</Text>
-            {entries.length > 2 && (
+            <Text style={styles.entryTitle}>Payment {index + 1}</Text>
+            {entries.length > 1 && (
               <TouchableOpacity onPress={() => onRemoveEntry(index)}>
                 <Text style={styles.removeButton}>Remove</Text>
               </TouchableOpacity>
@@ -93,7 +110,7 @@ export default function VoucherEntriesSection({
                 }
                 style={styles.picker}>
                 <Picker.Item label="Select Account" value="" />
-                {ledgerAccounts.map((account) => (
+                {paymentAccounts.map((account) => (
                   <Picker.Item
                     key={account.id}
                     label={
@@ -107,45 +124,31 @@ export default function VoucherEntriesSection({
             </View>
           </View>
 
-          <View style={styles.amountRow}>
-            <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.label}>Debit Amount</Text>
-              <TextInput
-                style={styles.input}
-                value={entry.debit_amount}
-                onChangeText={(value) =>
-                  onUpdateEntry(index, "debit_amount", value)
-                }
-                placeholder="0.00"
-                placeholderTextColor="#9ca3af"
-                keyboardType="decimal-pad"
-              />
-            </View>
-
-            <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-              <Text style={styles.label}>Credit Amount</Text>
-              <TextInput
-                style={styles.input}
-                value={entry.credit_amount}
-                onChangeText={(value) =>
-                  onUpdateEntry(index, "credit_amount", value)
-                }
-                placeholder="0.00"
-                placeholderTextColor="#9ca3af"
-                keyboardType="decimal-pad"
-              />
-            </View>
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>
+              Debit Amount <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={entry.debit_amount}
+              onChangeText={(value) =>
+                onUpdateEntry(index, "debit_amount", value)
+              }
+              placeholder="0.00"
+              placeholderTextColor="#9ca3af"
+              keyboardType="decimal-pad"
+            />
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>Particulars</Text>
             <TextInput
               style={styles.input}
               value={entry.description}
               onChangeText={(value) =>
                 onUpdateEntry(index, "description", value)
               }
-              placeholder="Entry description (optional)"
+              placeholder="Payment description (optional)"
               placeholderTextColor="#9ca3af"
             />
           </View>
@@ -177,6 +180,46 @@ export default function VoucherEntriesSection({
           </View>
         </View>
       ))}
+
+      <View style={styles.creditCard}>
+        <Text style={styles.creditTitle}>Bank/Cash Entry (Credit)</Text>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>
+            Bank/Cash Account <Text style={styles.required}>*</Text>
+          </Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={bankAccountId || ""}
+              onValueChange={(value) =>
+                onBankAccountChange(value === "" ? undefined : Number(value))
+              }
+              style={styles.picker}>
+              <Picker.Item label="Select Bank/Cash" value="" />
+              {bankCashAccounts.map((account) => (
+                <Picker.Item
+                  key={account.id}
+                  label={
+                    account.display_name || `${account.name} (${account.code})`
+                  }
+                  value={account.id}
+                />
+              ))}
+            </Picker>
+          </View>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Credit Amount</Text>
+          <View style={styles.readOnlyInput}>
+            <Text style={styles.readOnlyText}>
+              ₦
+              {totalDebits.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+              })}
+            </Text>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
@@ -267,15 +310,33 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     borderRadius: 8,
     overflow: "hidden",
-    marginTop: 4,
   },
   picker: {
     height: 50,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
   },
-  amountRow: {
-    flexDirection: "row",
+  creditCard: {
+    backgroundColor: "#fef9c3",
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#fde047",
+  },
+  creditTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
+    marginBottom: 12,
+  },
+  readOnlyInput: {
+    backgroundColor: "#f3f4f6",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  readOnlyText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
   },
   documentRow: {
     flexDirection: "row",

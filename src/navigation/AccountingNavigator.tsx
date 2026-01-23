@@ -20,6 +20,7 @@ import {
   VoucherHomeScreen,
   VoucherCreateScreen,
   VoucherFormScreen,
+  VoucherShowScreen,
 } from "../features/accounting/voucher";
 // Voucher Type Management Feature
 import {
@@ -211,7 +212,7 @@ function AccountingStack() {
       />
       <Stack.Screen
         name="VoucherShow"
-        component={PlaceholderScreen}
+        component={VoucherShowScreen}
         options={{ title: "Voucher Details" }}
       />
       <Stack.Screen
