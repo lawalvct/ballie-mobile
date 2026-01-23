@@ -297,9 +297,10 @@ export default function BankHomeScreen({ navigation }: Props) {
                   style={styles.bankCard}
                   activeOpacity={0.8}
                   onPress={() =>
-                    Alert.alert("Coming soon", "Bank detail screen pending", [
-                      { text: "OK" },
-                    ])
+                    navigation.navigate({
+                      name: "BankShow",
+                      params: { id: bank.id },
+                    })
                   }>
                   <View style={styles.bankCardHeader}>
                     <View style={styles.bankTitleRow}>

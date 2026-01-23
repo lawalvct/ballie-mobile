@@ -1,10 +1,13 @@
 import apiClient from "../../../../api/client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type {
+  BankDetailResponse,
   BankFormDataResponse,
+  BankStatementResponse,
   CreateBankPayload,
   ListParams,
   ListResponse,
+  UpdateBankPayload,
 } from "../types";
 
 const getBaseUrl = async () => {
@@ -60,6 +63,29 @@ export const bankService = {
   async create(payload: CreateBankPayload) {
     const baseUrl = await getBaseUrl();
     const response: any = await apiClient.post(baseUrl, payload);
+    return response.data || response;
+  },
+
+  async show(id: number): Promise<BankDetailResponse> {
+    const baseUrl = await getBaseUrl();
+    const response: any = await apiClient.get(`${baseUrl}/${id}`);
+    return response.data || response;
+  },
+
+  async update(id: number, payload: UpdateBankPayload): Promise<any> {
+    const baseUrl = await getBaseUrl();
+    const response: any = await apiClient.put(`${baseUrl}/${id}`, payload);
+    return response.data || response;
+  },
+
+  async statement(
+    id: number,
+    params: { start_date: string; end_date: string },
+  ): Promise<BankStatementResponse> {
+    const baseUrl = await getBaseUrl();
+    const response: any = await apiClient.get(`${baseUrl}/${id}/statement`, {
+      params,
+    });
     return response.data || response;
   },
 };

@@ -85,6 +85,9 @@ export type AccountingStackParamList = {
   // Banking Module
   BankHome: undefined;
   BankCreate: { onCreated?: () => void };
+  BankShow: { id: number };
+  BankEdit: { id: number; onUpdated?: () => void };
+  BankStatement: { id: number };
 
   // Invoice Management Module
   InvoiceHome: { type: "sales" | "purchase" };

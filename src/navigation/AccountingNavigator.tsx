@@ -40,7 +40,13 @@ import { BRAND_COLORS } from "../theme/colors";
 import AccountingScreen from "../screens/AccountingScreen";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useEffect } from "react";
-import { BankCreateScreen, BankHomeScreen } from "../features/accounting/bank";
+import {
+  BankCreateScreen,
+  BankHomeScreen,
+  BankShowScreen,
+  BankEditScreen,
+  BankStatementScreen,
+} from "../features/accounting/bank";
 
 // Temporary placeholder component for unimplemented screens
 const PlaceholderScreen = ({ navigation, route }: any) => (
@@ -254,6 +260,21 @@ function AccountingStack() {
         name="BankCreate"
         component={BankCreateScreen}
         options={{ title: "Add Bank Account" }}
+      />
+      <Stack.Screen
+        name="BankShow"
+        component={BankShowScreen}
+        options={{ title: "Bank Details" }}
+      />
+      <Stack.Screen
+        name="BankEdit"
+        component={BankEditScreen}
+        options={{ title: "Edit Bank" }}
+      />
+      <Stack.Screen
+        name="BankStatement"
+        component={BankStatementScreen}
+        options={{ title: "Bank Statement" }}
       />
 
       {/* Journal Entries Module - Placeholder for future */}
