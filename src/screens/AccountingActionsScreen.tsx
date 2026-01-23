@@ -6,11 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
+import { voucherTypeService } from "../features/accounting/vouchertype/services/voucherTypeService";
 
 type Props = NativeStackScreenProps<
   AccountingStackParamList,
@@ -18,6 +20,38 @@ type Props = NativeStackScreenProps<
 >;
 
 export default function AccountingActionsScreen({ navigation }: Props) {
+  const handleJournalPress = async () => {
+    try {
+      const voucherTypes = await voucherTypeService.search("", "accounting");
+      const journalType = voucherTypes.find(
+        (type) => type.code?.toUpperCase() === "JV",
+      );
+
+      if (!journalType) {
+        Alert.alert(
+          "Not found",
+          "Journal Voucher type is not available for this company.",
+          [{ text: "OK" }],
+        );
+        return;
+      }
+
+      navigation.navigate("VoucherForm", {
+        voucherTypeId: journalType.id,
+        voucherTypeCode: journalType.code,
+        voucherTypeName: journalType.name,
+      });
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load voucher types",
+        [{ text: "OK" }],
+      );
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -105,7 +139,8 @@ export default function AccountingActionsScreen({ navigation }: Props) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionCard, { backgroundColor: "#ec4899" }]}>
+              style={[styles.actionCard, { backgroundColor: "#ec4899" }]}
+              onPress={handleJournalPress}>
               <View
                 style={[
                   styles.cardIconContainer,

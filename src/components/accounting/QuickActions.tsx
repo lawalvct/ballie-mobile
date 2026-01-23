@@ -1,14 +1,47 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 import type { AccountingStackParamList } from "../../navigation/types";
+import { voucherTypeService } from "../../features/accounting/vouchertype/services/voucherTypeService";
 
 type NavigationProp = StackNavigationProp<AccountingStackParamList>;
 
 export default function QuickActions() {
   const navigation = useNavigation<NavigationProp>();
+
+  const handleReceiptPress = async () => {
+    try {
+      const voucherTypes = await voucherTypeService.search("", "accounting");
+      const receiptType = voucherTypes.find(
+        (type) => type.code?.toUpperCase() === "RV",
+      );
+
+      if (!receiptType) {
+        Alert.alert(
+          "Not found",
+          "Receipt Voucher type is not available for this company.",
+          [{ text: "OK" }],
+        );
+        return;
+      }
+
+      navigation.navigate("VoucherForm", {
+        voucherTypeId: receiptType.id,
+        voucherTypeCode: receiptType.code,
+        voucherTypeName: receiptType.name,
+      });
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load voucher types",
+        [{ text: "OK" }],
+      );
+    }
+  };
 
   return (
     <View style={styles.section}>
@@ -25,12 +58,14 @@ export default function QuickActions() {
           <Text style={styles.quickActionLabel}>Sales Invoice</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={handleReceiptPress}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#f59e0b" }]}>
             <Text style={styles.quickActionEmoji}>🧾</Text>
           </View>
-          <Text style={styles.quickActionLabel}>Receipt</Text>
+          <Text style={styles.quickActionLabel}>+ Receipt</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
