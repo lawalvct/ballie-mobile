@@ -44,6 +44,31 @@ const isRevenueAccount = (account: LedgerAccountOption) => {
   return accountType.includes("income") || accountType.includes("revenue");
 };
 
+const normalizeAmountInput = (value: string) => {
+  const cleaned = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  if (!cleaned) return "";
+  const hasTrailingDot = cleaned.endsWith(".");
+  const parts = cleaned.split(".");
+  const intPart = parts[0] ?? "";
+  const decimalPart = parts.slice(1).join("");
+  if (hasTrailingDot) {
+    return `${intPart}.${decimalPart}`;
+  }
+  return decimalPart ? `${intPart}.${decimalPart}` : intPart;
+};
+
+const formatAmountInput = (value: string) => {
+  const normalized = normalizeAmountInput(value);
+  if (!normalized) return "";
+  const hasTrailingDot = normalized.endsWith(".");
+  const [intPart, decimalPart] = normalized.split(".");
+  const intNumber = Number(intPart || "0");
+  const formattedInt = intPart ? intNumber.toLocaleString() : "0";
+  if (hasTrailingDot) return `${formattedInt}.`;
+  if (decimalPart !== undefined) return `${formattedInt}.${decimalPart}`;
+  return formattedInt;
+};
+
 export default function CreditNoteEntriesSection({
   ledgerAccounts,
   customerAccountId,
@@ -93,8 +118,10 @@ export default function CreditNoteEntriesSection({
         </Text>
         <TextInput
           style={styles.input}
-          value={customerAmount}
-          onChangeText={onCustomerAmountChange}
+          value={formatAmountInput(customerAmount)}
+          onChangeText={(value) =>
+            onCustomerAmountChange(normalizeAmountInput(value))
+          }
           placeholder="0.00"
           placeholderTextColor="#9ca3af"
           keyboardType="decimal-pad"
@@ -155,8 +182,10 @@ export default function CreditNoteEntriesSection({
             </Text>
             <TextInput
               style={styles.input}
-              value={entry.amount}
-              onChangeText={(value) => onUpdateEntry(index, "amount", value)}
+              value={formatAmountInput(entry.amount)}
+              onChangeText={(value) =>
+                onUpdateEntry(index, "amount", normalizeAmountInput(value))
+              }
               placeholder="0.00"
               placeholderTextColor="#9ca3af"
               keyboardType="decimal-pad"

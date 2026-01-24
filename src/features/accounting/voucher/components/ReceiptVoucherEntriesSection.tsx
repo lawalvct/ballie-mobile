@@ -64,6 +64,31 @@ const isBankCashAccount = (account: LedgerAccountOption) => {
   return isAsset && isBankCash;
 };
 
+const normalizeAmountInput = (value: string) => {
+  const cleaned = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  if (!cleaned) return "";
+  const hasTrailingDot = cleaned.endsWith(".");
+  const parts = cleaned.split(".");
+  const intPart = parts[0] ?? "";
+  const decimalPart = parts.slice(1).join("");
+  if (hasTrailingDot) {
+    return `${intPart}.${decimalPart}`;
+  }
+  return decimalPart ? `${intPart}.${decimalPart}` : intPart;
+};
+
+const formatAmountInput = (value: string) => {
+  const normalized = normalizeAmountInput(value);
+  if (!normalized) return "";
+  const hasTrailingDot = normalized.endsWith(".");
+  const [intPart, decimalPart] = normalized.split(".");
+  const intNumber = Number(intPart || "0");
+  const formattedInt = intPart ? intNumber.toLocaleString() : "0";
+  if (hasTrailingDot) return `${formattedInt}.`;
+  if (decimalPart !== undefined) return `${formattedInt}.${decimalPart}`;
+  return formattedInt;
+};
+
 export default function ReceiptVoucherEntriesSection({
   entries,
   ledgerAccounts,
@@ -136,9 +161,13 @@ export default function ReceiptVoucherEntriesSection({
             </Text>
             <TextInput
               style={styles.input}
-              value={entry.credit_amount}
+              value={formatAmountInput(entry.credit_amount)}
               onChangeText={(value) =>
-                onUpdateEntry(index, "credit_amount", value)
+                onUpdateEntry(
+                  index,
+                  "credit_amount",
+                  normalizeAmountInput(value),
+                )
               }
               placeholder="0.00"
               placeholderTextColor="#9ca3af"

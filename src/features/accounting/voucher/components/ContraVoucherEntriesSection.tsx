@@ -24,6 +24,31 @@ const isBankCashAccount = (account: LedgerAccountOption) => {
   return isAsset && isBankCash;
 };
 
+const normalizeAmountInput = (value: string) => {
+  const cleaned = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  if (!cleaned) return "";
+  const hasTrailingDot = cleaned.endsWith(".");
+  const parts = cleaned.split(".");
+  const intPart = parts[0] ?? "";
+  const decimalPart = parts.slice(1).join("");
+  if (hasTrailingDot) {
+    return `${intPart}.${decimalPart}`;
+  }
+  return decimalPart ? `${intPart}.${decimalPart}` : intPart;
+};
+
+const formatAmountInput = (value: string) => {
+  const normalized = normalizeAmountInput(value);
+  if (!normalized) return "";
+  const hasTrailingDot = normalized.endsWith(".");
+  const [intPart, decimalPart] = normalized.split(".");
+  const intNumber = Number(intPart || "0");
+  const formattedInt = intPart ? intNumber.toLocaleString() : "0";
+  if (hasTrailingDot) return `${formattedInt}.`;
+  if (decimalPart !== undefined) return `${formattedInt}.${decimalPart}`;
+  return formattedInt;
+};
+
 export default function ContraVoucherEntriesSection({
   ledgerAccounts,
   fromAccountId,
@@ -97,8 +122,10 @@ export default function ContraVoucherEntriesSection({
         </Text>
         <TextInput
           style={styles.input}
-          value={transferAmount}
-          onChangeText={onTransferAmountChange}
+          value={formatAmountInput(transferAmount)}
+          onChangeText={(value) =>
+            onTransferAmountChange(normalizeAmountInput(value))
+          }
           placeholder="0.00"
           placeholderTextColor="#9ca3af"
           keyboardType="decimal-pad"
