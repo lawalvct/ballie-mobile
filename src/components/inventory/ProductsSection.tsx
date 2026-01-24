@@ -1,49 +1,37 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MainTabParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import { productService } from "../../features/inventory/product/services/productService";
+import type {
+  ListResponse,
+  Product,
+} from "../../features/inventory/product/types";
 
 type NavigationProp = NativeStackNavigationProp<MainTabParamList, "Inventory">;
 
-const products = [
-  {
-    id: 1,
-    name: "Apple iPhone 14 Pro",
-    sku: "IP14P-128",
-    stock: 45,
-    price: "₦850,000",
-    status: "in-stock",
-  },
-  {
-    id: 2,
-    name: "Samsung Galaxy S23",
-    sku: "SGS23-256",
-    stock: 32,
-    price: "₦720,000",
-    status: "in-stock",
-  },
-  {
-    id: 3,
-    name: "Dell XPS 15 Laptop",
-    sku: "DXP15-512",
-    stock: 8,
-    price: "₦1,250,000",
-    status: "low-stock",
-  },
-  {
-    id: 4,
-    name: "Sony WH-1000XM5",
-    sku: "SWH1000",
-    stock: 0,
-    price: "₦320,000",
-    status: "out-of-stock",
-  },
-];
-
 export default function ProductsSection() {
   const navigation = useNavigation<NavigationProp>();
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      const response = (await productService.list({
+        per_page: 4,
+        sort_by: "created_at",
+        sort_order: "desc",
+      })) as ListResponse["data"];
+      setProducts(response?.products || []);
+    } catch {
+      setProducts([]);
+    }
+  };
 
   const handleViewAll = () => {
     navigation.navigate("Inventory", {
@@ -77,6 +65,28 @@ export default function ProductsSection() {
     }
   };
 
+  const getStatus = (product: Product) => {
+    if (!product.maintain_stock) {
+      return "in-stock";
+    }
+
+    const stockValue =
+      typeof product.current_stock === "number" ? product.current_stock : 0;
+    if (stockValue <= 0) return "out-of-stock";
+    if (
+      typeof product.reorder_level === "number" &&
+      stockValue <= product.reorder_level
+    ) {
+      return "low-stock";
+    }
+    return "in-stock";
+  };
+
+  const formatCurrency = (value?: number) => {
+    if (typeof value !== "number") return "₦0";
+    return `₦${value.toLocaleString()}`;
+  };
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -86,45 +96,62 @@ export default function ProductsSection() {
         </TouchableOpacity>
       </View>
 
-      {products.map((product) => (
-        <TouchableOpacity key={product.id} style={styles.productCard}>
-          <View style={styles.productLeft}>
-            <View style={[styles.productIcon, { backgroundColor: "#e0e7ff" }]}>
-              <Text style={styles.productEmoji}>📦</Text>
-            </View>
-            <View style={styles.productInfo}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productSku}>SKU: {product.sku}</Text>
-              <View style={styles.productMeta}>
-                <Text style={styles.productPrice}>{product.price}</Text>
+      {products.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No products available</Text>
+        </View>
+      ) : (
+        products.map((product) => {
+          const status = getStatus(product);
+          const stockValue =
+            typeof product.current_stock === "number"
+              ? product.current_stock
+              : 0;
+
+          return (
+            <TouchableOpacity key={product.id} style={styles.productCard}>
+              <View style={styles.productLeft}>
                 <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: getStatusColor(product.status) + "20" },
-                  ]}>
-                  <Text
-                    style={[
-                      styles.statusText,
-                      { color: getStatusColor(product.status) },
-                    ]}>
-                    {getStatusText(product.status)}
-                  </Text>
+                  style={[styles.productIcon, { backgroundColor: "#e0e7ff" }]}>
+                  <Text style={styles.productEmoji}>📦</Text>
+                </View>
+                <View style={styles.productInfo}>
+                  <Text style={styles.productName}>{product.name}</Text>
+                  <Text style={styles.productSku}>SKU: {product.sku}</Text>
+                  <View style={styles.productMeta}>
+                    <Text style={styles.productPrice}>
+                      {formatCurrency(product.sales_rate)}
+                    </Text>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        { backgroundColor: getStatusColor(status) + "20" },
+                      ]}>
+                      <Text
+                        style={[
+                          styles.statusText,
+                          { color: getStatusColor(status) },
+                        ]}>
+                        {getStatusText(status)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </View>
-            </View>
-          </View>
-          <View style={styles.productRight}>
-            <Text style={styles.stockLabel}>Stock</Text>
-            <Text
-              style={[
-                styles.stockValue,
-                { color: getStatusColor(product.status) },
-              ]}>
-              {product.stock}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      ))}
+              <View style={styles.productRight}>
+                <Text style={styles.stockLabel}>Stock</Text>
+                <Text
+                  style={[
+                    styles.stockValue,
+                    { color: getStatusColor(status) },
+                  ]}>
+                  {stockValue}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })
+      )}
     </View>
   );
 }
@@ -224,5 +251,15 @@ const styles = StyleSheet.create({
   stockValue: {
     fontSize: 20,
     fontWeight: "bold",
+  },
+  emptyState: {
+    backgroundColor: SEMANTIC_COLORS.white,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 13,
+    color: "#6b7280",
   },
 });

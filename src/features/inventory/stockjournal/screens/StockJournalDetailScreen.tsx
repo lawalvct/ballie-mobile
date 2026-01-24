@@ -255,7 +255,7 @@ export default function StockJournalDetailScreen({ navigation, route }: Props) {
                       {item.product?.sku || "-"}
                     </Text>
                   </View>
-                  {getMovementTypeBadge(item.movement_type)}
+                {getMovementTypeBadge(item.movement_type)}
                 </View>
 
                 <View style={styles.itemDetails}>

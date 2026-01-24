@@ -83,18 +83,43 @@ class ProductService {
   /**
    * List products with filters and pagination
    */
-  async list(params: ListParams = {}): Promise<ListResponse> {
+  async list(params: ListParams = {}): Promise<ListResponse["data"]> {
     // Clean params: remove undefined, null, empty string
     const cleanParams = Object.fromEntries(
       Object.entries(params).filter(
-        ([_, value]) => value !== undefined && value !== null && value !== ""
-      )
+        ([_, value]) => value !== undefined && value !== null && value !== "",
+      ),
     );
 
     const response = await apiClient.get<ListResponse>(this.baseUrl, {
       params: cleanParams,
     });
-    return response.data;
+    const payload = (response as any)?.data ? (response as any).data : response;
+    const data = payload?.data ?? payload ?? {};
+
+    return {
+      products: Array.isArray(data?.products)
+        ? data.products
+        : Array.isArray(data)
+          ? data
+          : [],
+      pagination: data?.pagination || {
+        current_page: 1,
+        last_page: 1,
+        per_page: cleanParams.per_page || 15,
+        total: Array.isArray(data?.products) ? data.products.length : 0,
+        from: 0,
+        to: 0,
+      },
+      statistics: data?.statistics || {
+        total_products: 0,
+        active_products: 0,
+        inactive_products: 0,
+        low_stock_count: 0,
+        out_of_stock_count: 0,
+        total_stock_value: 0,
+      },
+    };
   }
 
   /**
@@ -111,7 +136,7 @@ class ProductService {
   async update(id: number, data: Partial<CreateProductData>): Promise<Product> {
     const response = await apiClient.put<Product>(
       `${this.baseUrl}/${id}`,
-      data
+      data,
     );
     return response.data;
   }
@@ -128,7 +153,7 @@ class ProductService {
    */
   async toggleStatus(id: number): Promise<Product> {
     const response = await apiClient.post<Product>(
-      `${this.baseUrl}/${id}/toggle-status`
+      `${this.baseUrl}/${id}/toggle-status`,
     );
     return response.data;
   }
@@ -143,11 +168,11 @@ class ProductService {
       to_date?: string;
       transaction_type?: string;
       per_page?: number;
-    } = {}
+    } = {},
   ): Promise<{ data: StockMovement[]; pagination: any }> {
     const response = await apiClient.get(
       `${this.baseUrl}/${id}/stock-movements`,
-      { params }
+      { params },
     );
     return response.data;
   }
@@ -158,7 +183,7 @@ class ProductService {
   async bulkAction(data: BulkActionData): Promise<BulkActionResponse> {
     const response = await apiClient.post<BulkActionResponse>(
       `${this.baseUrl}/bulk-action`,
-      data
+      data,
     );
     return response.data;
   }
@@ -168,13 +193,13 @@ class ProductService {
    */
   async search(
     query: string,
-    options: { status?: string; type?: string } = {}
+    options: { status?: string; type?: string } = {},
   ): Promise<Product[]> {
     const response = await apiClient.get<{ data: Product[] }>(
       `${this.baseUrl}/search`,
       {
         params: { q: query, ...options },
-      }
+      },
     );
     return response.data.data;
   }

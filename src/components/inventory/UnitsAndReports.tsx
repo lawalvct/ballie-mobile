@@ -1,20 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { InventoryStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
-
-const units = [
-  { id: 1, name: "Pieces (pcs)", count: 245, icon: "📦" },
-  { id: 2, name: "Kilograms (kg)", count: 89, icon: "⚖️" },
-  { id: 3, name: "Liters (L)", count: 34, icon: "🥤" },
-  { id: 4, name: "Cartons", count: 88, icon: "📦" },
-];
+import { unitService } from "../../features/inventory/unit/services/unitService";
+import type { Unit } from "../../features/inventory/unit/types";
 
 export default function UnitsAndReports() {
   const navigation =
     useNavigation<NativeStackNavigationProp<InventoryStackParamList>>();
+  const [units, setUnits] = useState<Unit[]>([]);
+
+  useEffect(() => {
+    loadUnits();
+  }, []);
+
+  const loadUnits = async () => {
+    try {
+      const response = await unitService.list({
+        per_page: 4,
+        sort: "created_at",
+        direction: "desc",
+      });
+      setUnits(response.units || []);
+    } catch {
+      setUnits([]);
+    }
+  };
 
   return (
     <View style={styles.section}>
@@ -28,13 +41,21 @@ export default function UnitsAndReports() {
         </View>
 
         <View style={styles.unitsGrid}>
-          {units.map((unit) => (
-            <TouchableOpacity key={unit.id} style={styles.unitCard}>
-              <Text style={styles.unitEmoji}>{unit.icon}</Text>
-              <Text style={styles.unitName}>{unit.name}</Text>
-              <Text style={styles.unitCount}>{unit.count} products</Text>
-            </TouchableOpacity>
-          ))}
+          {units.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No units available</Text>
+            </View>
+          ) : (
+            units.map((unit) => (
+              <TouchableOpacity key={unit.id} style={styles.unitCard}>
+                <Text style={styles.unitEmoji}>📦</Text>
+                <Text style={styles.unitName}>{unit.name}</Text>
+                <Text style={styles.unitCount}>
+                  {(unit.products_count ?? 0).toString()} products
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </View>
 
@@ -145,6 +166,16 @@ const styles = StyleSheet.create({
   },
   unitCount: {
     fontSize: 11,
+    color: "#6b7280",
+  },
+  emptyState: {
+    backgroundColor: SEMANTIC_COLORS.white,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 13,
     color: "#6b7280",
   },
   reportCard: {

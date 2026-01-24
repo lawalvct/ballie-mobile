@@ -1,9 +1,58 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SEMANTIC_COLORS } from "../../theme/colors";
+import { productService } from "../../features/inventory/product/services/productService";
+import type { ListResponse } from "../../features/inventory/product/types";
 
 export default function InventoryOverview() {
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    inStock: 0,
+    lowStock: 0,
+    outOfStock: 0,
+  });
+
+  useEffect(() => {
+    loadOverview();
+  }, []);
+
+  const loadOverview = async () => {
+    try {
+      const response = (await productService.list({
+        per_page: 1,
+      })) as ListResponse["data"];
+      const statistics = response?.statistics || null;
+      const total =
+        typeof statistics?.total_products === "number"
+          ? statistics.total_products
+          : response?.pagination?.total || 0;
+      const low =
+        typeof statistics?.low_stock_count === "number"
+          ? statistics.low_stock_count
+          : 0;
+      const out =
+        typeof statistics?.out_of_stock_count === "number"
+          ? statistics.out_of_stock_count
+          : 0;
+      const inStock = Math.max(0, total - low - out);
+
+      setStats({
+        totalProducts: total,
+        inStock,
+        lowStock: low,
+        outOfStock: out,
+      });
+    } catch {
+      setStats({
+        totalProducts: 0,
+        inStock: 0,
+        lowStock: 0,
+        outOfStock: 0,
+      });
+    }
+  };
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Inventory Overview</Text>
@@ -15,7 +64,7 @@ export default function InventoryOverview() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
           <Text style={styles.overviewLabel}>Total Products</Text>
-          <Text style={styles.overviewValue}>456</Text>
+          <Text style={styles.overviewValue}>{stats.totalProducts}</Text>
           <Text style={styles.overviewSubtext}>In inventory</Text>
         </LinearGradient>
 
@@ -25,7 +74,7 @@ export default function InventoryOverview() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
           <Text style={styles.overviewLabel}>In Stock</Text>
-          <Text style={styles.overviewValue}>428</Text>
+          <Text style={styles.overviewValue}>{stats.inStock}</Text>
           <Text style={styles.overviewSubtext}>Available items</Text>
         </LinearGradient>
 
@@ -35,7 +84,7 @@ export default function InventoryOverview() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
           <Text style={styles.overviewLabel}>Low Stock</Text>
-          <Text style={styles.overviewValue}>18</Text>
+          <Text style={styles.overviewValue}>{stats.lowStock}</Text>
           <Text style={styles.overviewSubtext}>Need reorder</Text>
         </LinearGradient>
 
@@ -45,7 +94,7 @@ export default function InventoryOverview() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
           <Text style={styles.overviewLabel}>Out of Stock</Text>
-          <Text style={styles.overviewValue}>10</Text>
+          <Text style={styles.overviewValue}>{stats.outOfStock}</Text>
           <Text style={styles.overviewSubtext}>Urgent</Text>
         </LinearGradient>
       </View>

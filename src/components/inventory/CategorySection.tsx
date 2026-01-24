@@ -1,20 +1,35 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { InventoryStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
-
-const categories = [
-  { id: 1, name: "Electronics", count: 156, icon: "📱", color: "#3b82f6" },
-  { id: 2, name: "Furniture", count: 84, icon: "🛋️", color: "#f59e0b" },
-  { id: 3, name: "Clothing", count: 142, icon: "👕", color: "#8b5cf6" },
-  { id: 4, name: "Food & Beverage", count: 74, icon: "🍔", color: "#10b981" },
-];
+import { categoryService } from "../../features/inventory/category/services/categoryService";
+import type { Category } from "../../features/inventory/category/types";
 
 export default function CategorySection() {
   const navigation =
     useNavigation<NativeStackNavigationProp<InventoryStackParamList>>();
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const response = await categoryService.list({
+        per_page: 4,
+        sort: "products_count",
+        direction: "desc",
+      });
+      setCategories(response.categories || []);
+    } catch {
+      setCategories([]);
+    }
+  };
+
+  const colors = ["#3b82f6", "#f59e0b", "#8b5cf6", "#10b981"];
 
   return (
     <View style={styles.section}>
@@ -26,19 +41,33 @@ export default function CategorySection() {
       </View>
 
       <View style={styles.categoriesGrid}>
-        {categories.map((category) => (
-          <TouchableOpacity key={category.id} style={styles.categoryCard}>
-            <View
-              style={[
-                styles.categoryIcon,
-                { backgroundColor: category.color + "20" },
-              ]}>
-              <Text style={styles.categoryEmoji}>{category.icon}</Text>
-            </View>
-            <Text style={styles.categoryName}>{category.name}</Text>
-            <Text style={styles.categoryCount}>{category.count} items</Text>
-          </TouchableOpacity>
-        ))}
+        {categories.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No categories available</Text>
+          </View>
+        ) : (
+          categories.map((category, index) => {
+            const color = colors[index % colors.length];
+            const count =
+              typeof category.products_count === "number"
+                ? category.products_count
+                : 0;
+
+            return (
+              <TouchableOpacity key={category.id} style={styles.categoryCard}>
+                <View
+                  style={[
+                    styles.categoryIcon,
+                    { backgroundColor: color + "20" },
+                  ]}>
+                  <Text style={styles.categoryEmoji}>📦</Text>
+                </View>
+                <Text style={styles.categoryName}>{category.name}</Text>
+                <Text style={styles.categoryCount}>{count} items</Text>
+              </TouchableOpacity>
+            );
+          })
+        )}
       </View>
     </View>
   );
@@ -102,6 +131,17 @@ const styles = StyleSheet.create({
   },
   categoryCount: {
     fontSize: 12,
+    color: "#6b7280",
+  },
+  emptyState: {
+    width: "100%",
+    backgroundColor: SEMANTIC_COLORS.white,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 13,
     color: "#6b7280",
   },
 });

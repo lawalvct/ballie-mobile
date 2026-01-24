@@ -32,20 +32,34 @@ export default function QuickActions() {
           <Text style={styles.quickActionLabel}>Add Product</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={() =>
+            navigation.navigate("Accounting", {
+              screen: "InvoiceHome",
+              params: { type: "sales" },
+            })
+          }>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#3b82f6" }]}>
-            <Text style={styles.quickActionEmoji}>📤</Text>
+            <Text style={styles.quickActionEmoji}>💵</Text>
           </View>
-          <Text style={styles.quickActionLabel}>Upload</Text>
+          <Text style={styles.quickActionLabel}>Sales Invoice</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={() =>
+            navigation.navigate("Accounting", {
+              screen: "InvoiceHome",
+              params: { type: "purchase" },
+            })
+          }>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#8b5cf6" }]}>
-            <Text style={styles.quickActionEmoji}>📊</Text>
+            <Text style={styles.quickActionEmoji}>🛒</Text>
           </View>
-          <Text style={styles.quickActionLabel}>Reports</Text>
+          <Text style={styles.quickActionLabel}>Purchase Invoice</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.quickActionCard}>

@@ -1,38 +1,86 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 import type { InventoryStackParamList } from "../../navigation/types";
+import * as stockJournalService from "../../features/inventory/stockjournal/services/stockJournalService";
+import type { StockJournalEntry } from "../../features/inventory/stockjournal/types";
 
 type NavigationProp = NativeStackNavigationProp<InventoryStackParamList>;
 
-const recentMovements = [
-  {
-    id: 1,
-    product: "iPhone 14 Pro",
-    type: "in",
-    qty: 20,
-    date: "Today, 2:30 PM",
-  },
-  {
-    id: 2,
-    product: "Samsung Galaxy S23",
-    type: "out",
-    qty: 5,
-    date: "Today, 11:45 AM",
-  },
-  {
-    id: 3,
-    product: "Dell XPS 15",
-    type: "in",
-    qty: 10,
-    date: "Yesterday, 4:20 PM",
-  },
-];
-
 export default function StockManagement() {
   const navigation = useNavigation<NavigationProp>();
+  const [recentMovements, setRecentMovements] = useState<
+    Array<{
+      id: number;
+      label: string;
+      type: "in" | "out" | "adjustment" | "transfer";
+      qty: number;
+      date: string;
+    }>
+  >([]);
+
+  useEffect(() => {
+    loadRecentMovements();
+  }, []);
+
+  const mapMovementType = (entry: StockJournalEntry) => {
+    switch (entry.entry_type) {
+      case "production":
+        return "in";
+      case "consumption":
+        return "out";
+      case "transfer":
+        return "transfer";
+      default:
+        return "adjustment";
+    }
+  };
+
+  const getMovementIcon = (type: string) => {
+    switch (type) {
+      case "in":
+        return "📥";
+      case "out":
+        return "📤";
+      case "transfer":
+        return "🔀";
+      default:
+        return "🔄";
+    }
+  };
+
+  const getMovementColors = (type: string) => {
+    switch (type) {
+      case "in":
+        return { bg: "#d1fae5", text: "#059669" };
+      case "out":
+        return { bg: "#fee2e2", text: "#dc2626" };
+      case "transfer":
+        return { bg: "#dbeafe", text: "#2563eb" };
+      default:
+        return { bg: "#fef3c7", text: "#d97706" };
+    }
+  };
+
+  const loadRecentMovements = async () => {
+    try {
+      const response = await stockJournalService.list({ per_page: 3, page: 1 });
+      const entries = response?.data?.data || [];
+      setRecentMovements(
+        entries.map((entry: StockJournalEntry) => ({
+          id: entry.id,
+          label: entry.entry_type_display || entry.entry_type,
+          type: mapMovementType(entry),
+          qty: entry.total_items || 0,
+          date: entry.journal_date,
+        })),
+      );
+    } catch {
+      setRecentMovements([]);
+    }
+  };
 
   return (
     <View style={styles.section}>
@@ -85,43 +133,49 @@ export default function StockManagement() {
 
       <View style={styles.movementsSection}>
         <Text style={styles.movementsTitle}>Recent Movements</Text>
-        {recentMovements.map((movement) => (
-          <View key={movement.id} style={styles.movementCard}>
-            <View
-              style={[
-                styles.movementIcon,
-                {
-                  backgroundColor:
-                    movement.type === "in" ? "#d1fae5" : "#fee2e2",
-                },
-              ]}>
-              <Text style={styles.movementEmoji}>
-                {movement.type === "in" ? "📥" : "📤"}
-              </Text>
-            </View>
-            <View style={styles.movementInfo}>
-              <Text style={styles.movementProduct}>{movement.product}</Text>
-              <Text style={styles.movementDate}>{movement.date}</Text>
-            </View>
-            <View
-              style={[
-                styles.movementQty,
-                {
-                  backgroundColor:
-                    movement.type === "in" ? "#d1fae5" : "#fee2e2",
-                },
-              ]}>
-              <Text
-                style={[
-                  styles.movementQtyText,
-                  { color: movement.type === "in" ? "#059669" : "#dc2626" },
-                ]}>
-                {movement.type === "in" ? "+" : "-"}
-                {movement.qty}
-              </Text>
-            </View>
+        {recentMovements.length === 0 ? (
+          <View style={styles.emptyMovements}>
+            <Text style={styles.emptyMovementsText}>
+              No recent stock movements
+            </Text>
           </View>
-        ))}
+        ) : (
+          recentMovements.map((movement) => {
+            const colors = getMovementColors(movement.type);
+            return (
+              <View key={movement.id} style={styles.movementCard}>
+                <View
+                  style={[
+                    styles.movementIcon,
+                    {
+                      backgroundColor: colors.bg,
+                    },
+                  ]}>
+                  <Text style={styles.movementEmoji}>
+                    {getMovementIcon(movement.type)}
+                  </Text>
+                </View>
+                <View style={styles.movementInfo}>
+                  <Text style={styles.movementProduct}>{movement.label}</Text>
+                  <Text style={styles.movementDate}>{movement.date}</Text>
+                </View>
+                <View
+                  style={[
+                    styles.movementQty,
+                    {
+                      backgroundColor: colors.bg,
+                    },
+                  ]}>
+                  <Text
+                    style={[styles.movementQtyText, { color: colors.text }]}>
+                    {movement.type === "out" ? "-" : "+"}
+                    {movement.qty}
+                  </Text>
+                </View>
+              </View>
+            );
+          })
+        )}
       </View>
     </View>
   );
@@ -244,5 +298,15 @@ const styles = StyleSheet.create({
   movementQtyText: {
     fontSize: 14,
     fontWeight: "bold",
+  },
+  emptyMovements: {
+    backgroundColor: SEMANTIC_COLORS.white,
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  emptyMovementsText: {
+    fontSize: 12,
+    color: "#6b7280",
   },
 });
