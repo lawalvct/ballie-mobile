@@ -1,14 +1,62 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { MainTabParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import { voucherTypeService } from "../../features/accounting/vouchertype/services/voucherTypeService";
 
 export default function QuickActions() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<MainTabParamList>>();
+
+  const handleReceiptVoucher = async () => {
+    try {
+      const voucherTypes = await voucherTypeService.search("", "accounting");
+      const receiptType = voucherTypes.find((type) => {
+        const code = type.code?.toLowerCase() || "";
+        const name = type.name?.toLowerCase() || "";
+        return code.includes("receipt") || name.includes("receipt");
+      });
+
+      if (!receiptType) {
+        Alert.alert(
+          "Not found",
+          "Receipt voucher type is not available for this company.",
+          [{ text: "OK" }],
+        );
+        return;
+      }
+
+      navigation.navigate("Accounting", {
+        screen: "VoucherForm",
+        params: {
+          voucherTypeId: receiptType.id,
+          voucherTypeCode: receiptType.code,
+          voucherTypeName: receiptType.name,
+        },
+      });
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load voucher types",
+        [{ text: "OK" }],
+      );
+    }
+  };
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Quick Actions</Text>
 
       <View style={styles.quickActionsRow}>
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={() =>
+            navigation.navigate("CRM", { screen: "CustomerCreate" })
+          }>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#3b82f6" }]}>
             <Text style={styles.quickActionEmoji}>👥</Text>
@@ -16,7 +64,11 @@ export default function QuickActions() {
           <Text style={styles.quickActionLabel}>Add Customer</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={() =>
+            navigation.navigate("CRM", { screen: "VendorCreate" })
+          }>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#8b5cf6" }]}>
             <Text style={styles.quickActionEmoji}>🏪</Text>
@@ -24,7 +76,14 @@ export default function QuickActions() {
           <Text style={styles.quickActionLabel}>Add Vendor</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={() =>
+            navigation.navigate("Accounting", {
+              screen: "InvoiceCreate",
+              params: { type: "sales" },
+            })
+          }>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#10b981" }]}>
             <Text style={styles.quickActionEmoji}>📄</Text>
@@ -32,7 +91,9 @@ export default function QuickActions() {
           <Text style={styles.quickActionLabel}>New Invoice</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={handleReceiptVoucher}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#f59e0b" }]}>
             <Text style={styles.quickActionEmoji}>💰</Text>
