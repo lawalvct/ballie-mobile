@@ -1,5 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { InventoryStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 
 const categories = [
@@ -10,12 +13,15 @@ const categories = [
 ];
 
 export default function CategorySection() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<InventoryStackParamList>>();
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Categories</Text>
-        <TouchableOpacity>
-          <Text style={styles.viewAll}>View All →</Text>
+        <TouchableOpacity onPress={() => navigation.navigate("CategoryHome")}>
+          <Text style={styles.viewAll}>Manage →</Text>
         </TouchableOpacity>
       </View>
 

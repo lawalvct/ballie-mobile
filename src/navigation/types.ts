@@ -126,9 +126,15 @@ export type InventoryStackParamList = {
 
   // Category Management Module (placeholder for future)
   CategoryHome: undefined;
-  CategoryCreate: undefined;
+  CategoryCreate: { onCreated?: () => void };
   CategoryShow: { id: number };
-  CategoryEdit: { id: number };
+  CategoryEdit: { id: number; onUpdated?: (id: number) => void };
+
+  // Unit Management Module
+  UnitHome: undefined;
+  UnitCreate: { onCreated?: () => void };
+  UnitShow: { id: number };
+  UnitEdit: { id: number; onUpdated?: (id: number) => void };
 
   // Stock Adjustment Module (placeholder for future)
   StockAdjustmentHome: undefined;

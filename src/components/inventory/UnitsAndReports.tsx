@@ -1,5 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { InventoryStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 
 const units = [
@@ -10,13 +13,16 @@ const units = [
 ];
 
 export default function UnitsAndReports() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<InventoryStackParamList>>();
+
   return (
     <View style={styles.section}>
       {/* Units Section */}
       <View style={styles.subsection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Units</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("UnitHome")}>
             <Text style={styles.viewAll}>Manage →</Text>
           </TouchableOpacity>
         </View>
