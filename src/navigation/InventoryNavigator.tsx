@@ -9,6 +9,8 @@ import InventoryScreen from "../screens/InventoryScreen";
 // Product Screens
 import ProductHomeScreen from "../features/inventory/product/screens/ProductHomeScreen";
 import ProductCreateScreen from "../features/inventory/product/screens/ProductCreateScreen";
+import ProductShowScreen from "../features/inventory/product/screens/ProductShowScreen";
+import ProductEditScreen from "../features/inventory/product/screens/ProductEditScreen";
 
 const Stack = createNativeStackNavigator<InventoryStackParamList>();
 
@@ -22,6 +24,8 @@ export default function InventoryNavigator() {
       <Stack.Screen name="InventoryHome" component={InventoryScreen} />
       <Stack.Screen name="ProductHome" component={ProductHomeScreen} />
       <Stack.Screen name="ProductCreate" component={ProductCreateScreen} />
+      <Stack.Screen name="ProductShow" component={ProductShowScreen} />
+      <Stack.Screen name="ProductEdit" component={ProductEditScreen} />
     </Stack.Navigator>
   );
 }

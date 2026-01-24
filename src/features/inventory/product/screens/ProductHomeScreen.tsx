@@ -4,14 +4,16 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
 import { InventoryStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { showToast } from "../../../../utils/toast";
@@ -24,6 +26,7 @@ export default function ProductHomeScreen({ navigation }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState("");
   const [filters, setFilters] = useState<ListParams>({
     page: 1,
     per_page: 20,
@@ -33,7 +36,10 @@ export default function ProductHomeScreen({ navigation }: Props) {
   const [pagination, setPagination] = useState({
     current_page: 1,
     last_page: 1,
+    per_page: 20,
     total: 0,
+    from: 0,
+    to: 0,
   });
   const [statistics, setStatistics] = useState({
     total_products: 0,
@@ -51,14 +57,21 @@ export default function ProductHomeScreen({ navigation }: Props) {
       const response = await productService.list(filters);
       setProducts(response.products || []);
       setPagination(
-        response.pagination || { current_page: 1, last_page: 1, total: 0 }
+        response.pagination || {
+          current_page: 1,
+          last_page: 1,
+          per_page: 20,
+          total: 0,
+          from: 0,
+          to: 0,
+        },
       );
       setStatistics(
         response.statistics || {
           total_products: 0,
           active_products: 0,
           low_stock_count: 0,
-        }
+        },
       );
     } catch (error: any) {
       console.error("Error loading products:", error);
@@ -73,6 +86,21 @@ export default function ProductHomeScreen({ navigation }: Props) {
     await loadProducts();
     setRefreshing(false);
   }, [filters]);
+
+  const handleSearch = () => {
+    setFilters((prev) => ({
+      ...prev,
+      search: searchText.trim() || undefined,
+      page: 1,
+    }));
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      page,
+    }));
+  };
 
   const handleProductPress = (id: number) => {
     navigation.navigate("ProductShow", { id });
@@ -143,33 +171,6 @@ export default function ProductHomeScreen({ navigation }: Props) {
     </TouchableOpacity>
   );
 
-  const renderHeader = () => (
-    <View style={styles.headerSection}>
-      {/* Statistics Cards */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{statistics.total_products}</Text>
-          <Text style={styles.statLabel}>Total Products</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{statistics.active_products}</Text>
-          <Text style={styles.statLabel}>Active</Text>
-        </View>
-        <View style={[styles.statCard, styles.warningCard]}>
-          <Text style={[styles.statValue, styles.warningText]}>
-            {statistics.low_stock_count}
-          </Text>
-          <Text style={styles.statLabel}>Low Stock</Text>
-        </View>
-      </View>
-
-      {/* Filters Section - Placeholder */}
-      <View style={styles.filtersPlaceholder}>
-        <Text style={styles.filtersText}>🔍 Filters & Search</Text>
-      </View>
-    </View>
-  );
-
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>📦</Text>
@@ -193,7 +194,13 @@ export default function ProductHomeScreen({ navigation }: Props) {
           backgroundColor={BRAND_COLORS.darkPurple}
         />
         <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Products</Text>
+          <View style={styles.placeholder} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
@@ -218,32 +225,145 @@ export default function ProductHomeScreen({ navigation }: Props) {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Products</Text>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate("ProductCreate", { onCreated: loadProducts })
-          }
-          style={styles.addButton}>
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
+        <View style={styles.placeholder} />
       </View>
 
-      <FlatList
-        data={products}
-        renderItem={renderProductItem}
-        keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmpty}
-        contentContainerStyle={
-          products.length === 0 ? styles.emptyList : styles.list
-        }
+      <ScrollView
+        style={styles.content}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             colors={[BRAND_COLORS.gold]}
           />
-        }
-      />
+        }>
+        {/* Action Buttons Section */}
+        <View style={styles.actionsSection}>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() =>
+              navigation.navigate("ProductCreate", { onCreated: loadProducts })
+            }
+            activeOpacity={0.8}>
+            <Text style={styles.primaryBtnIcon}>+</Text>
+            <Text style={styles.primaryBtnText}>Create New Product</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Stats Section */}
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>Overview</Text>
+          <View style={styles.statsGrid}>
+            <LinearGradient
+              colors={["#8B5CF6", "#6D28D9"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCard}>
+              <Text style={styles.statValue}>{statistics.total_products}</Text>
+              <Text style={styles.statLabel}>Total Products</Text>
+            </LinearGradient>
+            <LinearGradient
+              colors={["#10B981", "#059669"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCard}>
+              <Text style={styles.statValue}>{statistics.active_products}</Text>
+              <Text style={styles.statLabel}>Active</Text>
+            </LinearGradient>
+            <LinearGradient
+              colors={["#F59E0B", "#D97706"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCard}>
+              <Text style={styles.statValue}>{statistics.low_stock_count}</Text>
+              <Text style={styles.statLabel}>Low Stock</Text>
+            </LinearGradient>
+          </View>
+        </View>
+
+        {/* Filters Section */}
+        <View style={styles.filtersSection}>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search products..."
+              placeholderTextColor="#9ca3af"
+              value={searchText}
+              onChangeText={setSearchText}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+            />
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={handleSearch}>
+              <Text style={styles.searchButtonText}>Search</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* List Section */}
+        <View style={styles.listSection}>
+          {products.length === 0
+            ? renderEmpty()
+            : products.map((item) => (
+                <View key={item.id}>{renderProductItem({ item })}</View>
+              ))}
+        </View>
+
+        {/* Pagination */}
+        {pagination.last_page > 1 && (
+          <View style={styles.paginationContainer}>
+            <View style={styles.paginationInfo}>
+              <Text style={styles.paginationText}>
+                Page {pagination.current_page} of {pagination.last_page}
+              </Text>
+              <Text style={styles.paginationSubtext}>
+                Showing {pagination.from} to {pagination.to} of{" "}
+                {pagination.total}
+              </Text>
+            </View>
+            <View style={styles.paginationButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.paginationButton,
+                  pagination.current_page === 1 &&
+                    styles.paginationButtonDisabled,
+                ]}
+                onPress={() => handlePageChange(pagination.current_page - 1)}
+                disabled={pagination.current_page === 1}>
+                <Text
+                  style={[
+                    styles.paginationButtonText,
+                    pagination.current_page === 1 &&
+                      styles.paginationButtonTextDisabled,
+                  ]}>
+                  ← Previous
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.paginationButton,
+                  pagination.current_page === pagination.last_page &&
+                    styles.paginationButtonDisabled,
+                ]}
+                onPress={() => handlePageChange(pagination.current_page + 1)}
+                disabled={pagination.current_page === pagination.last_page}>
+                <Text
+                  style={[
+                    styles.paginationButtonText,
+                    pagination.current_page === pagination.last_page &&
+                      styles.paginationButtonTextDisabled,
+                  ]}>
+                  Next →
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -266,27 +386,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   backButtonText: {
-    color: BRAND_COLORS.gold,
+    color: SEMANTIC_COLORS.white,
     fontSize: 16,
     fontWeight: "600",
   },
   headerTitle: {
-    color: "#fff",
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
+    color: SEMANTIC_COLORS.white,
   },
-  addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: BRAND_COLORS.gold,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addButtonText: {
-    color: BRAND_COLORS.darkPurple,
-    fontSize: 24,
-    fontWeight: "600",
+  placeholder: {
+    width: 60,
   },
   loadingContainer: {
     flex: 1,
@@ -299,65 +409,113 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: BRAND_COLORS.darkPurple,
   },
-  list: {
-    padding: 20,
-    backgroundColor: "#f5f5f5",
-  },
-  emptyList: {
-    flexGrow: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  headerSection: {
-    marginBottom: 20,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-  },
-  statCard: {
+  content: {
     flex: 1,
-    backgroundColor: SEMANTIC_COLORS.white,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "#f5f5f5",
+  },
+  actionsSection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  primaryBtn: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: BRAND_COLORS.gold,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  warningCard: {
-    backgroundColor: "#fef3c7",
-  },
-  statValue: {
+  primaryBtnIcon: {
     fontSize: 24,
     fontWeight: "bold",
     color: BRAND_COLORS.darkPurple,
-    marginBottom: 4,
+    marginRight: 8,
   },
-  warningText: {
-    color: "#d97706",
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: BRAND_COLORS.darkPurple,
+    letterSpacing: 0.5,
   },
-  statLabel: {
-    fontSize: 12,
-    color: "#6b7280",
-    textAlign: "center",
+  statsSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
-  filtersPlaceholder: {
-    backgroundColor: SEMANTIC_COLORS.white,
-    borderRadius: 12,
-    padding: 16,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: BRAND_COLORS.darkPurple,
+    marginBottom: 16,
+  },
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: "47%",
+    padding: 20,
+    borderRadius: 16,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  filtersText: {
+  statValue: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: SEMANTIC_COLORS.white,
+    marginBottom: 4,
+  },
+  statLabel: {
     fontSize: 14,
-    color: "#9ca3af",
+    color: "rgba(255, 255, 255, 0.9)",
+    fontWeight: "500",
+  },
+  filtersSection: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: BRAND_COLORS.darkPurple,
+  },
+  searchButton: {
+    backgroundColor: BRAND_COLORS.gold,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    justifyContent: "center",
+  },
+  searchButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
+  },
+  listSection: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
   productCard: {
     backgroundColor: SEMANTIC_COLORS.white,
@@ -431,10 +589,11 @@ const styles = StyleSheet.create({
     color: "#dc2626",
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
+    padding: 60,
     alignItems: "center",
-    padding: 40,
+    backgroundColor: SEMANTIC_COLORS.white,
+    borderRadius: 12,
+    marginBottom: 20,
   },
   emptyIcon: {
     fontSize: 64,
@@ -462,5 +621,56 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: BRAND_COLORS.darkPurple,
+  },
+  paginationContainer: {
+    padding: 16,
+    backgroundColor: SEMANTIC_COLORS.white,
+    marginTop: 20,
+    marginHorizontal: 20,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  paginationInfo: {
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  paginationText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 4,
+  },
+  paginationSubtext: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+  paginationButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+  },
+  paginationButton: {
+    backgroundColor: BRAND_COLORS.gold,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: "center",
+  },
+  paginationButtonDisabled: {
+    backgroundColor: "#e5e7eb",
+    opacity: 0.6,
+  },
+  paginationButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: BRAND_COLORS.darkPurple,
+  },
+  paginationButtonTextDisabled: {
+    color: "#9ca3af",
   },
 });
