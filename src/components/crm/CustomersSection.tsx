@@ -4,32 +4,30 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { CRMStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import type { CustomerListItem } from "../../features/crm/customers/types";
 
-const customers = [
-  {
-    id: 1,
-    name: "John Doe",
-    company: "Tech Solutions Ltd",
-    balance: "₦450,000",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    company: "Marketing Pro",
-    balance: "₦0",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Mike Williams",
-    company: "BuildCo Ltd",
-    balance: "₦125,000",
-    status: "overdue",
-  },
-];
+type CustomersSectionProps = {
+  customers: CustomerListItem[];
+  loading?: boolean;
+};
 
-export default function CustomersSection() {
+const formatCurrency = (value: number | string | null | undefined) => {
+  let amount = 0;
+  if (typeof value === "number") {
+    amount = value;
+  } else if (typeof value === "string") {
+    amount = parseFloat(value) || 0;
+  }
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+export default function CustomersSection({
+  customers,
+  loading = false,
+}: CustomersSectionProps) {
   const navigation =
     useNavigation<NativeStackNavigationProp<CRMStackParamList>>();
 
@@ -42,48 +40,64 @@ export default function CustomersSection() {
         </TouchableOpacity>
       </View>
 
-      {customers.map((customer) => (
-        <TouchableOpacity key={customer.id} style={styles.customerCard}>
-          <View style={styles.customerLeft}>
-            <View style={[styles.customerIcon, { backgroundColor: "#dbeafe" }]}>
-              <Text style={styles.customerEmoji}>👤</Text>
-            </View>
-            <View style={styles.customerInfo}>
-              <Text style={styles.customerName}>{customer.name}</Text>
-              <Text style={styles.customerCompany}>{customer.company}</Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  {
-                    backgroundColor:
-                      customer.status === "active" ? "#d1fae5" : "#fee2e2",
-                  },
-                ]}>
-                <Text
-                  style={[
-                    styles.statusText,
-                    {
-                      color:
-                        customer.status === "active" ? "#059669" : "#dc2626",
-                    },
-                  ]}>
-                  {customer.status === "active" ? "Active" : "Overdue"}
+      {loading ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Loading customers...</Text>
+        </View>
+      ) : customers.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No customers yet</Text>
+        </View>
+      ) : (
+        customers.map((customer) => {
+          const name =
+            customer.display_name ||
+            [customer.first_name, customer.last_name]
+              .filter(Boolean)
+              .join(" ") ||
+            "Unknown";
+          const companyLabel =
+            customer.company_name ||
+            (customer.customer_type === "business" ? name : "Individual");
+          const balanceValue =
+            customer.outstanding_balance ??
+            customer.ledger_account?.current_balance ??
+            0;
+          const isActive = customer.status !== "inactive";
+          const statusLabel = isActive ? "Active" : "Inactive";
+          const statusBg = isActive ? "#d1fae5" : "#fee2e2";
+          const statusColor = isActive ? "#059669" : "#dc2626";
+          const balanceColor =
+            Number(balanceValue) === 0 ? "#10b981" : "#f59e0b";
+
+          return (
+            <TouchableOpacity key={customer.id} style={styles.customerCard}>
+              <View style={styles.customerLeft}>
+                <View
+                  style={[styles.customerIcon, { backgroundColor: "#dbeafe" }]}>
+                  <Text style={styles.customerEmoji}>👤</Text>
+                </View>
+                <View style={styles.customerInfo}>
+                  <Text style={styles.customerName}>{name}</Text>
+                  <Text style={styles.customerCompany}>{companyLabel}</Text>
+                  <View
+                    style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+                    <Text style={[styles.statusText, { color: statusColor }]}>
+                      {statusLabel}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.customerRight}>
+                <Text style={styles.balanceLabel}>Balance</Text>
+                <Text style={[styles.balanceValue, { color: balanceColor }]}>
+                  ₦{formatCurrency(balanceValue)}
                 </Text>
               </View>
-            </View>
-          </View>
-          <View style={styles.customerRight}>
-            <Text style={styles.balanceLabel}>Balance</Text>
-            <Text
-              style={[
-                styles.balanceValue,
-                { color: customer.balance === "₦0" ? "#10b981" : "#f59e0b" },
-              ]}>
-              {customer.balance}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      ))}
+            </TouchableOpacity>
+          );
+        })
+      )}
     </View>
   );
 }
@@ -108,6 +122,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: BRAND_COLORS.blue,
     fontWeight: "600",
+  },
+  emptyState: {
+    backgroundColor: SEMANTIC_COLORS.white,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: "#6b7280",
   },
   customerCard: {
     flexDirection: "row",

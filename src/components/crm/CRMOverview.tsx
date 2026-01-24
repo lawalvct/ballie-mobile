@@ -3,7 +3,36 @@ import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SEMANTIC_COLORS } from "../../theme/colors";
 
-export default function CRMOverview() {
+type CRMOverviewProps = {
+  totalCustomers: number;
+  totalVendors: number;
+  pendingInvoices: number;
+  outstandingReceivable: number;
+  loading?: boolean;
+};
+
+const formatCurrency = (value: number | null | undefined) => {
+  const amount = typeof value === "number" ? value : 0;
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+export default function CRMOverview({
+  totalCustomers,
+  totalVendors,
+  pendingInvoices,
+  outstandingReceivable,
+  loading = false,
+}: CRMOverviewProps) {
+  const customerValue = loading ? "—" : String(totalCustomers || 0);
+  const vendorValue = loading ? "—" : String(totalVendors || 0);
+  const pendingValue = loading ? "—" : String(pendingInvoices || 0);
+  const outstandingValue = loading
+    ? "—"
+    : `₦${formatCurrency(outstandingReceivable)}`;
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>CRM Overview</Text>
@@ -15,7 +44,7 @@ export default function CRMOverview() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
           <Text style={styles.overviewLabel}>Total Customers</Text>
-          <Text style={styles.overviewValue}>342</Text>
+          <Text style={styles.overviewValue}>{customerValue}</Text>
           <Text style={styles.overviewSubtext}>Active clients</Text>
         </LinearGradient>
 
@@ -25,7 +54,7 @@ export default function CRMOverview() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
           <Text style={styles.overviewLabel}>Vendors</Text>
-          <Text style={styles.overviewValue}>128</Text>
+          <Text style={styles.overviewValue}>{vendorValue}</Text>
           <Text style={styles.overviewSubtext}>Suppliers</Text>
         </LinearGradient>
 
@@ -35,7 +64,7 @@ export default function CRMOverview() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
           <Text style={styles.overviewLabel}>Pending Invoices</Text>
-          <Text style={styles.overviewValue}>24</Text>
+          <Text style={styles.overviewValue}>{pendingValue}</Text>
           <Text style={styles.overviewSubtext}>Awaiting payment</Text>
         </LinearGradient>
 
@@ -45,7 +74,7 @@ export default function CRMOverview() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
           <Text style={styles.overviewLabel}>Outstanding</Text>
-          <Text style={styles.overviewValue}>₦8.4M</Text>
+          <Text style={styles.overviewValue}>{outstandingValue}</Text>
           <Text style={styles.overviewSubtext}>Receivables</Text>
         </LinearGradient>
       </View>

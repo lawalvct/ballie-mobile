@@ -4,34 +4,32 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { CRMStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import type { VendorListItem } from "../../features/crm/vendors/types";
 
 type NavigationProp = NativeStackNavigationProp<CRMStackParamList>;
 
-const vendors = [
-  {
-    id: 1,
-    name: "Global Supplies Inc",
-    category: "Electronics",
-    balance: "₦280,000",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Prime Distributors",
-    category: "Furniture",
-    balance: "₦0",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Quality Goods Ltd",
-    category: "Food & Beverage",
-    balance: "₦95,000",
-    status: "active",
-  },
-];
+type VendorsSectionProps = {
+  vendors: VendorListItem[];
+  loading?: boolean;
+};
 
-export default function VendorsSection() {
+const formatCurrency = (value: number | string | null | undefined) => {
+  let amount = 0;
+  if (typeof value === "number") {
+    amount = value;
+  } else if (typeof value === "string") {
+    amount = parseFloat(value) || 0;
+  }
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+export default function VendorsSection({
+  vendors,
+  loading = false,
+}: VendorsSectionProps) {
   const navigation = useNavigation<NavigationProp>();
 
   return (
@@ -43,35 +41,54 @@ export default function VendorsSection() {
         </TouchableOpacity>
       </View>
 
-      {vendors.map((vendor) => (
-        <TouchableOpacity key={vendor.id} style={styles.vendorCard}>
-          <View style={styles.vendorLeft}>
-            <View style={[styles.vendorIcon, { backgroundColor: "#f3e8ff" }]}>
-              <Text style={styles.vendorEmoji}>🏪</Text>
-            </View>
-            <View style={styles.vendorInfo}>
-              <Text style={styles.vendorName}>{vendor.name}</Text>
-              <Text style={styles.vendorCategory}>{vendor.category}</Text>
-              <View
-                style={[styles.statusBadge, { backgroundColor: "#d1fae5" }]}>
-                <Text style={[styles.statusText, { color: "#059669" }]}>
-                  Active
+      {loading ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>Loading vendors...</Text>
+        </View>
+      ) : vendors.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No vendors yet</Text>
+        </View>
+      ) : (
+        vendors.map((vendor) => {
+          const name = vendor.display_name || vendor.company_name || "Unknown";
+          const categoryLabel =
+            vendor.vendor_type === "business" ? "Business" : "Individual";
+          const balanceValue = vendor.outstanding_balance ?? 0;
+          const isActive = vendor.status !== "inactive";
+          const statusBg = isActive ? "#d1fae5" : "#fee2e2";
+          const statusColor = isActive ? "#059669" : "#dc2626";
+          const balanceColor =
+            Number(balanceValue) === 0 ? "#10b981" : "#ef4444";
+
+          return (
+            <TouchableOpacity key={vendor.id} style={styles.vendorCard}>
+              <View style={styles.vendorLeft}>
+                <View
+                  style={[styles.vendorIcon, { backgroundColor: "#f3e8ff" }]}>
+                  <Text style={styles.vendorEmoji}>🏪</Text>
+                </View>
+                <View style={styles.vendorInfo}>
+                  <Text style={styles.vendorName}>{name}</Text>
+                  <Text style={styles.vendorCategory}>{categoryLabel}</Text>
+                  <View
+                    style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+                    <Text style={[styles.statusText, { color: statusColor }]}>
+                      {isActive ? "Active" : "Inactive"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.vendorRight}>
+                <Text style={styles.balanceLabel}>Payable</Text>
+                <Text style={[styles.balanceValue, { color: balanceColor }]}>
+                  ₦{formatCurrency(balanceValue)}
                 </Text>
               </View>
-            </View>
-          </View>
-          <View style={styles.vendorRight}>
-            <Text style={styles.balanceLabel}>Payable</Text>
-            <Text
-              style={[
-                styles.balanceValue,
-                { color: vendor.balance === "₦0" ? "#10b981" : "#ef4444" },
-              ]}>
-              {vendor.balance}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      ))}
+            </TouchableOpacity>
+          );
+        })
+      )}
     </View>
   );
 }
@@ -96,6 +113,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: BRAND_COLORS.blue,
     fontWeight: "600",
+  },
+  emptyState: {
+    backgroundColor: SEMANTIC_COLORS.white,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: "#6b7280",
   },
   vendorCard: {
     flexDirection: "row",
