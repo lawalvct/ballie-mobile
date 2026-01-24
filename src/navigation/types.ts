@@ -100,6 +100,17 @@ export type AccountingStackParamList = {
   InvoiceShow: { id: number };
   InvoiceEdit: { id: number; onUpdated?: (id: number) => void };
 
+  // Purchase Order (LPO) Module
+  PurchaseOrderHome: undefined;
+  PurchaseOrderCreate: { vendorId?: number } | undefined;
+  PurchaseOrderShow: { id: number };
+
+  // Quotation Management Module
+  QuotationHome: undefined;
+  QuotationCreate: undefined;
+  QuotationShow: { id: number };
+  QuotationEdit: { id: number };
+
   // Journal Entries Module (placeholder for future)
   JournalEntryList: undefined;
   JournalEntryCreate: undefined;

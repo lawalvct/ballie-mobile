@@ -34,6 +34,15 @@ import InvoiceHomeScreen from "../features/accounting/invoice/screens/InvoiceHom
 import InvoiceCreateScreen from "../features/accounting/invoice/screens/InvoiceCreateScreen";
 import InvoiceShowScreen from "../features/accounting/invoice/screens/InvoiceShowScreen";
 import InvoiceEditScreen from "../features/accounting/invoice/screens/InvoiceEditScreen";
+// Purchase Order (LPO) Feature
+import PurchaseOrderHomeScreen from "../features/accounting/purchaseorder/screens/PurchaseOrderHomeScreen";
+import PurchaseOrderCreateScreen from "../features/accounting/purchaseorder/screens/PurchaseOrderCreateScreen";
+import PurchaseOrderShowScreen from "../features/accounting/purchaseorder/screens/PurchaseOrderShowScreen";
+// Quotation Management Feature
+import QuotationHomeScreen from "../features/accounting/quotation/screens/QuotationHomeScreen";
+import QuotationCreateScreen from "../features/accounting/quotation/screens/QuotationCreateScreen";
+import QuotationShowScreen from "../features/accounting/quotation/screens/QuotationShowScreen";
+import QuotationEditScreen from "../features/accounting/quotation/screens/QuotationEditScreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "./types";
 import { BRAND_COLORS } from "../theme/colors";
@@ -253,6 +262,45 @@ function AccountingStack() {
         name="InvoiceEdit"
         component={InvoiceEditScreen}
         options={{ title: "Edit Invoice" }}
+      />
+
+      {/* Purchase Order (LPO) Module */}
+      <Stack.Screen
+        name="PurchaseOrderHome"
+        component={PurchaseOrderHomeScreen}
+        options={{ title: "Purchase Orders" }}
+      />
+      <Stack.Screen
+        name="PurchaseOrderCreate"
+        component={PurchaseOrderCreateScreen}
+        options={{ title: "Create LPO" }}
+      />
+      <Stack.Screen
+        name="PurchaseOrderShow"
+        component={PurchaseOrderShowScreen}
+        options={{ title: "LPO Details" }}
+      />
+
+      {/* Quotation Management Module */}
+      <Stack.Screen
+        name="QuotationHome"
+        component={QuotationHomeScreen}
+        options={{ title: "Quotations" }}
+      />
+      <Stack.Screen
+        name="QuotationCreate"
+        component={QuotationCreateScreen}
+        options={{ title: "Create Quotation" }}
+      />
+      <Stack.Screen
+        name="QuotationShow"
+        component={QuotationShowScreen}
+        options={{ title: "Quotation Details" }}
+      />
+      <Stack.Screen
+        name="QuotationEdit"
+        component={QuotationEditScreen}
+        options={{ title: "Edit Quotation" }}
       />
 
       {/* Banking Module */}

@@ -1,8 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { MainTabParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 
 export default function DocumentsSection() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<MainTabParamList>>();
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Documents & Transactions</Text>
@@ -16,7 +22,13 @@ export default function DocumentsSection() {
           <Text style={styles.docCount}>24</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.docCard}>
+        <TouchableOpacity
+          style={styles.docCard}
+          onPress={() =>
+            navigation.navigate("Accounting", {
+              screen: "QuotationHome",
+            })
+          }>
           <View style={[styles.docIcon, { backgroundColor: "#dbeafe" }]}>
             <Text style={styles.docEmoji}>📝</Text>
           </View>
@@ -24,7 +36,13 @@ export default function DocumentsSection() {
           <Text style={styles.docCount}>12</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.docCard}>
+        <TouchableOpacity
+          style={styles.docCard}
+          onPress={() =>
+            navigation.navigate("Accounting", {
+              screen: "PurchaseOrderHome",
+            })
+          }>
           <View style={[styles.docIcon, { backgroundColor: "#fef3c7" }]}>
             <Text style={styles.docEmoji}>📋</Text>
           </View>
