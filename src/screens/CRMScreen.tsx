@@ -1,5 +1,5 @@
-﻿import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+﻿import React, { useState } from "react";
+import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import AppHeader from "../components/AppHeader";
@@ -13,6 +13,15 @@ import StatementsAndPayments from "../components/crm/StatementsAndPayments";
 
 export default function CRMScreen() {
   const { user, tenant } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simulate data refresh - in a real app, you might reload data from APIs
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -23,7 +32,17 @@ export default function CRMScreen() {
         userRole={user?.role}
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#3c2c64"]}
+            tintColor="#3c2c64"
+          />
+        }>
         <CRMOverview />
         <QuickActions />
         <CustomersSection />

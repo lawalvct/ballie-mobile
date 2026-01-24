@@ -39,23 +39,7 @@ export default function VendorsSection() {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Vendors</Text>
         <TouchableOpacity onPress={() => navigation.navigate("VendorHome")}>
-          <Text style={styles.viewAll}>View All →</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.actionsRow}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate("VendorHome")}>
-          <Text style={styles.actionEmoji}>➕</Text>
-          <Text style={styles.actionText}>Add Vendor</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: "#ddd6fe" }]}
-          onPress={() => navigation.navigate("VendorHome")}>
-          <Text style={styles.actionEmoji}>📋</Text>
-          <Text style={styles.actionText}>Manage</Text>
+          <Text style={styles.viewAll}>Manage →</Text>
         </TouchableOpacity>
       </View>
 
@@ -112,29 +96,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: BRAND_COLORS.blue,
     fontWeight: "600",
-  },
-  actionsRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#e9d5ff",
-    padding: 12,
-    borderRadius: 10,
-    gap: 8,
-  },
-  actionEmoji: {
-    fontSize: 18,
-  },
-  actionText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
   },
   vendorCard: {
     flexDirection: "row",

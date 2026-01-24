@@ -1,15 +1,22 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { CRMStackParamList } from "../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 
 export default function StatementsAndPayments() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<CRMStackParamList>>();
   return (
     <View style={styles.section}>
       {/* Statements Section */}
       <View style={styles.subsection}>
         <Text style={styles.sectionTitle}>Statements</Text>
 
-        <TouchableOpacity style={styles.menuCard}>
+        <TouchableOpacity
+          style={styles.menuCard}
+          onPress={() => navigation.navigate("CustomerStatements")}>
           <View style={[styles.menuIcon, { backgroundColor: "#dbeafe" }]}>
             <Text style={styles.menuEmoji}>📊</Text>
           </View>
@@ -22,7 +29,9 @@ export default function StatementsAndPayments() {
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuCard}>
+        <TouchableOpacity
+          style={styles.menuCard}
+          onPress={() => navigation.navigate("VendorStatements")}>
           <View style={[styles.menuIcon, { backgroundColor: "#e0e7ff" }]}>
             <Text style={styles.menuEmoji}>📈</Text>
           </View>
@@ -34,7 +43,7 @@ export default function StatementsAndPayments() {
         </TouchableOpacity>
       </View>
 
-      {/* Payments Section */}
+      {/* Payments Section - Commented out
       <View style={styles.subsection}>
         <Text style={styles.sectionTitle}>Payments</Text>
 
@@ -73,8 +82,9 @@ export default function StatementsAndPayments() {
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
       </View>
+      */}
 
-      {/* Recent Payments */}
+      {/* Recent Payments - Commented out
       <View style={styles.subsection}>
         <Text style={styles.sectionTitle}>Recent Payments</Text>
 
@@ -108,6 +118,7 @@ export default function StatementsAndPayments() {
           </Text>
         </View>
       </View>
+      */}
     </View>
   );
 }
