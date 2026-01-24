@@ -136,10 +136,14 @@ export type InventoryStackParamList = {
   UnitShow: { id: number };
   UnitEdit: { id: number; onUpdated?: (id: number) => void };
 
-  // Stock Adjustment Module (placeholder for future)
-  StockAdjustmentHome: undefined;
-  StockAdjustmentCreate: undefined;
-  StockAdjustmentShow: { id: number };
+  // Stock Journal Module
+  StockJournalHome: undefined;
+  StockConsumption: undefined;
+  StockProduction: undefined;
+  StockAdjustment: undefined;
+  StockTransfer: undefined;
+  StockJournalDetail: { id: number };
+  StockJournalEdit: { id: number };
 };
 
 // ============================================================================

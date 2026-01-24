@@ -1,6 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import type { InventoryStackParamList } from "../../navigation/types";
+
+type NavigationProp = NativeStackNavigationProp<InventoryStackParamList>;
 
 const recentMovements = [
   {
@@ -27,16 +32,21 @@ const recentMovements = [
 ];
 
 export default function StockManagement() {
+  const navigation = useNavigation<NavigationProp>();
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Stock Management</Text>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("StockJournalHome")}>
           <Text style={styles.viewAll}>View All →</Text>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.menuCard}>
+      <TouchableOpacity
+        style={styles.menuCard}
+        onPress={() => navigation.navigate("StockProduction")}>
         <View style={[styles.menuIcon, { backgroundColor: "#dbeafe" }]}>
           <Text style={styles.menuEmoji}>📥</Text>
         </View>
@@ -47,7 +57,9 @@ export default function StockManagement() {
         <Text style={styles.menuArrow}>›</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuCard}>
+      <TouchableOpacity
+        style={styles.menuCard}
+        onPress={() => navigation.navigate("StockConsumption")}>
         <View style={[styles.menuIcon, { backgroundColor: "#fee2e2" }]}>
           <Text style={styles.menuEmoji}>📤</Text>
         </View>
@@ -58,7 +70,9 @@ export default function StockManagement() {
         <Text style={styles.menuArrow}>›</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuCard}>
+      <TouchableOpacity
+        style={styles.menuCard}
+        onPress={() => navigation.navigate("StockTransfer")}>
         <View style={[styles.menuIcon, { backgroundColor: "#fef3c7" }]}>
           <Text style={styles.menuEmoji}>🔄</Text>
         </View>

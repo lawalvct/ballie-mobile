@@ -24,6 +24,15 @@ import UnitCreateScreen from "../features/inventory/unit/screens/UnitCreateScree
 import UnitShowScreen from "../features/inventory/unit/screens/UnitShowScreen";
 import UnitEditScreen from "../features/inventory/unit/screens/UnitEditScreen";
 
+// Stock Journal Screens
+import StockJournalHomeScreen from "../features/inventory/stockjournal/screens/StockJournalHomeScreen";
+import StockConsumptionScreen from "../features/inventory/stockjournal/screens/StockConsumptionScreen";
+import StockProductionScreen from "../features/inventory/stockjournal/screens/StockProductionScreen";
+import StockAdjustmentScreen from "../features/inventory/stockjournal/screens/StockAdjustmentScreen";
+import StockTransferScreen from "../features/inventory/stockjournal/screens/StockTransferScreen";
+import StockJournalDetailScreen from "../features/inventory/stockjournal/screens/StockJournalDetailScreen";
+import StockJournalEditScreen from "../features/inventory/stockjournal/screens/StockJournalEditScreen";
+
 const Stack = createNativeStackNavigator<InventoryStackParamList>();
 
 export default function InventoryNavigator() {
@@ -46,6 +55,25 @@ export default function InventoryNavigator() {
       <Stack.Screen name="UnitCreate" component={UnitCreateScreen} />
       <Stack.Screen name="UnitShow" component={UnitShowScreen} />
       <Stack.Screen name="UnitEdit" component={UnitEditScreen} />
+      <Stack.Screen
+        name="StockJournalHome"
+        component={StockJournalHomeScreen}
+      />
+      <Stack.Screen
+        name="StockConsumption"
+        component={StockConsumptionScreen}
+      />
+      <Stack.Screen name="StockProduction" component={StockProductionScreen} />
+      <Stack.Screen name="StockAdjustment" component={StockAdjustmentScreen} />
+      <Stack.Screen name="StockTransfer" component={StockTransferScreen} />
+      <Stack.Screen
+        name="StockJournalDetail"
+        component={StockJournalDetailScreen}
+      />
+      <Stack.Screen
+        name="StockJournalEdit"
+        component={StockJournalEditScreen}
+      />
     </Stack.Navigator>
   );
 }
