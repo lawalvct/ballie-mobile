@@ -1,15 +1,74 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 import type { AccountingStackParamList } from "../../navigation/types";
+import { bankService } from "../../features/accounting/bank/services/bankService";
+import type { BankAccount } from "../../features/accounting/bank/types";
 
 type NavigationProp = NativeStackNavigationProp<AccountingStackParamList>;
 
 export default function BankingSection() {
   const navigation = useNavigation<NavigationProp>();
+  const [banks, setBanks] = useState<BankAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadBanks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await bankService.list({
+        page: 1,
+        per_page: 2,
+        sort_by: "created_at",
+        sort_order: "desc",
+      });
+      setBanks(response.banks || []);
+    } catch {
+      setBanks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadBanks();
+    }, [loadBanks]),
+  );
+
+  const getCurrencySymbol = (currency?: string): string => {
+    const symbols: Record<string, string> = {
+      NGN: "₦",
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+    };
+    return symbols[currency || "NGN"] || currency || "₦";
+  };
+
+  const formatAmount = (
+    amount: number | string | null | undefined,
+    currency?: string,
+  ): string => {
+    const num =
+      typeof amount === "number" ? amount : amount ? Number(amount) : 0;
+    const symbol = getCurrencySymbol(currency);
+    return `${symbol}${num.toLocaleString()}`;
+  };
+
+  const gradients = [
+    ["#3b82f6", "#1d4ed8"],
+    ["#10b981", "#059669"],
+    ["#f59e0b", "#d97706"],
+  ];
 
   return (
     <View style={styles.section}>
@@ -20,37 +79,48 @@ export default function BankingSection() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.bankCard}>
-        <LinearGradient
-          colors={["#3b82f6", "#1d4ed8"]}
-          style={styles.bankCardGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}>
-          <View style={styles.bankCardHeader}>
-            <Text style={styles.bankName}>Access Bank</Text>
-            <Text style={styles.bankType}>Current Account</Text>
-          </View>
-          <Text style={styles.bankBalance}>₦2,450,890.50</Text>
-          <Text style={styles.bankAccount}>0123456789</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+      {loading && banks.length === 0 ? (
+        <View style={styles.loadingState}>
+          <ActivityIndicator size="small" color={BRAND_COLORS.gold} />
+          <Text style={styles.loadingText}>Loading bank accounts...</Text>
+        </View>
+      ) : banks.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No bank accounts yet.</Text>
+        </View>
+      ) : (
+        banks.map((bank, index) => (
+          <TouchableOpacity
+            key={bank.id}
+            style={styles.bankCard}
+            onPress={() => navigation.navigate("BankShow", { id: bank.id })}>
+            <LinearGradient
+              colors={gradients[index % gradients.length]}
+              style={styles.bankCardGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}>
+              <View style={styles.bankCardHeader}>
+                <Text style={styles.bankName}>
+                  {bank.display_name || bank.bank_name}
+                </Text>
+                <Text style={styles.bankType}>
+                  {bank.account_type_display || bank.account_type || "Account"}
+                </Text>
+              </View>
+              <Text style={styles.bankBalance}>
+                {formatAmount(bank.current_balance, bank.currency)}
+              </Text>
+              <Text style={styles.bankAccount}>
+                {bank.masked_account_number || bank.account_number}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        ))
+      )}
 
-      <TouchableOpacity style={styles.bankCard}>
-        <LinearGradient
-          colors={["#10b981", "#059669"]}
-          style={styles.bankCardGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}>
-          <View style={styles.bankCardHeader}>
-            <Text style={styles.bankName}>GTBank</Text>
-            <Text style={styles.bankType}>Savings Account</Text>
-          </View>
-          <Text style={styles.bankBalance}>₦1,680,450.00</Text>
-          <Text style={styles.bankAccount}>9876543210</Text>
-        </LinearGradient>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.menuCard}>
+      <TouchableOpacity
+        style={styles.menuCard}
+        onPress={() => navigation.navigate("BankCreate")}>
         <View style={[styles.menuIcon, { backgroundColor: "#dbeafe" }]}>
           <Text style={styles.menuEmoji}>🏦</Text>
         </View>
@@ -165,5 +235,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: "#d1d5db",
     fontWeight: "300",
+  },
+  loadingState: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 12,
+  },
+  loadingText: {
+    fontSize: 13,
+    color: SEMANTIC_COLORS.textLight,
+  },
+  emptyState: {
+    paddingVertical: 12,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: SEMANTIC_COLORS.textLight,
   },
 });

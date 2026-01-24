@@ -1,14 +1,62 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 import type { AccountingStackParamList } from "../../navigation/types";
+import { voucherTypeService } from "../../features/accounting/vouchertype/services/voucherTypeService";
+import type { VoucherType } from "../../features/accounting/vouchertype/types";
 
 type NavigationProp = NativeStackNavigationProp<AccountingStackParamList>;
 
 export default function VouchersSection() {
   const navigation = useNavigation<NavigationProp>();
+  const [voucherTypes, setVoucherTypes] = useState<VoucherType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadVoucherTypes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await voucherTypeService.list({
+        category: "accounting",
+        per_page: 8,
+        sort: "name",
+        direction: "asc",
+      });
+      setVoucherTypes(response.data || []);
+    } catch {
+      setVoucherTypes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadVoucherTypes();
+    }, [loadVoucherTypes]),
+  );
+
+  const getVoucherMeta = (name: string) => {
+    const map: Record<string, { emoji: string; color: string }> = {
+      "Sales Invoice": { emoji: "📄", color: "#d1fae5" },
+      "Purchase Invoice": { emoji: "🧾", color: "#fee2e2" },
+      "Journal Entry": { emoji: "📝", color: "#e0e7ff" },
+      "Payment Entry": { emoji: "💳", color: "#ddd6fe" },
+      Receipt: { emoji: "💰", color: "#dcfce7" },
+      Contra: { emoji: "🔄", color: "#fef9c3" },
+      "Credit Note": { emoji: "📉", color: "#fecaca" },
+      "Debit Note": { emoji: "📈", color: "#fed7aa" },
+    };
+
+    return map[name] || { emoji: "📄", color: "#e5e7eb" };
+  };
 
   return (
     <View style={styles.section}>
@@ -19,71 +67,35 @@ export default function VouchersSection() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.vouchersGrid}>
-        <TouchableOpacity style={styles.voucherCard}>
-          <View style={[styles.voucherIcon, { backgroundColor: "#d1fae5" }]}>
-            <Text style={styles.voucherEmoji}>📄</Text>
-          </View>
-          <Text style={styles.voucherLabel}>Sales Invoice</Text>
-          <Text style={styles.voucherCount}>24</Text>
-        </TouchableOpacity>
+      {loading && voucherTypes.length === 0 ? (
+        <View style={styles.loadingState}>
+          <ActivityIndicator size="small" color={BRAND_COLORS.gold} />
+          <Text style={styles.loadingText}>Loading vouchers...</Text>
+        </View>
+      ) : voucherTypes.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No voucher types yet.</Text>
+        </View>
+      ) : (
+        <View style={styles.vouchersGrid}>
+          {voucherTypes.map((type) => {
+            const meta = getVoucherMeta(type.name);
 
-        <TouchableOpacity style={styles.voucherCard}>
-          <View style={[styles.voucherIcon, { backgroundColor: "#fee2e2" }]}>
-            <Text style={styles.voucherEmoji}>🧾</Text>
-          </View>
-          <Text style={styles.voucherLabel}>Purchase Invoice</Text>
-          <Text style={styles.voucherCount}>18</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.voucherCard}>
-          <View style={[styles.voucherIcon, { backgroundColor: "#e0e7ff" }]}>
-            <Text style={styles.voucherEmoji}>📝</Text>
-          </View>
-          <Text style={styles.voucherLabel}>Journal Entry</Text>
-          <Text style={styles.voucherCount}>32</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.voucherCard}>
-          <View style={[styles.voucherIcon, { backgroundColor: "#ddd6fe" }]}>
-            <Text style={styles.voucherEmoji}>💳</Text>
-          </View>
-          <Text style={styles.voucherLabel}>Payment Entry</Text>
-          <Text style={styles.voucherCount}>45</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.voucherCard}>
-          <View style={[styles.voucherIcon, { backgroundColor: "#dcfce7" }]}>
-            <Text style={styles.voucherEmoji}>💰</Text>
-          </View>
-          <Text style={styles.voucherLabel}>Receipt</Text>
-          <Text style={styles.voucherCount}>52</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.voucherCard}>
-          <View style={[styles.voucherIcon, { backgroundColor: "#fef9c3" }]}>
-            <Text style={styles.voucherEmoji}>🔄</Text>
-          </View>
-          <Text style={styles.voucherLabel}>Contra</Text>
-          <Text style={styles.voucherCount}>8</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.voucherCard}>
-          <View style={[styles.voucherIcon, { backgroundColor: "#fecaca" }]}>
-            <Text style={styles.voucherEmoji}>📉</Text>
-          </View>
-          <Text style={styles.voucherLabel}>Credit Note</Text>
-          <Text style={styles.voucherCount}>6</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.voucherCard}>
-          <View style={[styles.voucherIcon, { backgroundColor: "#fed7aa" }]}>
-            <Text style={styles.voucherEmoji}>📈</Text>
-          </View>
-          <Text style={styles.voucherLabel}>Debit Note</Text>
-          <Text style={styles.voucherCount}>4</Text>
-        </TouchableOpacity>
-      </View>
+            return (
+              <TouchableOpacity key={type.id} style={styles.voucherCard}>
+                <View
+                  style={[styles.voucherIcon, { backgroundColor: meta.color }]}>
+                  <Text style={styles.voucherEmoji}>{meta.emoji}</Text>
+                </View>
+                <Text style={styles.voucherLabel}>{type.name}</Text>
+                <Text style={styles.voucherCount}>
+                  {type.voucher_count ?? 0}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
@@ -148,5 +160,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: BRAND_COLORS.gold,
+  },
+  loadingState: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 12,
+  },
+  loadingText: {
+    fontSize: 13,
+    color: SEMANTIC_COLORS.textLight,
+  },
+  emptyState: {
+    paddingVertical: 12,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: SEMANTIC_COLORS.textLight,
   },
 });
