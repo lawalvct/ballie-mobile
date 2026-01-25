@@ -8,10 +8,12 @@ import {
   Animated,
 } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const [showPointer, setShowPointer] = useState(true);
   const [pointerAnim] = useState(new Animated.Value(0));
+  const insets = useSafeAreaInsets();
 
   const tabs = [
     { id: "Dashboard", label: "Dashboard", icon: "📊" },
@@ -41,7 +43,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           duration: 800,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
 
     // Hide pointer after 4 seconds
@@ -63,11 +65,18 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   });
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingBottom: insets.bottom, height: 70 + insets.bottom },
+      ]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 10 + insets.bottom },
+        ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}>
         {tabs.map((tab, index) => {
