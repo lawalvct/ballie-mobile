@@ -1,0 +1,372 @@
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
+import type { PayrollStackParamList } from "../navigation/types";
+
+type NavigationProp = NativeStackNavigationProp<
+  PayrollStackParamList,
+  "PayrollActions"
+>;
+
+type ActionCard = {
+  title: string;
+  subtitle: string;
+  description: string;
+  color: string;
+  accent: string;
+  icon: string;
+};
+
+type ActionSection = {
+  title: string;
+  icon: string;
+  color: string;
+  cards: ActionCard[];
+};
+
+const SECTIONS: ActionSection[] = [
+  {
+    title: "Employee Management",
+    icon: "👥",
+    color: "#3b82f6",
+    cards: [
+      {
+        title: "Add Employee",
+        subtitle: "Create new employee",
+        description: "Create new employee records with salary details.",
+        color: "#3b82f6",
+        accent: "#2563eb",
+        icon: "➕",
+      },
+      {
+        title: "All Employees",
+        subtitle: "Manage employees",
+        description: "View and manage all employee records and details.",
+        color: "#10b981",
+        accent: "#059669",
+        icon: "📋",
+      },
+      {
+        title: "Departments",
+        subtitle: "Manage departments",
+        description: "Organize employees into departments and teams.",
+        color: "#8b5cf6",
+        accent: "#7c3aed",
+        icon: "🏢",
+      },
+      {
+        title: "Positions",
+        subtitle: "Manage positions",
+        description: "Define job positions and hierarchies.",
+        color: "#f59e0b",
+        accent: "#d97706",
+        icon: "💼",
+      },
+      {
+        title: "Salary Components",
+        subtitle: "Manage components",
+        description: "Configure allowances, deductions, and benefits.",
+        color: "#ec4899",
+        accent: "#db2777",
+        icon: "📊",
+      },
+      {
+        title: "Shift Management",
+        subtitle: "Work schedules",
+        description: "Create and manage employee shift schedules.",
+        color: "#06b6d4",
+        accent: "#0891b2",
+        icon: "🗓️",
+      },
+    ],
+  },
+  {
+    title: "Payroll Processing",
+    icon: "💰",
+    color: "#10b981",
+    cards: [
+      {
+        title: "Process Payroll",
+        subtitle: "Run new payroll",
+        description: "Calculate and process current period payroll.",
+        color: "#10b981",
+        accent: "#059669",
+        icon: "⚙️",
+      },
+      {
+        title: "Payroll History",
+        subtitle: "View past payrolls",
+        description: "Review completed and pending payroll runs.",
+        color: "#6366f1",
+        accent: "#4f46e5",
+        icon: "🧾",
+      },
+      {
+        title: "Attendance",
+        subtitle: "Track attendance",
+        description: "Manage employee attendance and time tracking.",
+        color: "#f97316",
+        accent: "#ea580c",
+        icon: "⏱️",
+      },
+      {
+        title: "Overtime",
+        subtitle: "Extra hours",
+        description: "Manage overtime hours and calculations.",
+        color: "#ef4444",
+        accent: "#dc2626",
+        icon: "⏰",
+      },
+      {
+        title: "Salary Advance",
+        subtitle: "IOU / Staff Loans",
+        description: "Issue salary advances and manage loan repayments.",
+        color: "#8b5cf6",
+        accent: "#7c3aed",
+        icon: "💳",
+      },
+      {
+        title: "Announcements",
+        subtitle: "Email & SMS",
+        description: "Send notifications to employees via email or SMS.",
+        color: "#0ea5e9",
+        accent: "#0284c7",
+        icon: "📣",
+      },
+    ],
+  },
+  {
+    title: "Payroll Reports",
+    icon: "📈",
+    color: "#f97316",
+    cards: [
+      {
+        title: "Tax Reports",
+        subtitle: "Tax compliance",
+        description: "Generate comprehensive tax reports and analytics.",
+        color: "#f97316",
+        accent: "#ea580c",
+        icon: "🧾",
+      },
+      {
+        title: "Payslips",
+        subtitle: "Salary statements",
+        description: "Generate and view employee payslips.",
+        color: "#14b8a6",
+        accent: "#0d9488",
+        icon: "💵",
+      },
+      {
+        title: "Bank Files",
+        subtitle: "Banking integration",
+        description: "Export bank transfer files for payroll.",
+        color: "#6366f1",
+        accent: "#4f46e5",
+        icon: "🏦",
+      },
+      {
+        title: "Analytics",
+        subtitle: "Insights & trends",
+        description: "View payroll analytics and cost trends.",
+        color: "#06b6d4",
+        accent: "#0891b2",
+        icon: "📊",
+      },
+    ],
+  },
+  {
+    title: "Settings",
+    icon: "⚙️",
+    color: "#eab308",
+    cards: [
+      {
+        title: "Payroll Settings",
+        subtitle: "Configure payroll",
+        description: "Configure employee number format and other settings.",
+        color: "#eab308",
+        accent: "#ca8a04",
+        icon: "🛠️",
+      },
+    ],
+  },
+];
+
+export default function PayrollActionsScreen() {
+  const navigation = useNavigation<NavigationProp>();
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={BRAND_COLORS.darkPurple}
+      />
+
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>All Payroll Actions</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {SECTIONS.map((section) => (
+          <View style={styles.section} key={section.title}>
+            <View style={styles.sectionHeader}>
+              <View
+                style={[
+                  styles.sectionIcon,
+                  { backgroundColor: section.color },
+                ]}>
+                <Text style={styles.sectionIconText}>{section.icon}</Text>
+              </View>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+            </View>
+
+            <View style={styles.cardsGrid}>
+              {section.cards.map((card) => (
+                <TouchableOpacity
+                  key={card.title}
+                  style={[styles.actionCard, { backgroundColor: card.color }]}>
+                  <View
+                    style={[
+                      styles.cardIconContainer,
+                      { backgroundColor: card.accent },
+                    ]}>
+                    <Text style={styles.cardIcon}>{card.icon}</Text>
+                  </View>
+                  <View style={styles.cardContent}>
+                    <Text style={styles.cardTitle}>{card.title}</Text>
+                    <Text style={styles.cardSubtitle}>{card.subtitle}</Text>
+                  </View>
+                  <Text style={styles.cardDescription}>{card.description}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ))}
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: BRAND_COLORS.darkPurple,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 12,
+    backgroundColor: BRAND_COLORS.darkPurple,
+  },
+  backButton: {
+    paddingVertical: 8,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: SEMANTIC_COLORS.white,
+    fontWeight: "600",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: SEMANTIC_COLORS.white,
+  },
+  placeholder: {
+    width: 60,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  section: {
+    marginTop: 24,
+    paddingHorizontal: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  sectionIconText: {
+    fontSize: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: BRAND_COLORS.darkPurple,
+  },
+  cardsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: -6,
+  },
+  actionCard: {
+    width: "47%",
+    marginHorizontal: "1.5%",
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  cardIcon: {
+    fontSize: 20,
+  },
+  cardContent: {
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: SEMANTIC_COLORS.white,
+    marginBottom: 2,
+  },
+  cardSubtitle: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  cardDescription: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.7)",
+    lineHeight: 16,
+  },
+});

@@ -22,18 +22,26 @@ export type CRMStackParamList = {
 };
 
 // ============================================================================
+// PAYROLL STACK NAVIGATOR
+// ============================================================================
+export type PayrollStackParamList = {
+  PayrollHome: undefined;
+  PayrollActions: undefined;
+};
+
+// ============================================================================
 // MAIN TAB NAVIGATOR
 // ============================================================================
 export type MainTabParamList = {
   Dashboard: undefined;
   Accounting: NavigatorScreenParams<AccountingStackParamList>;
   Inventory: NavigatorScreenParams<InventoryStackParamList>;
-  POS: undefined;
+  // POS: undefined;
   CRM: NavigatorScreenParams<CRMStackParamList>;
   Reports: undefined;
   Audit: undefined;
   Ecommerce: undefined;
-  Payroll: undefined;
+  Payroll: NavigatorScreenParams<PayrollStackParamList>;
   Admins: undefined;
   Statutory: undefined;
 };

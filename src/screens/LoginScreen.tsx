@@ -46,7 +46,7 @@ export default function LoginScreen({
         Alert.alert(
           "Multiple Workspaces",
           `You belong to ${response.data.tenants?.length} workspaces. Workspace selector coming soon!`,
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
         // TODO: Navigate to workspace selector screen
         console.log("Available workspaces:", response.data.tenants);
@@ -55,7 +55,7 @@ export default function LoginScreen({
         await login(
           response.data.token,
           response.data.user,
-          response.data.tenant
+          response.data.tenant,
         );
       }
     } catch (error: any) {
@@ -82,7 +82,7 @@ export default function LoginScreen({
             <View style={styles.logoContainer}>
               <View style={styles.logo}>
                 <Image
-                  source={require("../../assets/images/ballie_logo.png")}
+                  source={require("../../assets/images/icon.png")}
                   style={styles.logoImage}
                   resizeMode="contain"
                 />

@@ -8,7 +8,13 @@ import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 type NavigationProp = NativeStackNavigationProp<MainTabParamList, "Inventory">;
 
 export default function QuickActions() {
-  const navigation = useNavigation<NavigationProp>();
+    const navigation = useNavigation<NavigationProp>();
+    
+ const handleViewAll = () => {
+   navigation.navigate("Inventory", {
+     screen: "ProductHome",
+   });
+ };
 
   const handleAddProduct = () => {
     navigation.navigate("Inventory", {
@@ -62,12 +68,14 @@ export default function QuickActions() {
           <Text style={styles.quickActionLabel}>Purchase Invoice</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.quickActionCard}>
+        <TouchableOpacity
+          style={styles.quickActionCard}
+          onPress={handleViewAll}>
           <View
             style={[styles.quickActionIcon, { backgroundColor: "#f59e0b" }]}>
-            <Text style={styles.quickActionEmoji}>🔔</Text>
+            <Text style={styles.quickActionEmoji}>📦</Text>
           </View>
-          <Text style={styles.quickActionLabel}>Stock Alert</Text>
+          <Text style={styles.quickActionLabel}> Products</Text>
         </TouchableOpacity>
       </View>
     </View>

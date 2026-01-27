@@ -1,8 +1,15 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import type { PayrollStackParamList } from "../../navigation/types";
 
 export default function EmployeeManagement() {
+  const navigation = useNavigation<
+    NativeStackNavigationProp<PayrollStackParamList>
+  >();
+
   const sections = [
     {
       icon: "👥",
@@ -32,7 +39,14 @@ export default function EmployeeManagement() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Employee Management</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.sectionTitle}>Employee Management</Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("PayrollActions")}
+          activeOpacity={0.7}>
+          <Text style={styles.moreActions}>More Actions →</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.grid}>
         {sections.map((section, index) => (
@@ -55,11 +69,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 24,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: BRAND_COLORS.darkPurple,
-    marginBottom: 16,
+  },
+  moreActions: {
+    fontSize: 14,
+    color: BRAND_COLORS.blue,
+    fontWeight: "600",
   },
   grid: {
     gap: 12,

@@ -22,7 +22,7 @@ export default function Splash1({ onNext }: { onNext: () => void }) {
         <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
             <Image
-              source={require("../../assets/images/ballie_logo.png")}
+              source={require("../../assets/images/icon.png")}
               style={styles.logoImage}
               resizeMode="contain"
             />

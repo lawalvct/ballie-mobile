@@ -36,24 +36,35 @@ export default function PayrollOverview() {
   ];
 
   return (
-    <View style={styles.container}>
-      {stats.map((stat, index) => (
-        <LinearGradient
-          key={index}
-          colors={[stat.color1, stat.color2]}
-          style={styles.statCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}>
-          <Text style={styles.statValue}>{stat.value}</Text>
-          <Text style={styles.statLabel}>{stat.label}</Text>
-          <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
-        </LinearGradient>
-      ))}
+    <View>
+      <Text style={styles.sectionTitle}>Payroll Overview</Text>
+      <View style={styles.container}>
+        {stats.map((stat, index) => (
+          <LinearGradient
+            key={index}
+            colors={[stat.color1, stat.color2]}
+            style={styles.statCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}>
+            <Text style={styles.statValue}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
+          </LinearGradient>
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 8,
+    color: SEMANTIC_COLORS.text.primary,
+  },
   container: {
     flexDirection: "row",
     flexWrap: "wrap",

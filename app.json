@@ -4,47 +4,45 @@
     "slug": "ballie",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/ballie.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/images/ballie.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#3c2c64"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/ballie.png",
-        "backgroundColor": "#3c2c64"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       },
       "splash": {
-        "image": "./assets/images/ballie.png",
+        "image": "./assets/images/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#3c2c64",
+        "backgroundColor": "#ffffff",
         "dark": {
-          "image": "./assets/images/ballie.png",
+          "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#3c2c64"
+          "backgroundColor": "#ffffff"
         }
       },
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.talosmartcto.ballie",
       "statusBar": {
-        "backgroundColor": "#3c2c64",
+        "backgroundColor": "#ffffff",
         "translucent": false
       },
       "navigationBar": {
-        "backgroundColor": "#3c2c64"
+        "backgroundColor": "#ffffff"
       }
     },
     "web": {
-      "favicon": "./assets/images/ballie.png"
+      "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "@react-native-community/datetimepicker"
-    ],
+    "plugins": ["@react-native-community/datetimepicker"],
     "extra": {
       "eas": {
         "projectId": "d8955117-5a62-40ab-87b8-f06962a8c478"

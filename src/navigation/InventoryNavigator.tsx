@@ -5,6 +5,7 @@ import { InventoryStackParamList } from "./types";
 
 // Main Inventory Screen
 import InventoryScreen from "../screens/InventoryScreen";
+import InventoryActionsScreen from "../screens/InventoryActionsScreen";
 
 // Product Screens
 import ProductHomeScreen from "../features/inventory/product/screens/ProductHomeScreen";
@@ -43,6 +44,10 @@ export default function InventoryNavigator() {
       }}
       initialRouteName="InventoryHome">
       <Stack.Screen name="InventoryHome" component={InventoryScreen} />
+      <Stack.Screen
+        name="InventoryActions"
+        component={InventoryActionsScreen}
+      />
       <Stack.Screen name="ProductHome" component={ProductHomeScreen} />
       <Stack.Screen name="ProductCreate" component={ProductCreateScreen} />
       <Stack.Screen name="ProductShow" component={ProductShowScreen} />

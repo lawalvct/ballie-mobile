@@ -35,7 +35,7 @@ export default function ProductsSection() {
 
   const handleViewAll = () => {
     navigation.navigate("Inventory", {
-      screen: "ProductHome",
+      screen: "InventoryActions",
     });
   };
 
@@ -92,7 +92,7 @@ export default function ProductsSection() {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Products</Text>
         <TouchableOpacity onPress={handleViewAll}>
-          <Text style={styles.viewAll}>View All →</Text>
+          <Text style={styles.viewAll}>More Actions →</Text>
         </TouchableOpacity>
       </View>
 
