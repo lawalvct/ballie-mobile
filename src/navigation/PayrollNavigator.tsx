@@ -4,6 +4,40 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { PayrollStackParamList } from "./types";
 import PayrollScreen from "../screens/PayrollScreen";
 import PayrollActionsScreen from "../screens/PayrollActionsScreen";
+import PayrollEmployeeHomeScreen from "../features/payroll/employee/screens/PayrollEmployeeHomeScreen";
+import PayrollEmployeeCreateScreen from "../features/payroll/employee/screens/PayrollEmployeeCreateScreen";
+import PayrollEmployeeShowScreen from "../features/payroll/employee/screens/PayrollEmployeeShowScreen";
+import PayrollEmployeeEditScreen from "../features/payroll/employee/screens/PayrollEmployeeEditScreen";
+import PayrollAttendanceHomeScreen from "../features/payroll/attendance/screens/PayrollAttendanceHomeScreen";
+import PayrollAttendanceClockInScreen from "../features/payroll/attendance/screens/PayrollAttendanceClockInScreen";
+import PayrollAttendanceClockOutScreen from "../features/payroll/attendance/screens/PayrollAttendanceClockOutScreen";
+import PayrollAttendanceMarkAbsentScreen from "../features/payroll/attendance/screens/PayrollAttendanceMarkAbsentScreen";
+import PayrollAttendanceMarkLeaveScreen from "../features/payroll/attendance/screens/PayrollAttendanceMarkLeaveScreen";
+import PayrollAttendanceManualEntryScreen from "../features/payroll/attendance/screens/PayrollAttendanceManualEntryScreen";
+import PayrollAttendanceQrScreen from "../features/payroll/attendance/screens/PayrollAttendanceQrScreen";
+import PayrollAttendanceMonthlyReportScreen from "../features/payroll/attendance/screens/PayrollAttendanceMonthlyReportScreen";
+import PayrollAttendanceEmployeeScreen from "../features/payroll/attendance/screens/PayrollAttendanceEmployeeScreen";
+import PayrollProcessingHomeScreen from "../features/payroll/processing/screens/PayrollProcessingHomeScreen";
+import PayrollProcessingCreateScreen from "../features/payroll/processing/screens/PayrollProcessingCreateScreen";
+import PayrollProcessingShowScreen from "../features/payroll/processing/screens/PayrollProcessingShowScreen";
+import PayrollShiftHomeScreen from "../features/payroll/shift/screens/PayrollShiftHomeScreen";
+import PayrollShiftCreateScreen from "../features/payroll/shift/screens/PayrollShiftCreateScreen";
+import PayrollShiftShowScreen from "../features/payroll/shift/screens/PayrollShiftShowScreen";
+import PayrollShiftEditScreen from "../features/payroll/shift/screens/PayrollShiftEditScreen";
+import PayrollShiftAssignmentsScreen from "../features/payroll/shift/screens/PayrollShiftAssignmentsScreen";
+import PayrollShiftAssignScreen from "../features/payroll/shift/screens/PayrollShiftAssignScreen";
+import PayrollDepartmentHomeScreen from "../features/payroll/department/screens/PayrollDepartmentHomeScreen";
+import PayrollDepartmentCreateScreen from "../features/payroll/department/screens/PayrollDepartmentCreateScreen";
+import PayrollDepartmentShowScreen from "../features/payroll/department/screens/PayrollDepartmentShowScreen";
+import PayrollDepartmentEditScreen from "../features/payroll/department/screens/PayrollDepartmentEditScreen";
+import PayrollSalaryComponentHomeScreen from "../features/payroll/salarycomponent/screens/PayrollSalaryComponentHomeScreen";
+import PayrollSalaryComponentCreateScreen from "../features/payroll/salarycomponent/screens/PayrollSalaryComponentCreateScreen";
+import PayrollSalaryComponentShowScreen from "../features/payroll/salarycomponent/screens/PayrollSalaryComponentShowScreen";
+import PayrollSalaryComponentEditScreen from "../features/payroll/salarycomponent/screens/PayrollSalaryComponentEditScreen";
+import PayrollPositionHomeScreen from "../features/payroll/position/screens/PayrollPositionHomeScreen";
+import PayrollPositionCreateScreen from "../features/payroll/position/screens/PayrollPositionCreateScreen";
+import PayrollPositionShowScreen from "../features/payroll/position/screens/PayrollPositionShowScreen";
+import PayrollPositionEditScreen from "../features/payroll/position/screens/PayrollPositionEditScreen";
 
 const Stack = createNativeStackNavigator<PayrollStackParamList>();
 
@@ -37,6 +71,176 @@ export default function PayrollNavigator() {
         name="PayrollActions"
         component={PayrollActionsScreen}
         options={{ title: "All Payroll Actions" }}
+      />
+      <Stack.Screen
+        name="PayrollEmployeeHome"
+        component={PayrollEmployeeHomeScreen}
+        options={{ title: "Employees" }}
+      />
+      <Stack.Screen
+        name="PayrollEmployeeCreate"
+        component={PayrollEmployeeCreateScreen}
+        options={{ title: "Create Employee" }}
+      />
+      <Stack.Screen
+        name="PayrollEmployeeShow"
+        component={PayrollEmployeeShowScreen}
+        options={{ title: "Employee Details" }}
+      />
+      <Stack.Screen
+        name="PayrollEmployeeEdit"
+        component={PayrollEmployeeEditScreen}
+        options={{ title: "Edit Employee" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceHome"
+        component={PayrollAttendanceHomeScreen}
+        options={{ title: "Attendance" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceClockIn"
+        component={PayrollAttendanceClockInScreen}
+        options={{ title: "Clock In" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceClockOut"
+        component={PayrollAttendanceClockOutScreen}
+        options={{ title: "Clock Out" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceMarkAbsent"
+        component={PayrollAttendanceMarkAbsentScreen}
+        options={{ title: "Mark Absent" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceMarkLeave"
+        component={PayrollAttendanceMarkLeaveScreen}
+        options={{ title: "Mark Leave" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceManualEntry"
+        component={PayrollAttendanceManualEntryScreen}
+        options={{ title: "Manual Attendance" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceQr"
+        component={PayrollAttendanceQrScreen}
+        options={{ title: "Attendance QR" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceMonthlyReport"
+        component={PayrollAttendanceMonthlyReportScreen}
+        options={{ title: "Monthly Report" }}
+      />
+      <Stack.Screen
+        name="PayrollAttendanceEmployee"
+        component={PayrollAttendanceEmployeeScreen}
+        options={{ title: "Employee Attendance" }}
+      />
+      <Stack.Screen
+        name="PayrollProcessingHome"
+        component={PayrollProcessingHomeScreen}
+        options={{ title: "Payroll Processing" }}
+      />
+      <Stack.Screen
+        name="PayrollProcessingCreate"
+        component={PayrollProcessingCreateScreen}
+        options={{ title: "Create Payroll Period" }}
+      />
+      <Stack.Screen
+        name="PayrollProcessingShow"
+        component={PayrollProcessingShowScreen}
+        options={{ title: "Payroll Details" }}
+      />
+      <Stack.Screen
+        name="PayrollShiftHome"
+        component={PayrollShiftHomeScreen}
+        options={{ title: "Shifts" }}
+      />
+      <Stack.Screen
+        name="PayrollShiftCreate"
+        component={PayrollShiftCreateScreen}
+        options={{ title: "Create Shift" }}
+      />
+      <Stack.Screen
+        name="PayrollShiftShow"
+        component={PayrollShiftShowScreen}
+        options={{ title: "Shift Details" }}
+      />
+      <Stack.Screen
+        name="PayrollShiftEdit"
+        component={PayrollShiftEditScreen}
+        options={{ title: "Edit Shift" }}
+      />
+      <Stack.Screen
+        name="PayrollShiftAssignments"
+        component={PayrollShiftAssignmentsScreen}
+        options={{ title: "Shift Assignments" }}
+      />
+      <Stack.Screen
+        name="PayrollShiftAssign"
+        component={PayrollShiftAssignScreen}
+        options={{ title: "Assign Shift" }}
+      />
+      <Stack.Screen
+        name="PayrollDepartmentHome"
+        component={PayrollDepartmentHomeScreen}
+        options={{ title: "Departments" }}
+      />
+      <Stack.Screen
+        name="PayrollDepartmentCreate"
+        component={PayrollDepartmentCreateScreen}
+        options={{ title: "Create Department" }}
+      />
+      <Stack.Screen
+        name="PayrollDepartmentShow"
+        component={PayrollDepartmentShowScreen}
+        options={{ title: "Department Details" }}
+      />
+      <Stack.Screen
+        name="PayrollDepartmentEdit"
+        component={PayrollDepartmentEditScreen}
+        options={{ title: "Edit Department" }}
+      />
+      <Stack.Screen
+        name="PayrollSalaryComponentHome"
+        component={PayrollSalaryComponentHomeScreen}
+        options={{ title: "Salary Components" }}
+      />
+      <Stack.Screen
+        name="PayrollSalaryComponentCreate"
+        component={PayrollSalaryComponentCreateScreen}
+        options={{ title: "Create Component" }}
+      />
+      <Stack.Screen
+        name="PayrollSalaryComponentShow"
+        component={PayrollSalaryComponentShowScreen}
+        options={{ title: "Component Details" }}
+      />
+      <Stack.Screen
+        name="PayrollSalaryComponentEdit"
+        component={PayrollSalaryComponentEditScreen}
+        options={{ title: "Edit Component" }}
+      />
+      <Stack.Screen
+        name="PayrollPositionHome"
+        component={PayrollPositionHomeScreen}
+        options={{ title: "Positions" }}
+      />
+      <Stack.Screen
+        name="PayrollPositionCreate"
+        component={PayrollPositionCreateScreen}
+        options={{ title: "Create Position" }}
+      />
+      <Stack.Screen
+        name="PayrollPositionShow"
+        component={PayrollPositionShowScreen}
+        options={{ title: "Position Details" }}
+      />
+      <Stack.Screen
+        name="PayrollPositionEdit"
+        component={PayrollPositionEditScreen}
+        options={{ title: "Edit Position" }}
       />
     </Stack.Navigator>
   );

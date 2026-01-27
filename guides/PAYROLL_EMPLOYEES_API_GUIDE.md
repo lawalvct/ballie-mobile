@@ -26,13 +26,23 @@ These endpoints are typically called when creating/editing employees:
 - Filters: search, department, status, position (text).
 - Columns: employee name/email, employee ID, department, position, hire date, basic salary, status.
 
-### Employee Create/Edit
+### Employee Create vs Edit
+
+**Create screen (resources/views/tenant/payroll/employees/create.blade.php):**
 
 - Section 1 (Personal): first name, last name, email, phone, optional avatar.
 - Section 2 (Employment): department (required), position (optional), job title, employment type, pay frequency, status (create), attendance deduction exemption.
 - Section 3 (Salary): basic salary (required). Salary components can be assigned during update or in the salary edit screen.
 - Section 4 (Address): address, city, state, postal code, country (optional).
 - Section 5 (Bank/Pension): bank name/account fields, pension provider/RSA, pension exemption.
+
+**Edit screen (resources/views/tenant/payroll/employees/edit.blade.php):**
+
+- Adds personal fields: `date_of_birth`, `gender`.
+- Adds payroll/tax fields: `tin`, `pension_pin`.
+- Shows salary components with **amount/percentage inputs** per component.
+- Supports avatar replace and remove (send `remove_avatar=true` to clear).
+- Status is not shown in the edit UI, but the API allows it as optional.
 
 ## Endpoints
 
@@ -271,6 +281,8 @@ These endpoints are typically called when creating/editing employees:
     "position_id": 7,
     "job_title": "Senior Accountant",
     "hire_date": "2026-01-10",
+    "date_of_birth": "1992-04-12",
+    "gender": "male",
     "employment_type": "full_time",
     "pay_frequency": "monthly",
     "status": "active",
@@ -278,9 +290,17 @@ These endpoints are typically called when creating/editing employees:
     "attendance_exemption_reason": "Executive agreement",
     "basic_salary": 280000,
     "effective_date": "2026-02-01",
+    "tin": "1234567890",
+    "pension_pin": "PEN1234567",
+    "bank_name": "First Bank",
+    "account_number": "1234567890",
+    "account_name": "John Lawal",
+    "pfa_provider": "ARM Pensions",
+    "rsa_pin": "PEN123456789012",
+    "pension_exempt": false,
     "components": [
         { "id": 10, "percentage": 20 },
-        { "id": 12, "amount": 10000 }
+        { "id": 12, "amount": 10000, "is_active": true }
     ]
 }
 ```
@@ -327,5 +347,8 @@ These endpoints are typically called when creating/editing employees:
 - All endpoints require `auth:sanctum`.
 - `employee_number` is optional; if omitted, the backend auto-generates it.
 - Use `multipart/form-data` when uploading `avatar`.
+- Edit supports `remove_avatar=true` to clear the current avatar.
+- Edit supports extra fields: `date_of_birth`, `gender`, `tin`, `pension_pin`, and other optional profile fields.
+- Salary component values are sent via `components[]` with `amount` or `percentage` per component.
 - For salary components, use the salary component endpoints to build the component list in the UI.
 - For department/position selection, fetch departments and positions (or positions by department).

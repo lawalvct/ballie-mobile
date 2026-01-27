@@ -25,6 +25,7 @@ type ActionCard = {
   color: string;
   accent: string;
   icon: string;
+  route?: keyof PayrollStackParamList;
 };
 
 type ActionSection = {
@@ -47,6 +48,7 @@ const SECTIONS: ActionSection[] = [
         color: "#3b82f6",
         accent: "#2563eb",
         icon: "➕",
+        route: "PayrollEmployeeCreate",
       },
       {
         title: "All Employees",
@@ -55,6 +57,7 @@ const SECTIONS: ActionSection[] = [
         color: "#10b981",
         accent: "#059669",
         icon: "📋",
+        route: "PayrollEmployeeHome",
       },
       {
         title: "Departments",
@@ -63,6 +66,7 @@ const SECTIONS: ActionSection[] = [
         color: "#8b5cf6",
         accent: "#7c3aed",
         icon: "🏢",
+        route: "PayrollDepartmentHome",
       },
       {
         title: "Positions",
@@ -71,6 +75,7 @@ const SECTIONS: ActionSection[] = [
         color: "#f59e0b",
         accent: "#d97706",
         icon: "💼",
+        route: "PayrollPositionHome",
       },
       {
         title: "Salary Components",
@@ -79,6 +84,7 @@ const SECTIONS: ActionSection[] = [
         color: "#ec4899",
         accent: "#db2777",
         icon: "📊",
+        route: "PayrollSalaryComponentHome",
       },
       {
         title: "Shift Management",
@@ -87,6 +93,7 @@ const SECTIONS: ActionSection[] = [
         color: "#06b6d4",
         accent: "#0891b2",
         icon: "🗓️",
+        route: "PayrollShiftHome",
       },
     ],
   },
@@ -102,6 +109,7 @@ const SECTIONS: ActionSection[] = [
         color: "#10b981",
         accent: "#059669",
         icon: "⚙️",
+        route: "PayrollProcessingCreate",
       },
       {
         title: "Payroll History",
@@ -110,6 +118,7 @@ const SECTIONS: ActionSection[] = [
         color: "#6366f1",
         accent: "#4f46e5",
         icon: "🧾",
+        route: "PayrollProcessingHome",
       },
       {
         title: "Attendance",
@@ -118,6 +127,7 @@ const SECTIONS: ActionSection[] = [
         color: "#f97316",
         accent: "#ea580c",
         icon: "⏱️",
+        route: "PayrollAttendanceHome",
       },
       {
         title: "Overtime",
@@ -239,7 +249,12 @@ export default function PayrollActionsScreen() {
               {section.cards.map((card) => (
                 <TouchableOpacity
                   key={card.title}
-                  style={[styles.actionCard, { backgroundColor: card.color }]}>
+                  style={[styles.actionCard, { backgroundColor: card.color }]}
+                  onPress={() => {
+                    if (card.route) {
+                      navigation.navigate(card.route as any);
+                    }
+                  }}>
                   <View
                     style={[
                       styles.cardIconContainer,

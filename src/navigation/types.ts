@@ -27,6 +27,45 @@ export type CRMStackParamList = {
 export type PayrollStackParamList = {
   PayrollHome: undefined;
   PayrollActions: undefined;
+  PayrollEmployeeHome: undefined;
+  PayrollEmployeeCreate: { onCreated?: () => void } | undefined;
+  PayrollEmployeeShow: { id: number };
+  PayrollEmployeeEdit: { id: number; onUpdated?: (id: number) => void };
+  PayrollAttendanceHome: undefined;
+  PayrollAttendanceClockIn: undefined;
+  PayrollAttendanceClockOut: undefined;
+  PayrollAttendanceMarkAbsent: undefined;
+  PayrollAttendanceMarkLeave: undefined;
+  PayrollAttendanceManualEntry: { onCreated?: () => void } | undefined;
+  PayrollAttendanceQr: undefined;
+  PayrollAttendanceMonthlyReport: undefined;
+  PayrollAttendanceEmployee: undefined;
+  PayrollProcessingHome: undefined;
+  PayrollProcessingCreate: { onCreated?: () => void } | undefined;
+  PayrollProcessingShow: { id: number };
+  PayrollShiftHome: undefined;
+  PayrollShiftCreate: { onCreated?: () => void } | undefined;
+  PayrollShiftShow: { id: number };
+  PayrollShiftEdit: { id: number; onUpdated?: (id: number) => void };
+  PayrollShiftAssignments: { shiftId?: number } | undefined;
+  PayrollShiftAssign: { shiftId?: number; employeeId?: number } | undefined;
+  PayrollDepartmentHome: undefined;
+  PayrollDepartmentCreate: { onCreated?: () => void } | undefined;
+  PayrollDepartmentShow: { id: number };
+  PayrollDepartmentEdit: { id: number; onUpdated?: (id: number) => void };
+  PayrollSalaryComponentHome: undefined;
+  PayrollSalaryComponentCreate:
+    | {
+        type?: "earning" | "deduction" | "employer_contribution";
+        onCreated?: () => void;
+      }
+    | undefined;
+  PayrollSalaryComponentShow: { id: number };
+  PayrollSalaryComponentEdit: { id: number; onUpdated?: (id: number) => void };
+  PayrollPositionHome: undefined;
+  PayrollPositionCreate: { onCreated?: () => void } | undefined;
+  PayrollPositionShow: { id: number };
+  PayrollPositionEdit: { id: number; onUpdated?: (id: number) => void };
 };
 
 // ============================================================================
