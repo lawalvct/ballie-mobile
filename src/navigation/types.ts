@@ -82,6 +82,21 @@ export type PayrollStackParamList = {
 };
 
 // ============================================================================
+// REPORTS STACK NAVIGATOR
+// ============================================================================
+export type ReportsStackParamList = {
+  ReportsHome: undefined;
+  SalesSummaryReport: undefined;
+  SalesCustomersReport: undefined;
+  SalesProductsReport: undefined;
+  SalesByPeriodReport: undefined;
+  PurchaseSummaryReport: undefined;
+  PurchaseVendorsReport: undefined;
+  PurchaseProductsReport: undefined;
+  PurchaseByPeriodReport: undefined;
+};
+
+// ============================================================================
 // MAIN TAB NAVIGATOR
 // ============================================================================
 export type MainTabParamList = {
@@ -90,7 +105,7 @@ export type MainTabParamList = {
   Inventory: NavigatorScreenParams<InventoryStackParamList>;
   // POS: undefined;
   CRM: NavigatorScreenParams<CRMStackParamList>;
-  Reports: undefined;
+  Reports: NavigatorScreenParams<ReportsStackParamList>;
   Audit: undefined;
   Ecommerce: undefined;
   Payroll: NavigatorScreenParams<PayrollStackParamList>;

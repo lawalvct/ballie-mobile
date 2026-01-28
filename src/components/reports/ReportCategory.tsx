@@ -5,6 +5,7 @@ import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 interface ReportItem {
   name: string;
   icon: string;
+  routeName?: string;
 }
 
 interface ReportCategoryProps {
@@ -12,6 +13,7 @@ interface ReportCategoryProps {
   subtitle: string;
   reports: ReportItem[];
   iconColor: string;
+  onReportPress?: (report: ReportItem) => void;
 }
 
 export default function ReportCategory({
@@ -19,6 +21,7 @@ export default function ReportCategory({
   subtitle,
   reports,
   iconColor,
+  onReportPress,
 }: ReportCategoryProps) {
   return (
     <View style={styles.section}>
@@ -28,7 +31,14 @@ export default function ReportCategory({
       </View>
 
       {reports.map((report, index) => (
-        <TouchableOpacity key={index} style={styles.reportCard}>
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.reportCard,
+            !report.routeName && styles.reportCardDisabled,
+          ]}
+          disabled={!report.routeName || !onReportPress}
+          onPress={() => onReportPress?.(report)}>
           <View style={[styles.reportIcon, { backgroundColor: iconColor }]}>
             <Text style={styles.reportEmoji}>{report.icon}</Text>
           </View>
@@ -96,5 +106,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: "#d1d5db",
     fontWeight: "300",
+  },
+  reportCardDisabled: {
+    opacity: 0.6,
   },
 });

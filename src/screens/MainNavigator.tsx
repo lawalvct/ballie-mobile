@@ -6,7 +6,7 @@ import type { MainTabParamList } from "../navigation/types";
 import DashboardScreen from "./DashboardScreen";
 // import POSScreen from "./POSScreen";
 import CRMNavigator from "../navigation/CRMNavigator";
-import ReportsScreen from "./ReportsScreen";
+import ReportsNavigator from "../navigation/ReportsNavigator";
 import AuditScreen from "./AuditScreen";
 import EcommerceScreen from "./EcommerceScreen";
 import AdminsScreen from "./AdminsScreen";
@@ -37,7 +37,7 @@ export default function MainNavigator() {
         {/* <Tab.Screen name="POS" component={POSScreen} /> */}
         <Tab.Screen name="CRM" component={CRMNavigator} />
         <Tab.Screen name="Payroll" component={PayrollNavigator} />
-        <Tab.Screen name="Reports" component={ReportsScreen} />
+        <Tab.Screen name="Reports" component={ReportsNavigator} />
         <Tab.Screen name="Audit" component={AuditScreen} />
         <Tab.Screen name="Ecommerce" component={EcommerceScreen} />
 
