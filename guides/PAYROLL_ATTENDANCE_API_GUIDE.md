@@ -426,6 +426,63 @@ These endpoints are used to populate filters and actions:
 }
 ```
 
+#### React Native QR Rendering Notes
+
+The `qr_code` field returns **raw SVG markup**. React Native does not render raw SVG as an `<img>` like web.
+
+**Recommended (react-native-svg):**
+
+```tsx
+import { SvgXml } from "react-native-svg";
+
+// response.qr_code is SVG text
+<SvgXml xml={response.qr_code} width={300} height={300} />;
+```
+
+**Alternative (WebView):**
+
+```tsx
+import { WebView } from "react-native-webview";
+
+const html = `<html><body style="margin:0;display:flex;justify-content:center;align-items:center;">${response.qr_code}</body></html>`;
+
+<WebView originWhitelist={["*"]} source={{ html }} />;
+```
+
+**If you must use `<Image />`:**
+
+```tsx
+const svgDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(response.qr_code)}`;
+
+<Image source={{ uri: svgDataUri }} style={{ width: 300, height: 300 }} />;
+```
+
+#### Troubleshooting (Mobile)
+
+If the QR code is **empty/null** or **not rendering**, check the following:
+
+1. **Endpoint reachable from device**
+    - Use device-accessible base URL (not `localhost`).
+    - Android emulator: `http://10.0.2.2:{port}`
+    - iOS simulator: `http://127.0.0.1:{port}`
+    - Physical device: use LAN IP (e.g. `http://192.168.1.10:{port}`)
+
+2. **Auth headers**
+    - All endpoints require `Authorization: Bearer <token>`.
+    - If you see HTML or a login page in the response, the token is missing or expired.
+
+3. **QR package availability**
+    - API returns `success: false` with a message if the QR package is missing.
+    - Ensure `simplesoftwareio/simple-qrcode` is installed on the server.
+
+4. **Response validation**
+    - Confirm `data.qr_code` is a non-empty string.
+    - If empty, log the raw response and verify `type=clock_in` or `clock_out`.
+
+5. **HTTPS / Mixed content**
+    - On real devices, ensure SSL is valid if using HTTPS.
+    - Avoid self-signed certs unless device trusts them.
+
 ### 14) Scan Attendance QR (Clock In/Out)
 
 **POST** `/api/v1/tenant/{tenant}/payroll/attendance/scan-qr`

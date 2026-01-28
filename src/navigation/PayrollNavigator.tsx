@@ -17,6 +17,19 @@ import PayrollAttendanceManualEntryScreen from "../features/payroll/attendance/s
 import PayrollAttendanceQrScreen from "../features/payroll/attendance/screens/PayrollAttendanceQrScreen";
 import PayrollAttendanceMonthlyReportScreen from "../features/payroll/attendance/screens/PayrollAttendanceMonthlyReportScreen";
 import PayrollAttendanceEmployeeScreen from "../features/payroll/attendance/screens/PayrollAttendanceEmployeeScreen";
+import PayrollOvertimeHomeScreen from "../features/payroll/overtime/screens/PayrollOvertimeHomeScreen";
+import PayrollOvertimeCreateScreen from "../features/payroll/overtime/screens/PayrollOvertimeCreateScreen";
+import PayrollOvertimeShowScreen from "../features/payroll/overtime/screens/PayrollOvertimeShowScreen";
+import PayrollOvertimeEditScreen from "../features/payroll/overtime/screens/PayrollOvertimeEditScreen";
+import PayrollOvertimeMonthlyReportScreen from "../features/payroll/overtime/screens/PayrollOvertimeMonthlyReportScreen";
+import PayrollSalaryAdvanceScreen from "../features/payroll/loans/screens/PayrollSalaryAdvanceScreen";
+import PayrollLoansHomeScreen from "../features/payroll/loans/screens/PayrollLoansHomeScreen";
+import PayrollLoanShowScreen from "../features/payroll/loans/screens/PayrollLoanShowScreen";
+import PayrollAnnouncementsHomeScreen from "../features/payroll/announcements/screens/PayrollAnnouncementsHomeScreen";
+import PayrollAnnouncementCreateScreen from "../features/payroll/announcements/screens/PayrollAnnouncementCreateScreen";
+import PayrollAnnouncementShowScreen from "../features/payroll/announcements/screens/PayrollAnnouncementShowScreen";
+import PayrollAnnouncementEditScreen from "../features/payroll/announcements/screens/PayrollAnnouncementEditScreen";
+import PayrollSettingsScreen from "../features/payroll/settings/screens/PayrollSettingsScreen";
 import PayrollProcessingHomeScreen from "../features/payroll/processing/screens/PayrollProcessingHomeScreen";
 import PayrollProcessingCreateScreen from "../features/payroll/processing/screens/PayrollProcessingCreateScreen";
 import PayrollProcessingShowScreen from "../features/payroll/processing/screens/PayrollProcessingShowScreen";
@@ -136,6 +149,71 @@ export default function PayrollNavigator() {
         name="PayrollAttendanceEmployee"
         component={PayrollAttendanceEmployeeScreen}
         options={{ title: "Employee Attendance" }}
+      />
+      <Stack.Screen
+        name="PayrollOvertimeHome"
+        component={PayrollOvertimeHomeScreen}
+        options={{ title: "Overtime" }}
+      />
+      <Stack.Screen
+        name="PayrollOvertimeCreate"
+        component={PayrollOvertimeCreateScreen}
+        options={{ title: "Create Overtime" }}
+      />
+      <Stack.Screen
+        name="PayrollOvertimeShow"
+        component={PayrollOvertimeShowScreen}
+        options={{ title: "Overtime Details" }}
+      />
+      <Stack.Screen
+        name="PayrollOvertimeEdit"
+        component={PayrollOvertimeEditScreen}
+        options={{ title: "Edit Overtime" }}
+      />
+      <Stack.Screen
+        name="PayrollOvertimeMonthlyReport"
+        component={PayrollOvertimeMonthlyReportScreen}
+        options={{ title: "Overtime Report" }}
+      />
+      <Stack.Screen
+        name="PayrollSalaryAdvance"
+        component={PayrollSalaryAdvanceScreen}
+        options={{ title: "Salary Advance" }}
+      />
+      <Stack.Screen
+        name="PayrollLoansHome"
+        component={PayrollLoansHomeScreen}
+        options={{ title: "Loan History" }}
+      />
+      <Stack.Screen
+        name="PayrollLoanShow"
+        component={PayrollLoanShowScreen}
+        options={{ title: "Loan Details" }}
+      />
+      <Stack.Screen
+        name="PayrollAnnouncementsHome"
+        component={PayrollAnnouncementsHomeScreen}
+        options={{ title: "Announcements" }}
+      />
+      <Stack.Screen
+        name="PayrollAnnouncementCreate"
+        component={PayrollAnnouncementCreateScreen}
+        options={{ title: "Create Announcement" }}
+      />
+      <Stack.Screen
+        name="PayrollAnnouncementShow"
+        component={PayrollAnnouncementShowScreen}
+        options={{ title: "Announcement Details" }}
+      />
+      <Stack.Screen
+        name="PayrollAnnouncementEdit"
+        component={PayrollAnnouncementEditScreen}
+        options={{ title: "Edit Announcement" }}
+      />
+      <Stack.Screen
+        name="PayrollSettings"
+        component={PayrollSettingsScreen}
+        options={{ title: "Payroll Settings" }}
       />
       <Stack.Screen
         name="PayrollProcessingHome"

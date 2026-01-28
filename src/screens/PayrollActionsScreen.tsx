@@ -136,6 +136,7 @@ const SECTIONS: ActionSection[] = [
         color: "#ef4444",
         accent: "#dc2626",
         icon: "⏰",
+        route: "PayrollOvertimeHome",
       },
       {
         title: "Salary Advance",
@@ -144,6 +145,7 @@ const SECTIONS: ActionSection[] = [
         color: "#8b5cf6",
         accent: "#7c3aed",
         icon: "💳",
+        route: "PayrollSalaryAdvance",
       },
       {
         title: "Announcements",
@@ -152,6 +154,7 @@ const SECTIONS: ActionSection[] = [
         color: "#0ea5e9",
         accent: "#0284c7",
         icon: "📣",
+        route: "PayrollAnnouncementsHome",
       },
     ],
   },
@@ -206,6 +209,7 @@ const SECTIONS: ActionSection[] = [
         color: "#eab308",
         accent: "#ca8a04",
         icon: "🛠️",
+        route: "PayrollSettings",
       },
     ],
   },
