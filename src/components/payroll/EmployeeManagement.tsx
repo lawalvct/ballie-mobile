@@ -1,39 +1,79 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
 import type { PayrollStackParamList } from "../../navigation/types";
+import { employeeService } from "../../features/payroll/employee/services/employeeService";
+import { departmentService } from "../../features/payroll/department/services/departmentService";
+import { positionService } from "../../features/payroll/position/services/positionService";
+import { salaryComponentService } from "../../features/payroll/salarycomponent/services/salaryComponentService";
+import { showToast } from "../../utils/toast";
 
 export default function EmployeeManagement() {
-  const navigation = useNavigation<
-    NativeStackNavigationProp<PayrollStackParamList>
-  >();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<PayrollStackParamList>>();
+
+  const [counts, setCounts] = useState({
+    employees: 0,
+    departments: 0,
+    positions: 0,
+    components: 0,
+  });
+
+  useEffect(() => {
+    loadCounts();
+  }, []);
+
+  const loadCounts = async () => {
+    try {
+      const [employeesRes, departmentsRes, positionsRes, componentsRes] =
+        await Promise.all([
+          employeeService.list({ per_page: 1 }),
+          departmentService.list({ per_page: 1 }),
+          positionService.list({ per_page: 1 }),
+          salaryComponentService.list({ per_page: 1 }),
+        ]);
+
+      setCounts({
+        employees: employeesRes.pagination?.total ?? 0,
+        departments: departmentsRes.pagination?.total ?? 0,
+        positions: positionsRes.pagination?.total ?? 0,
+        components: componentsRes.pagination?.total ?? 0,
+      });
+    } catch (error: any) {
+      showToast(error.message || "Failed to load summary", "error");
+    }
+  };
 
   const sections = [
     {
       icon: "👥",
       title: "Employment",
       description: "Manage employee records and contracts",
-      count: "248 employees",
+      count: `${counts.employees} employees`,
+      route: "PayrollEmployeeHome" as keyof PayrollStackParamList,
     },
     {
       icon: "🏢",
       title: "Departments",
       description: "Organize by department structure",
-      count: "12 departments",
+      count: `${counts.departments} departments`,
+      route: "PayrollDepartmentHome" as keyof PayrollStackParamList,
     },
     {
       icon: "💼",
       title: "Positions",
       description: "Define job roles and titles",
-      count: "45 positions",
+      count: `${counts.positions} positions`,
+      route: "PayrollPositionHome" as keyof PayrollStackParamList,
     },
     {
       icon: "📊",
       title: "Salary Components",
       description: "Configure pay items and deductions",
-      count: "18 components",
+      count: `${counts.components} components`,
+      route: "PayrollSalaryComponentHome" as keyof PayrollStackParamList,
     },
   ];
 
@@ -50,7 +90,14 @@ export default function EmployeeManagement() {
 
       <View style={styles.grid}>
         {sections.map((section, index) => (
-          <TouchableOpacity key={index} style={styles.card}>
+          <TouchableOpacity
+            key={index}
+            style={styles.card}
+            onPress={() => {
+              if (section.route) {
+                navigation.navigate(section.route);
+              }
+            }}>
             <Text style={styles.icon}>{section.icon}</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>{section.title}</Text>

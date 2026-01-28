@@ -1,13 +1,20 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { PayrollStackParamList } from "../../navigation/types";
 
 export default function PayrollReportsSection() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<PayrollStackParamList>>();
+
   const reports = [
     {
       icon: "📄",
       title: "Announcement",
       description: "Send payroll notifications to employees",
+      route: "PayrollAnnouncementsHome" as keyof PayrollStackParamList,
     },
     {
       icon: "📋",
@@ -28,6 +35,7 @@ export default function PayrollReportsSection() {
       icon: "⚙️",
       title: "Payroll Settings",
       description: "Configure payroll preferences",
+      route: "PayrollSettings" as keyof PayrollStackParamList,
     },
   ];
 
@@ -37,7 +45,14 @@ export default function PayrollReportsSection() {
 
       <View style={styles.grid}>
         {reports.map((report, index) => (
-          <TouchableOpacity key={index} style={styles.card}>
+          <TouchableOpacity
+            key={index}
+            style={styles.card}
+            onPress={() => {
+              if (report.route) {
+                navigation.navigate(report.route);
+              }
+            }}>
             <Text style={styles.icon}>{report.icon}</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>{report.title}</Text>

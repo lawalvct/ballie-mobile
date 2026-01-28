@@ -1,34 +1,88 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SEMANTIC_COLORS } from "../../theme/colors";
+import { employeeService } from "../../features/payroll/employee/services/employeeService";
+import { overtimeService } from "../../features/payroll/overtime/services/overtimeService";
+import { payrollProcessingService } from "../../features/payroll/processing/services/processingService";
+import type { PayrollProcessingPeriod } from "../../features/payroll/processing/types";
+import { showToast } from "../../utils/toast";
 
 export default function PayrollOverview() {
+  const [employeeTotal, setEmployeeTotal] = useState(0);
+  const [payrollAmount, setPayrollAmount] = useState(0);
+  const [pendingApprovals, setPendingApprovals] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const parseNumber = (value?: string | number) => {
+    if (typeof value === "number") return value;
+    if (!value) return 0;
+    const parsed = Number(String(value).replace(/,/g, ""));
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  const formatCurrency = (value: number) =>
+    `₦${new Intl.NumberFormat("en-US").format(value)}`;
+
+  const loadStats = async () => {
+    try {
+      const [employeesRes, overtimeRes, processingRes, completedRes] =
+        await Promise.all([
+          employeeService.list({ per_page: 1 }),
+          overtimeService.list({ status: "pending", per_page: 1 }),
+          payrollProcessingService.list({ per_page: 1 }),
+          payrollProcessingService.list({ status: "completed", per_page: 1 }),
+        ]);
+
+      setEmployeeTotal(employeesRes.pagination?.total ?? 0);
+      setPendingApprovals(overtimeRes.summary?.pending_count ?? 0);
+
+      const latestPeriod =
+        (processingRes.periods?.[0] as PayrollProcessingPeriod | undefined) ??
+        undefined;
+      const periodAmount = parseNumber(
+        latestPeriod?.total_net ?? latestPeriod?.total_gross,
+      );
+      setPayrollAmount(periodAmount);
+
+      const processedFromPeriod = latestPeriod?.payroll_runs_count ?? 0;
+      const processedFromTotal =
+        completedRes.pagination?.total ?? latestPeriod?.payroll_runs_count ?? 0;
+      setProcessedCount(processedFromPeriod || processedFromTotal || 0);
+    } catch (error: any) {
+      showToast(error.message || "Failed to load payroll overview", "error");
+    }
+  };
+
   const stats = [
     {
       label: "Total Employees",
-      value: "248",
+      value: String(employeeTotal),
       subtitle: "Active",
       color1: "#3c2c64",
       color2: "#5a4a7e",
     },
     {
       label: "This Month",
-      value: "₦18.5M",
+      value: formatCurrency(payrollAmount),
       subtitle: "Total payroll",
       color1: "#10b981",
       color2: "#059669",
     },
     {
       label: "Pending",
-      value: "12",
+      value: String(pendingApprovals),
       subtitle: "Approvals",
       color1: "#f59e0b",
       color2: "#d97706",
     },
     {
       label: "Processed",
-      value: "236",
+      value: String(processedCount),
       subtitle: "This month",
       color1: "#3b82f6",
       color2: "#2563eb",

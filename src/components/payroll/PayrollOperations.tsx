@@ -2,41 +2,60 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../theme/colors";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { PayrollStackParamList } from "../../navigation/types";
 
 export default function PayrollOperations() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<PayrollStackParamList>>();
+
+  const operations = [
+    {
+      icon: "⏰",
+      title: "Shift Management",
+      description: "Configure work schedules and shifts",
+      route: "PayrollShiftHome" as keyof PayrollStackParamList,
+    },
+    {
+      icon: "✅",
+      title: "Attendance",
+      description: "Track employee attendance",
+      route: "PayrollAttendanceHome" as keyof PayrollStackParamList,
+    },
+    {
+      icon: "🕐",
+      title: "Overtime",
+      description: "Manage overtime hours",
+      route: "PayrollOvertimeHome" as keyof PayrollStackParamList,
+    },
+    {
+      icon: "💰",
+      title: "Salary Advance",
+      description: "Process advance payments",
+      route: "PayrollSalaryAdvance" as keyof PayrollStackParamList,
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Payroll Operations</Text>
 
       <View style={styles.grid}>
-        <TouchableOpacity style={styles.card}>
-          <Text style={styles.cardIcon}>⏰</Text>
-          <Text style={styles.cardTitle}>Shift Management</Text>
-          <Text style={styles.cardDescription}>
-            Configure work schedules and shifts
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.card}>
-          <Text style={styles.cardIcon}>✅</Text>
-          <Text style={styles.cardTitle}>Attendance</Text>
-          <Text style={styles.cardDescription}>Track employee attendance</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.card}>
-          <Text style={styles.cardIcon}>🕐</Text>
-          <Text style={styles.cardTitle}>Overtime</Text>
-          <Text style={styles.cardDescription}>Manage overtime hours</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.card}>
-          <Text style={styles.cardIcon}>💰</Text>
-          <Text style={styles.cardTitle}>Salary Advance</Text>
-          <Text style={styles.cardDescription}>Process advance payments</Text>
-        </TouchableOpacity>
+        {operations.map((item) => (
+          <TouchableOpacity
+            key={item.title}
+            style={styles.card}
+            onPress={() => navigation.navigate(item.route)}>
+            <Text style={styles.cardIcon}>{item.icon}</Text>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardDescription}>{item.description}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      <TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("PayrollProcessingCreate")}>
         <LinearGradient
           colors={[BRAND_COLORS.gold, "#c9a854"]}
           style={styles.processButton}
