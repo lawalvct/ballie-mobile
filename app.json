@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ballie",
-    "slug": "ballie",
+    "slug": "balle",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -12,7 +12,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "lawalthb",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -42,10 +46,12 @@
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": ["@react-native-community/datetimepicker"],
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ],
     "extra": {
       "eas": {
-        "projectId": "d8955117-5a62-40ab-87b8-f06962a8c478"
+        "projectId": "54ee220c-147c-4ab6-bc11-623fccc1b1d3"
       }
     },
     "runtimeVersion": {
@@ -53,6 +59,7 @@
     },
     "updates": {
       "url": "https://u.expo.dev/d8955117-5a62-40ab-87b8-f06962a8c478"
-    }
+    },
+    "owner": "ballie-technology"
   }
 }
