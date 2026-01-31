@@ -2,6 +2,24 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { ReportsStackParamList } from "./types";
 import ReportsScreen from "../screens/ReportsScreen";
+import ProfitLossReportScreen from "../features/reports/financial/screens/ProfitLossReportScreen";
+import BalanceSheetReportScreen from "../features/reports/financial/screens/BalanceSheetReportScreen";
+import TrialBalanceReportScreen from "../features/reports/financial/screens/TrialBalanceReportScreen";
+import CashFlowReportScreen from "../features/reports/financial/screens/CashFlowReportScreen";
+import StockSummaryReportScreen from "../features/reports/inventory/screens/StockSummaryReportScreen";
+import LowStockAlertReportScreen from "../features/reports/inventory/screens/LowStockAlertReportScreen";
+import StockValuationReportScreen from "../features/reports/inventory/screens/StockValuationReportScreen";
+import StockMovementReportScreen from "../features/reports/inventory/screens/StockMovementReportScreen";
+import BinCardReportScreen from "../features/reports/inventory/screens/BinCardReportScreen";
+import PayrollSummaryReportScreen from "../features/reports/payroll/screens/PayrollSummaryReportScreen";
+import PayrollTaxReportScreen from "../features/reports/payroll/screens/PayrollTaxReportScreen";
+import PayrollTaxSummaryReportScreen from "../features/reports/payroll/screens/PayrollTaxSummaryReportScreen";
+import PayrollEmployeeSummaryReportScreen from "../features/reports/payroll/screens/PayrollEmployeeSummaryReportScreen";
+import PayrollBankScheduleReportScreen from "../features/reports/payroll/screens/PayrollBankScheduleReportScreen";
+import PayrollDetailedReportScreen from "../features/reports/payroll/screens/PayrollDetailedReportScreen";
+import CustomerActivitiesReportScreen from "../features/reports/crm/screens/CustomerActivitiesReportScreen";
+import CustomerStatementsReportScreen from "../features/reports/crm/screens/CustomerStatementsReportScreen";
+import PaymentReportsScreen from "../features/reports/crm/screens/PaymentReportsScreen";
 import SalesSummaryReportScreen from "../features/reports/sales/screens/SalesSummaryReportScreen";
 import SalesCustomersReportScreen from "../features/reports/sales/screens/SalesCustomersReportScreen";
 import SalesProductsReportScreen from "../features/reports/sales/screens/SalesProductsReportScreen";
@@ -22,6 +40,69 @@ export default function ReportsNavigator() {
         animation: "slide_from_right",
       }}>
       <Stack.Screen name="ReportsHome" component={ReportsScreen} />
+      <Stack.Screen
+        name="ProfitLossReport"
+        component={ProfitLossReportScreen}
+      />
+      <Stack.Screen
+        name="BalanceSheetReport"
+        component={BalanceSheetReportScreen}
+      />
+      <Stack.Screen
+        name="TrialBalanceReport"
+        component={TrialBalanceReportScreen}
+      />
+      <Stack.Screen name="CashFlowReport" component={CashFlowReportScreen} />
+      <Stack.Screen
+        name="StockSummaryReport"
+        component={StockSummaryReportScreen}
+      />
+      <Stack.Screen
+        name="LowStockAlertReport"
+        component={LowStockAlertReportScreen}
+      />
+      <Stack.Screen
+        name="StockValuationReport"
+        component={StockValuationReportScreen}
+      />
+      <Stack.Screen
+        name="StockMovementReport"
+        component={StockMovementReportScreen}
+      />
+      <Stack.Screen name="BinCardReport" component={BinCardReportScreen} />
+      <Stack.Screen
+        name="PayrollSummaryReport"
+        component={PayrollSummaryReportScreen}
+      />
+      <Stack.Screen
+        name="PayrollTaxReport"
+        component={PayrollTaxReportScreen}
+      />
+      <Stack.Screen
+        name="PayrollTaxSummaryReport"
+        component={PayrollTaxSummaryReportScreen}
+      />
+      <Stack.Screen
+        name="PayrollEmployeeSummaryReport"
+        component={PayrollEmployeeSummaryReportScreen}
+      />
+      <Stack.Screen
+        name="PayrollBankScheduleReport"
+        component={PayrollBankScheduleReportScreen}
+      />
+      <Stack.Screen
+        name="PayrollDetailedReport"
+        component={PayrollDetailedReportScreen}
+      />
+      <Stack.Screen
+        name="CrmActivitiesReport"
+        component={CustomerActivitiesReportScreen}
+      />
+      <Stack.Screen
+        name="CrmCustomerStatementsReport"
+        component={CustomerStatementsReportScreen}
+      />
+      <Stack.Screen name="CrmPaymentReports" component={PaymentReportsScreen} />
       <Stack.Screen
         name="SalesSummaryReport"
         component={SalesSummaryReportScreen}

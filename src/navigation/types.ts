@@ -86,6 +86,24 @@ export type PayrollStackParamList = {
 // ============================================================================
 export type ReportsStackParamList = {
   ReportsHome: undefined;
+  ProfitLossReport: undefined;
+  BalanceSheetReport: undefined;
+  TrialBalanceReport: undefined;
+  CashFlowReport: undefined;
+  StockSummaryReport: undefined;
+  LowStockAlertReport: undefined;
+  StockValuationReport: undefined;
+  StockMovementReport: undefined;
+  BinCardReport: undefined;
+  PayrollSummaryReport: undefined;
+  PayrollTaxReport: undefined;
+  PayrollTaxSummaryReport: undefined;
+  PayrollEmployeeSummaryReport: undefined;
+  PayrollBankScheduleReport: undefined;
+  PayrollDetailedReport: undefined;
+  CrmActivitiesReport: undefined;
+  CrmCustomerStatementsReport: undefined;
+  CrmPaymentReports: undefined;
   SalesSummaryReport: undefined;
   SalesCustomersReport: undefined;
   SalesProductsReport: undefined;

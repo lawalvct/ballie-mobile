@@ -16,17 +16,33 @@ type ReportRouteName = Exclude<keyof ReportsStackParamList, "ReportsHome">;
 type ReportItem = {
   name: string;
   icon: string;
-  routeName?: ReportRouteName;
+  routeName?: string;
 };
 
 export default function ReportsScreen({ navigation }: Props) {
   const { user, tenant } = useAuth();
 
   const financialReports: ReportItem[] = [
-    { name: "Profit & Loss Statement", icon: "📈" },
-    { name: "Balance Sheet", icon: "📊" },
-    { name: "Cash Flow Statement", icon: "💰" },
-    { name: "Trial Balance", icon: "⚖️" },
+    {
+      name: "Profit & Loss Statement",
+      icon: "📈",
+      routeName: "ProfitLossReport",
+    },
+    {
+      name: "Balance Sheet",
+      icon: "📊",
+      routeName: "BalanceSheetReport",
+    },
+    {
+      name: "Cash Flow Statement",
+      icon: "💰",
+      routeName: "CashFlowReport",
+    },
+    {
+      name: "Trial Balance",
+      icon: "⚖️",
+      routeName: "TrialBalanceReport",
+    },
   ];
 
   const salesReports: ReportItem[] = [
@@ -76,46 +92,104 @@ export default function ReportsScreen({ navigation }: Props) {
   ];
 
   const inventoryReports: ReportItem[] = [
-    { name: "Stock Summary Report", icon: "📊" },
-    { name: "Low Stock Alert Report", icon: "⚠️" },
-    { name: "Stock Valuation Report", icon: "💵" },
-    { name: "Stock Movement Report", icon: "📦" },
+    {
+      name: "Stock Summary Report",
+      icon: "📊",
+      routeName: "StockSummaryReport",
+    },
+    {
+      name: "Low Stock Alert Report",
+      icon: "⚠️",
+      routeName: "LowStockAlertReport",
+    },
+    {
+      name: "Stock Valuation Report",
+      icon: "💵",
+      routeName: "StockValuationReport",
+    },
+    {
+      name: "Stock Movement Report",
+      icon: "📦",
+      routeName: "StockMovementReport",
+    },
+    {
+      name: "Bin Card Report",
+      icon: "🧾",
+      routeName: "BinCardReport",
+    },
   ];
 
   const payrollReports: ReportItem[] = [
-    { name: "Payroll Summary Report", icon: "💳" },
-    { name: "Payroll Tax Report", icon: "📋" },
-    { name: "Employee Payroll Summary", icon: "👤" },
-    { name: "Bank Payment Schedule", icon: "🏦" },
+    {
+      name: "Payroll Summary Report",
+      icon: "💳",
+      routeName: "PayrollSummaryReport",
+    },
+    {
+      name: "Payroll Tax Report",
+      icon: "📋",
+      routeName: "PayrollTaxReport",
+    },
+    {
+      name: "Payroll Tax Summary",
+      icon: "🧾",
+      routeName: "PayrollTaxSummaryReport",
+    },
+    {
+      name: "Employee Payroll Summary",
+      icon: "👤",
+      routeName: "PayrollEmployeeSummaryReport",
+    },
+    {
+      name: "Bank Payment Schedule",
+      icon: "🏦",
+      routeName: "PayrollBankScheduleReport",
+    },
+    {
+      name: "Detailed Payroll Report",
+      icon: "📑",
+      routeName: "PayrollDetailedReport",
+    },
   ];
 
   const crmReports: ReportItem[] = [
-    { name: "Customer Account Statement", icon: "📄" },
-    { name: "Payment Reports", icon: "💰" },
-    { name: "Sales Analysis Report", icon: "📈" },
-    { name: "Customer Activity Summary", icon: "📊" },
+    {
+      name: "Customer Activities",
+      icon: "📊",
+      routeName: "CrmActivitiesReport",
+    },
+    {
+      name: "Customer Statements",
+      icon: "📄",
+      routeName: "CrmCustomerStatementsReport",
+    },
+    {
+      name: "Payment Reports",
+      icon: "💰",
+      routeName: "CrmPaymentReports",
+    },
   ];
 
-  const posReports: ReportItem[] = [
-    { name: "Daily Sales Report", icon: "📅" },
-    { name: "Product Performance Report", icon: "🏆" },
-    { name: "Transaction History", icon: "🧾" },
-    { name: "POS Overview Report", icon: "🖥️" },
-  ];
+  // const posReports: ReportItem[] = [
+  //   { name: "Daily Sales Report", icon: "📅" },
+  //   { name: "Product Performance Report", icon: "🏆" },
+  //   { name: "Transaction History", icon: "🧾" },
+  //   { name: "POS Overview Report", icon: "🖥️" },
+  // ];
 
-  const ecommerceReports: ReportItem[] = [
-    { name: "Orders Report", icon: "📦" },
-    { name: "Revenue Report", icon: "💰" },
-    { name: "Product Performance", icon: "📊" },
-    { name: "Customer Analytics", icon: "👥" },
-    { name: "Abandoned Carts Report", icon: "🛒" },
-  ];
+  // const ecommerceReports: ReportItem[] = [
+  //   { name: "Orders Report", icon: "📦" },
+  //   { name: "Revenue Report", icon: "💰" },
+  //   { name: "Product Performance", icon: "📊" },
+  //   { name: "Customer Analytics", icon: "👥" },
+  //   { name: "Abandoned Carts Report", icon: "🛒" },
+  // ];
 
   const handleReportPress = (report: ReportItem) => {
     if (!report.routeName) {
       return;
     }
-    navigation.navigate(report.routeName);
+    navigation.navigate(report.routeName as never);
   };
 
   return (
@@ -178,6 +252,7 @@ export default function ReportsScreen({ navigation }: Props) {
           onReportPress={handleReportPress}
         />
 
+        {/*
         <ReportCategory
           title="POS Reports"
           subtitle="Track point of sale activities"
@@ -193,6 +268,7 @@ export default function ReportsScreen({ navigation }: Props) {
           iconColor="#14b8a6"
           onReportPress={handleReportPress}
         />
+        */}
 
         <View style={{ height: 30 }} />
       </ScrollView>
