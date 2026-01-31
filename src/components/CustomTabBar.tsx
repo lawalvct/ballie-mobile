@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,10 +9,14 @@ import {
 } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const [showPointer, setShowPointer] = useState(true);
   const [pointerAnim] = useState(new Animated.Value(0));
+  const [pointerOpacity] = useState(new Animated.Value(1));
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [contentWidth, setContentWidth] = useState(0);
   const insets = useSafeAreaInsets();
 
   const tabs = [
@@ -25,35 +29,70 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     { id: "Reports", label: "Reports", icon: "📈" },
     { id: "Audit", label: "Audit", icon: "🔍" },
     { id: "Ecommerce", label: "E-commerce", icon: "🛒" },
-   
+
     { id: "Admins", label: "Admins", icon: "👔" },
     { id: "Statutory", label: "Statutory", icon: "📜" },
   ];
 
+  const isOverflowing = useMemo(
+    () => contentWidth > containerWidth + 8,
+    [contentWidth, containerWidth],
+  );
+  const shouldShowHint = useMemo(() => {
+    if (contentWidth === 0 || containerWidth === 0) {
+      return tabs.length > 5;
+    }
+    return isOverflowing;
+  }, [contentWidth, containerWidth, isOverflowing, tabs.length]);
+
   useEffect(() => {
-    // Start animation after component mounts
+    if (!shouldShowHint) {
+      setShowPointer(false);
+      return;
+    }
+
+    setShowPointer(true);
+
     Animated.loop(
       Animated.sequence([
         Animated.timing(pointerAnim, {
           toValue: 1,
-          duration: 800,
+          duration: 1000,
           useNativeDriver: true,
         }),
         Animated.timing(pointerAnim, {
           toValue: 0,
-          duration: 800,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ]),
     ).start();
 
-    // Hide pointer after 4 seconds
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pointerOpacity, {
+          toValue: 0.5,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pointerOpacity, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+
     const timer = setTimeout(() => {
-      setShowPointer(false);
-    }, 4000);
+      Animated.timing(pointerOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }).start(() => setShowPointer(false));
+    }, 5000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [shouldShowHint, pointerAnim, pointerOpacity]);
 
   const handleScroll = () => {
     // Hide pointer when user starts scrolling
@@ -62,7 +101,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
   const translateX = pointerAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 10],
+    outputRange: [0, 12],
   });
 
   return (
@@ -71,40 +110,78 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         styles.container,
         { paddingBottom: insets.bottom, height: 70 + insets.bottom },
       ]}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: 10 + insets.bottom },
-        ]}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}>
-        {tabs.map((tab, index) => {
-          const isFocused = state.index === index;
+      <View
+        style={styles.scrollWrapper}
+        onLayout={(event) => setContainerWidth(event.nativeEvent.layout.width)}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 10 + insets.bottom },
+          ]}
+          onContentSizeChange={(width) => setContentWidth(width)}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}>
+          {tabs.map((tab, index) => {
+            const isFocused = state.index === index;
 
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={styles.tab}
-              onPress={() => navigation.navigate(tab.id)}>
-              <Text style={[styles.icon, isFocused && styles.activeIcon]}>
-                {tab.icon}
-              </Text>
-              <Text style={[styles.label, isFocused && styles.activeLabel]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+            return (
+              <TouchableOpacity
+                key={tab.id}
+                style={styles.tab}
+                onPress={() => navigation.navigate(tab.id)}>
+                <Text style={[styles.icon, isFocused && styles.activeIcon]}>
+                  {tab.icon}
+                </Text>
+                <Text style={[styles.label, isFocused && styles.activeLabel]}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {isOverflowing && (
+          <>
+            <LinearGradient
+              colors={["rgba(60, 44, 100, 0)", "rgba(60, 44, 100, 0.9)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.rightFade}
+              pointerEvents="none"
+            />
+            <LinearGradient
+              colors={["rgba(60, 44, 100, 0.9)", "rgba(60, 44, 100, 0)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.leftFade}
+              pointerEvents="none"
+            />
+          </>
+        )}
+      </View>
 
       {/* Scroll Indicator Pointer */}
-      {showPointer && (
+      {showPointer && shouldShowHint && (
         <Animated.View
-          style={[styles.pointerContainer, { transform: [{ translateX }] }]}>
-          <Text style={styles.pointerText}>→</Text>
-          <Text style={styles.pointerHint}>Swipe for more</Text>
+          style={[
+            styles.pointerContainer,
+            {
+              transform: [{ translateX }],
+              opacity: pointerOpacity,
+            },
+          ]}>
+          <LinearGradient
+            colors={["#f7d68f", "#d1b05e", "#b89950"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.pointerBackground}
+          />
+          <View style={styles.pointerContent}>
+            <Text style={styles.pointerText}>Swipe tabs</Text>
+            <Text style={styles.pointerArrow}>→</Text>
+          </View>
         </Animated.View>
       )}
     </View>
@@ -121,6 +198,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  scrollWrapper: {
+    flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 8,
@@ -151,31 +231,53 @@ const styles = StyleSheet.create({
     color: "#d1b05e",
     fontWeight: "bold",
   },
+  leftFade: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 30,
+  },
+  rightFade: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 36,
+  },
   pointerContainer: {
     position: "absolute",
-    right: 10,
-    top: "50%",
-    marginTop: -20,
-    alignItems: "center",
-    backgroundColor: "rgba(209, 176, 94, 0.9)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    right: 16,
+    top: 10,
     borderRadius: 20,
+    overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  pointerBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  pointerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   pointerText: {
-    fontSize: 20,
-    color: "#fff",
-    fontWeight: "bold",
+    fontSize: 13,
+    color: "#2a1e4a",
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
-  pointerHint: {
-    fontSize: 10,
-    color: "#fff",
-    fontWeight: "600",
-    marginTop: 2,
+  pointerArrow: {
+    fontSize: 16,
+    color: "#2a1e4a",
+    fontWeight: "bold",
   },
 });
