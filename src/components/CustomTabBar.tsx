@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
+  Platform,
 } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +19,17 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const [containerWidth, setContainerWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
   const insets = useSafeAreaInsets();
+
+  // For Android with 3-button navigation, insets.bottom is often 0 even though
+  // the navigation bar exists. We use a fixed minimum padding of 56dp for Android
+  // which covers both gesture nav (~24dp) and 3-button nav (~48dp) with some buffer.
+  // This ensures the tab bar is always tappable above the system navigation.
+  const ANDROID_NAV_BAR_PADDING = 56;
+
+  const bottomInset =
+    Platform.OS === "android"
+      ? Math.max(insets.bottom, ANDROID_NAV_BAR_PADDING)
+      : insets.bottom;
 
   const tabs = [
     { id: "Dashboard", label: "Dashboard", icon: "📊" },
@@ -108,7 +120,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     <View
       style={[
         styles.container,
-        { paddingBottom: insets.bottom, height: 70 + insets.bottom },
+        { paddingBottom: bottomInset, height: 70 + bottomInset },
       ]}>
       <View
         style={styles.scrollWrapper}
@@ -118,7 +130,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: 10 + insets.bottom },
+            { paddingBottom: 10 + bottomInset },
           ]}
           onContentSizeChange={(width) => setContentWidth(width)}
           onScroll={handleScroll}
