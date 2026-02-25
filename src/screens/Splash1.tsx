@@ -31,7 +31,7 @@ export default function Splash1({ onNext }: { onNext: () => void }) {
 
         {/* Brand Name */}
         <Text style={styles.title}>Ballie</Text>
-        <Text style={styles.subtitle}>Smart Accounting Made Simple</Text>
+        <Text style={styles.subtitle}>Manage Your Business Like a Pro</Text>
 
         {/* Features */}
         <View style={styles.featuresContainer}>

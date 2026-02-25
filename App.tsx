@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./src/state";
 import Splash1 from "./src/screens/Splash1";
 import Splash2 from "./src/screens/Splash2";
+import SplashCarousel from "./src/screens/SplashCarousel";
 import LoginScreen from "./src/screens/LoginScreen";
 import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
 import BusinessTypeScreen from "./src/screens/BusinessTypeScreen";
@@ -24,8 +25,7 @@ import { updateScreenName } from "./src/components/DevScreenIndicator";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 type Screen =
-  | "splash1"
-  | "splash2"
+  | "splash"
   | "login"
   | "forgotPassword"
   | "businessType"
@@ -50,7 +50,7 @@ interface RegistrationData {
 }
 
 function AppContent() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>("splash1");
+  const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
   const [registrationData, setRegistrationData] = useState<RegistrationData>(
     {},
   );
@@ -344,10 +344,8 @@ function AppContent() {
     }
 
     switch (currentScreen) {
-      case "splash1":
-        return <Splash1 onNext={() => setCurrentScreen("splash2")} />;
-      case "splash2":
-        return <Splash2 onNext={() => setCurrentScreen("login")} />;
+      case "splash":
+        return <SplashCarousel onFinish={() => setCurrentScreen("login")} />;
       case "login":
         return (
           <LoginScreen
