@@ -70,28 +70,44 @@ export interface BusinessTypeCategory {
   types: BusinessType[];
 }
 
+export interface BillingCycle {
+  cycle: "monthly" | "quarterly" | "biannual" | "yearly";
+  label: string;
+  price: number;
+  formatted_price: string;
+  price_per_month: number;
+  formatted_price_per_month: string;
+  savings_kobo: number;
+  savings_label: string | null;
+  savings_description: string | null;
+}
+
 export interface PlanCapabilities {
   pos: boolean;
   payroll: boolean;
   api_access: boolean;
+  advanced_reports: boolean;
 }
 
 export interface PlanLimits {
-  max_users: number;
-  max_customers: number;
+  max_users: number | null;
+  max_customers: number | null;
 }
 
 export interface Plan {
   id: number;
+  slug: string;
   name: string;
+  description: string;
   monthly_price: number;
-  formatted_monthly_price: string;
+  quarterly_price: number;
+  biannual_price: number;
   yearly_price: number;
-  formatted_yearly_price: string;
-  yearly_savings_percent: number;
+  billing_cycles: BillingCycle[];
   features: string[];
   limits: PlanLimits;
   capabilities: PlanCapabilities;
+  support_level: string;
   is_popular: boolean;
 }
 
@@ -105,6 +121,7 @@ export interface RegisterData {
   business_name: string;
   phone?: string;
   plan_id: number;
+  billing_cycle?: string;
   terms: boolean;
   device_name?: string;
   affiliate_code?: string;

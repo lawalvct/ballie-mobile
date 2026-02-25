@@ -121,7 +121,11 @@ function AppContent() {
     setCurrentScreen("planSelection");
   };
 
-  const handlePlanSelected = async (planId: number, termsAccepted: boolean) => {
+  const handlePlanSelected = async (
+    planId: number,
+    termsAccepted: boolean,
+    billingCycle: string,
+  ) => {
     setIsSubmitting(true);
     try {
       const response = await authAPI.register({
@@ -134,6 +138,7 @@ function AppContent() {
         business_name: registrationData.businessName!,
         phone: registrationData.phone,
         plan_id: planId,
+        billing_cycle: billingCycle,
         terms: termsAccepted,
         device_name: "Ballie Mobile App",
       });

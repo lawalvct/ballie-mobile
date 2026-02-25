@@ -63,7 +63,11 @@ export default function OnboardingWelcomeScreen({
         <View style={styles.options}>
           {/* Guided Setup */}
           <View style={styles.optionCard}>
-            <View style={[styles.optionIcon, { backgroundColor: BRAND_COLORS.gold }]}>
+            <View
+              style={[
+                styles.optionIcon,
+                { backgroundColor: BRAND_COLORS.gold },
+              ]}>
               <Text style={styles.optionEmoji}>📊</Text>
             </View>
             <Text style={styles.optionTitle}>Guided Setup</Text>
@@ -79,9 +83,7 @@ export default function OnboardingWelcomeScreen({
               </View>
               <View style={styles.featureItem}>
                 <Text style={styles.featureIcon}>✓</Text>
-                <Text style={styles.featureText}>
-                  Set business preferences
-                </Text>
+                <Text style={styles.featureText}>Set business preferences</Text>
               </View>
               <View style={styles.featureItem}>
                 <Text style={styles.featureIcon}>✓</Text>
@@ -135,7 +137,7 @@ export default function OnboardingWelcomeScreen({
                   [
                     { text: "Cancel", style: "cancel" },
                     { text: "Skip to Dashboard", onPress: onQuickStart },
-                  ]
+                  ],
                 );
               }}>
               <Text style={styles.secondaryButtonText}>
@@ -154,146 +156,147 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 24,
+    padding: 20,
+    paddingBottom: 32,
   },
   header: {
     alignItems: "center",
-    marginBottom: 32,
-    marginTop: 40,
+    marginBottom: 16,
+    marginTop: 28,
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 10,
   },
   iconText: {
-    fontSize: 40,
+    fontSize: 28,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: "bold",
     color: SEMANTIC_COLORS.white,
-    marginBottom: 12,
+    marginBottom: 6,
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: BRAND_COLORS.lavender,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: 20,
   },
   progressSteps: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 32,
+    marginBottom: 18,
   },
   step: {
     alignItems: "center",
   },
   stepCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   stepActive: {
     backgroundColor: BRAND_COLORS.gold,
   },
   stepNumber: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "bold",
     color: SEMANTIC_COLORS.white,
   },
   stepLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: BRAND_COLORS.lavender,
   },
   connector: {
-    width: 40,
+    width: 32,
     height: 2,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    marginHorizontal: 8,
-    marginBottom: 24,
+    marginHorizontal: 6,
+    marginBottom: 16,
   },
   options: {
-    gap: 20,
+    gap: 12,
   },
   optionCard: {
     backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 14,
+    padding: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)",
   },
   optionIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 10,
   },
   optionEmoji: {
-    fontSize: 32,
+    fontSize: 22,
   },
   optionTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "bold",
     color: SEMANTIC_COLORS.white,
     marginBottom: 8,
   },
   optionDesc: {
-    fontSize: 15,
+    fontSize: 13,
     color: BRAND_COLORS.lavender,
-    lineHeight: 22,
-    marginBottom: 20,
+    lineHeight: 18,
+    marginBottom: 12,
   },
   featureList: {
-    marginBottom: 20,
-    gap: 12,
+    marginBottom: 14,
+    gap: 6,
   },
   featureItem: {
     flexDirection: "row",
     alignItems: "center",
   },
   featureIcon: {
-    fontSize: 16,
+    fontSize: 14,
     color: SEMANTIC_COLORS.success,
-    marginRight: 12,
+    marginRight: 8,
   },
   featureText: {
-    fontSize: 14,
+    fontSize: 13,
     color: SEMANTIC_COLORS.white,
   },
   primaryButton: {
     backgroundColor: BRAND_COLORS.gold,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
   },
   primaryButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "bold",
     color: BRAND_COLORS.darkPurple,
   },
   secondaryButton: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
   },
   secondaryButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: SEMANTIC_COLORS.white,
   },

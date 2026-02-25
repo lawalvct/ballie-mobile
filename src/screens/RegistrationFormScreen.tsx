@@ -52,6 +52,8 @@ export default function RegistrationFormScreen({
     businessStructure: "",
   });
   const [showStructurePicker, setShowStructurePicker] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
   const updateField = (field: keyof RegistrationFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -164,34 +166,48 @@ export default function RegistrationFormScreen({
             <Text style={styles.label}>
               Password <Text style={styles.required}>*</Text>
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Minimum 8 characters"
-              placeholderTextColor={BRAND_COLORS.lavender}
-              value={formData.password}
-              onChangeText={(text) => updateField("password", text)}
-              secureTextEntry
-              autoComplete="password-new"
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Minimum 8 characters"
+                placeholderTextColor={BRAND_COLORS.lavender}
+                value={formData.password}
+                onChangeText={(text) => updateField("password", text)}
+                secureTextEntry={!showPassword}
+                autoComplete="password-new"
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}>
+                <Text style={styles.eyeIconText}>{showPassword ? "👁️" : "👁️‍🗨️"}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>
               Confirm Password <Text style={styles.required}>*</Text>
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Re-enter password"
-              placeholderTextColor={BRAND_COLORS.lavender}
-              value={formData.passwordConfirmation}
-              onChangeText={(text) => updateField("passwordConfirmation", text)}
-              secureTextEntry
-              autoComplete="password-new"
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Re-enter password"
+                placeholderTextColor={BRAND_COLORS.lavender}
+                value={formData.passwordConfirmation}
+                onChangeText={(text) => updateField("passwordConfirmation", text)}
+                secureTextEntry={!showPasswordConfirmation}
+                autoComplete="password-new"
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPasswordConfirmation(!showPasswordConfirmation)}>
+                <Text style={styles.eyeIconText}>{showPasswordConfirmation ? "👁️" : "👁️‍🗨️"}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone (Optional)</Text>
+            <Text style={styles.label}>Phone</Text>
             <TextInput
               style={styles.input}
               placeholder="08012345678"
@@ -359,6 +375,28 @@ const styles = StyleSheet.create({
     color: SEMANTIC_COLORS.white,
     borderWidth: 1,
     borderColor: BRAND_COLORS.violet,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+    padding: 16,
+    paddingRight: 50,
+    fontSize: 16,
+    color: SEMANTIC_COLORS.white,
+    borderWidth: 1,
+    borderColor: BRAND_COLORS.violet,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+    padding: 4,
+  },
+  eyeIconText: {
+    fontSize: 20,
   },
   dropdownButton: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
