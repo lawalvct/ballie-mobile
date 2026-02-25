@@ -5,13 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
+import AccountingModuleHeader from "../components/accounting/AccountingModuleHeader";
 import { voucherTypeService } from "../features/accounting/vouchertype/services/voucherTypeService";
 
 type Props = NativeStackScreenProps<
@@ -53,22 +54,14 @@ export default function AccountingActionsScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>All Accounting Actions</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <AccountingModuleHeader
+        title="All Accounting Actions"
+        onBack={() => navigation.goBack()}
+        navigation={navigation}
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Voucher Management Section */}
@@ -84,7 +77,10 @@ export default function AccountingActionsScreen({ navigation }: Props) {
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#3b82f6" }]}
               onPress={() =>
-                navigation.navigate({ name: "VoucherTypeHome", params: undefined })
+                navigation.navigate({
+                  name: "VoucherTypeHome",
+                  params: undefined,
+                })
               }>
               <View
                 style={[
@@ -262,7 +258,10 @@ export default function AccountingActionsScreen({ navigation }: Props) {
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#eab308" }]}
               onPress={() =>
-                navigation.navigate({ name: "LedgerAccountHome", params: undefined })
+                navigation.navigate({
+                  name: "LedgerAccountHome",
+                  params: undefined,
+                })
               }>
               <View
                 style={[
@@ -283,7 +282,10 @@ export default function AccountingActionsScreen({ navigation }: Props) {
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#ef4444" }]}
               onPress={() =>
-                navigation.navigate({ name: "AccountGroupHome", params: undefined })
+                navigation.navigate({
+                  name: "AccountGroupHome",
+                  params: undefined,
+                })
               }>
               <View
                 style={[
@@ -325,7 +327,10 @@ export default function AccountingActionsScreen({ navigation }: Props) {
             <TouchableOpacity
               style={[styles.actionCard, { backgroundColor: "#8b5cf6" }]}
               onPress={() =>
-                navigation.navigate({ name: "ReconciliationHome", params: undefined })
+                navigation.navigate({
+                  name: "ReconciliationHome",
+                  params: undefined,
+                })
               }>
               <View
                 style={[
@@ -356,34 +361,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BRAND_COLORS.darkPurple,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
-  },
-  backButton: {
-    paddingVertical: 8,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: SEMANTIC_COLORS.white,
-    fontWeight: "600",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: SEMANTIC_COLORS.white,
-  },
-  placeholder: {
-    width: 60,
-  },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
   },
   section: {
     marginTop: 24,

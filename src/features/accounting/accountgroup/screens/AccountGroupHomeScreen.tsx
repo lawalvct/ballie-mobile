@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
-import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
-import AppHeader from "../../../../components/AppHeader";
+import AccountingModuleHeader from "../../../../components/accounting/AccountingModuleHeader";
 import AccountGroupStats from "../components/AccountGroupStats";
 import AccountGroupFilters from "../components/AccountGroupFilters";
 import AccountGroupList from "../components/AccountGroupList";
+import { useAccountGroups } from "../hooks/useAccountGroups";
 import { accountGroupService } from "../services/accountGroupService";
-import { AccountGroup, ListParams, PaginationInfo, Statistics } from "../types";
+import type { ListParams } from "../types";
 import { showToast } from "../../../../utils/toast";
 
 type Props = NativeStackScreenProps<
@@ -27,174 +27,108 @@ type Props = NativeStackScreenProps<
 >;
 
 export default function AccountGroupHomeScreen({ navigation }: Props) {
-  // State
-  const [accountGroups, setAccountGroups] = useState<AccountGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
-
-  // Filter state
   const [filters, setFilters] = useState<ListParams>({
     sort: "name",
     direction: "asc",
+    page: 1,
+    per_page: 20,
   });
 
-  // Load data on mount and when filters change
-  useEffect(() => {
-    loadAccountGroups();
-  }, [
-    filters.status,
-    filters.nature,
-    filters.level,
-    filters.sort,
-    filters.direction,
-  ]);
+  const { groups, pagination, statistics, isLoading, isRefreshing, refresh } =
+    useAccountGroups(filters);
 
-  const handleItemUpdated = async (id: number) => {
-    try {
-      // Fetch only the updated item
-      const updatedGroup = await accountGroupService.show(id);
+  // â”€â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-      // Update the item in the list
-      setAccountGroups((prev) =>
-        prev.map((group) => (group.id === id ? updatedGroup : group))
-      );
-    } catch (error) {
-      // If fetch fails, do a full reload
-      loadAccountGroups();
-    }
-  };
+  const handleSearch = () => setFilters((prev) => ({ ...prev, page: 1 }));
 
-  const handleItemCreated = () => {
-    // For new items, we need to reload to get proper ordering
-    loadAccountGroups();
-  };
-
-  const loadAccountGroups = async () => {
-    try {
-      setLoading(true);
-      const response = await accountGroupService.list(filters);
-
-      setAccountGroups(response.account_groups || []);
-      setPagination(response.pagination || null);
-      setStatistics(response.statistics || null);
-    } catch (error: any) {
-      showToast(error.message || "Failed to load account groups", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      const response = await accountGroupService.list(filters);
-
-      setAccountGroups(response.account_groups || []);
-      setPagination(response.pagination || null);
-      setStatistics(response.statistics || null);
-    } catch (error: any) {
-      showToast(error.message || "Failed to refresh data", "error");
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleSearch = () => {
-    loadAccountGroups();
-  };
+  const handleItemUpdated = () => refresh();
+  const handleItemCreated = () => refresh();
 
   const handleToggleStatus = async (id: number) => {
     try {
       await accountGroupService.toggleStatus(id);
-      showToast("✅ Status updated successfully", "success");
-      loadAccountGroups();
+      showToast("âœ… Status updated successfully", "success");
+      refresh();
     } catch (error: any) {
       showToast(error.message || "Failed to update status", "error");
     }
   };
 
-  if (loading && !refreshing) {
+  // â”€â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <AccountingModuleHeader
+          title="Account Groups"
+          onBack={() => navigation.goBack()}
+          navigation={navigation}
         />
-
-        {/* Header with Back Button */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Account Groups</Text>
-          <View style={styles.placeholder} />
-        </View>
-
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-          <Text style={styles.loadingText}>Loading account groups...</Text>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#d1b05e" />
+          <Text style={styles.loadingLabel}>Loading account groupsâ€¦</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  // â”€â”€â”€ Main render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <AccountingModuleHeader
+        title="Account Groups"
+        onBack={() => navigation.goBack()}
+        navigation={navigation}
       />
 
-      {/* Header with Back Button */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Account Groups</Text>
-        <View style={styles.placeholder} />
-      </View>
-
       <ScrollView
-        style={styles.content}
+        style={styles.body}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refresh}
+            colors={["#d1b05e"]}
+            tintColor="#d1b05e"
+          />
         }>
-        {/* Add New Button */}
-        <View style={styles.addButtonContainer}>
+        {/* Create button */}
+        <View style={styles.actionsSection}>
           <TouchableOpacity
-            style={styles.addButton}
+            style={styles.createBtn}
             onPress={() =>
               navigation.navigate("AccountGroupCreate", {
                 onCreated: handleItemCreated,
               } as any)
-            }>
-            <Text style={styles.addButtonText}>+ Add New Account Group</Text>
+            }
+            activeOpacity={0.8}>
+            <Text style={styles.createBtnIcon}>+</Text>
+            <Text style={styles.createBtnLabel}>Create New Account Group</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Stats Section */}
+        {/* Stats */}
         <AccountGroupStats statistics={statistics} />
 
-        {/* Filters Section */}
+        {/* Filters */}
         <AccountGroupFilters
           filters={filters}
           setFilters={setFilters}
           onSearch={handleSearch}
         />
 
-        {/* Account Group List */}
+        {/* List */}
         <AccountGroupList
-          accountGroups={accountGroups}
+          accountGroups={groups}
           pagination={pagination}
           onToggleStatus={handleToggleStatus}
           onItemUpdated={handleItemUpdated}
         />
+
+        <View style={{ height: 30 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -203,70 +137,59 @@ export default function AccountGroupHomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
-  },
-  backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  backButtonText: {
-    color: BRAND_COLORS.gold,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  placeholder: {
-    width: 60, // Same width as back button to center the title
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  loadingContainer: {
+
+  /* â”€â”€ Loading â”€â”€ */
+  loadingWrap: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 40,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
   },
-  loadingText: {
-    marginTop: 12,
+  loadingLabel: {
+    marginTop: 14,
     fontSize: 14,
-    color: BRAND_COLORS.darkPurple,
+    color: "#6b7280",
   },
-  addButtonContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+
+  /* â”€â”€ Body â”€â”€ */
+  body: {
+    flex: 1,
+    backgroundColor: "#f3f4f8",
   },
-  addButton: {
-    backgroundColor: BRAND_COLORS.gold,
-    paddingVertical: 14,
+
+  /* â”€â”€ Actions section â”€â”€ */
+  actionsSection: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  createBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#d1b05e",
+    paddingVertical: 15,
     paddingHorizontal: 24,
     borderRadius: 12,
-    alignItems: "center",
-    shadowColor: BRAND_COLORS.gold,
+    gap: 8,
+    shadowColor: "#d1b05e",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 5,
   },
-  addButtonText: {
-    fontSize: 16,
+  createBtnIcon: {
+    fontSize: 22,
     fontWeight: "bold",
-    color: BRAND_COLORS.darkPurple,
+    color: "#1a0f33",
+    lineHeight: 24,
+  },
+  createBtnLabel: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#1a0f33",
+    letterSpacing: 0.3,
   },
 });

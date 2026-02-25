@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SEMANTIC_COLORS } from "../../theme/colors";
 
@@ -8,6 +8,10 @@ type Props = {
   pendingVouchers?: number;
   bankBalance?: number;
   needsReconciliation?: number;
+  onAccountsPress?: () => void;
+  onVouchersPress?: () => void;
+  onBankBalancePress?: () => void;
+  onReconciliationPress?: () => void;
 };
 
 const formatCurrency = (value?: number) => {
@@ -20,53 +24,77 @@ export default function AccountingOverview({
   pendingVouchers = 0,
   bankBalance = 0,
   needsReconciliation = 0,
+  onAccountsPress,
+  onVouchersPress,
+  onBankBalancePress,
+  onReconciliationPress,
 }: Props) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Accounting Overview</Text>
 
       <View style={styles.overviewGrid}>
-        <LinearGradient
-          colors={["#249484", "#69a2a4"]}
-          style={styles.overviewCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}>
-          <Text style={styles.overviewLabel}>Total Accounts</Text>
-          <Text style={styles.overviewValue}>{totalAccounts}</Text>
-          <Text style={styles.overviewSubtext}>Active ledgers</Text>
-        </LinearGradient>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={onAccountsPress}
+          style={styles.cardWrapper}>
+          <LinearGradient
+            colors={["#249484", "#69a2a4"]}
+            style={styles.overviewCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}>
+            <Text style={styles.overviewLabel}>Total Accounts</Text>
+            <Text style={styles.overviewValue}>{totalAccounts}</Text>
+            <Text style={styles.overviewSubtext}>Active ledgers</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        <LinearGradient
-          colors={["#ef4444", "#dc2626"]}
-          style={styles.overviewCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}>
-          <Text style={styles.overviewLabel}>Pending Vouchers</Text>
-          <Text style={styles.overviewValue}>{pendingVouchers}</Text>
-          <Text style={styles.overviewSubtext}>Awaiting approval</Text>
-        </LinearGradient>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={onVouchersPress}
+          style={styles.cardWrapper}>
+          <LinearGradient
+            colors={["#ef4444", "#dc2626"]}
+            style={styles.overviewCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}>
+            <Text style={styles.overviewLabel}>Pending Vouchers</Text>
+            <Text style={styles.overviewValue}>{pendingVouchers}</Text>
+            <Text style={styles.overviewSubtext}>Awaiting approval</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        <LinearGradient
-          colors={["#d1b05e", "#c9a556"]}
-          style={styles.overviewCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}>
-          <Text style={styles.overviewLabel}>Bank Balance</Text>
-          <Text style={styles.overviewValue}>
-            ₦{formatCurrency(bankBalance)}
-          </Text>
-          <Text style={styles.overviewSubtext}>Across 3 accounts</Text>
-        </LinearGradient>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={onBankBalancePress}
+          style={styles.cardWrapper}>
+          <LinearGradient
+            colors={["#d1b05e", "#c9a556"]}
+            style={styles.overviewCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}>
+            <Text style={styles.overviewLabel}>Bank Balance</Text>
+            <Text style={styles.overviewValue}>
+              ₦{formatCurrency(bankBalance)}
+            </Text>
+            <Text style={styles.overviewSubtext}>Across 3 accounts</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        <LinearGradient
-          colors={["#7e3af2", "#6d28d9"]}
-          style={styles.overviewCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}>
-          <Text style={styles.overviewLabel}>Needs Reconciliation</Text>
-          <Text style={styles.overviewValue}>{needsReconciliation}</Text>
-          <Text style={styles.overviewSubtext}>Transactions</Text>
-        </LinearGradient>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={onReconciliationPress}
+          style={styles.cardWrapper}>
+          <LinearGradient
+            colors={["#7e3af2", "#6d28d9"]}
+            style={styles.overviewCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}>
+            <Text style={styles.overviewLabel}>Needs Reconciliation</Text>
+            <Text style={styles.overviewValue}>{needsReconciliation}</Text>
+            <Text style={styles.overviewSubtext}>Transactions</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -88,8 +116,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 12,
   },
-  overviewCard: {
+  cardWrapper: {
     width: "48%",
+  },
+  overviewCard: {
     padding: 16,
     borderRadius: 12,
     minHeight: 110,

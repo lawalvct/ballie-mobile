@@ -1,32 +1,31 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   ScrollView,
   RefreshControl,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
-import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
-import { reconciliationService } from "../services/reconciliationService";
+import AccountingModuleHeader from "../../../../components/accounting/AccountingModuleHeader";
+import { useReconciliations } from "../hooks/useReconciliations";
 import type {
   ReconciliationRecord,
-  ReconciliationStats,
-  PaginationInfo,
   ReconciliationBankOption,
 } from "../types";
 
 type Props = NativeStackScreenProps<AccountingStackParamList>;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();
@@ -35,6 +34,23 @@ const formatDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+const statusBadgeStyle = (status?: string): { bg: string; text: string } => {
+  switch (status) {
+    case "completed":
+      return { bg: "#d1fae5", text: "#065f46" };
+    case "in_progress":
+      return { bg: "#e0f2fe", text: "#075985" };
+    case "draft":
+      return { bg: "#fef3c7", text: "#92400e" };
+    case "cancelled":
+      return { bg: "#fee2e2", text: "#b91c1c" };
+    default:
+      return { bg: "#e5e7eb", text: "#6b7280" };
+  }
+};
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
+
 export default function ReconciliationHomeScreen({ navigation }: Props) {
   const today = useMemo(() => new Date(), []);
   const defaultFrom = useMemo(
@@ -42,15 +58,6 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
     [today],
   );
   const defaultTo = useMemo(() => formatDate(today), [today]);
-
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [reconciliations, setReconciliations] = useState<
-    ReconciliationRecord[]
-  >([]);
-  const [stats, setStats] = useState<ReconciliationStats | null>(null);
-  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
-  const [banks, setBanks] = useState<ReconciliationBankOption[]>([]);
 
   const [filters, setFilters] = useState({
     bank_id: "",
@@ -64,120 +71,80 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [filters]);
+  const {
+    reconciliations,
+    pagination,
+    statistics,
+    banks,
+    isLoading,
+    isRefreshing,
+    refresh,
+  } = useReconciliations(filters);
 
+  // Refresh when navigating back to this screen
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [filters]),
+      refresh();
+    }, []),
   );
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const response = await reconciliationService.list(filters);
-      setReconciliations(response.reconciliations || []);
-      setStats(response.statistics || null);
-      setPagination(response.pagination || null);
-      setBanks(response.banks || []);
-    } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to load reconciliations",
-        [{ text: "OK" }],
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      await loadData();
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handlePageChange = (page: number) => {
+  const handlePageChange = (page: number) =>
     setFilters((prev) => ({ ...prev, page }));
-  };
 
-  const statusBadge = (status?: string) => {
-    switch (status) {
-      case "completed":
-        return { bg: "#d1fae5", text: "#065f46" };
-      case "in_progress":
-        return { bg: "#e0f2fe", text: "#075985" };
-      case "draft":
-        return { bg: "#fef3c7", text: "#92400e" };
-      case "cancelled":
-        return { bg: "#fee2e2", text: "#b91c1c" };
-      default:
-        return { bg: "#e5e7eb", text: "#6b7280" };
-    }
-  };
+  // ─── Loading ────────────────────────────────────────────────────────────────
 
-  if (loading && !refreshing) {
+  if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <AccountingModuleHeader
+          title="Reconciliations"
+          onBack={() => navigation.goBack()}
+          navigation={navigation}
         />
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Reconciliations</Text>
-          <View style={styles.placeholder} />
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-          <Text style={styles.loadingText}>Loading reconciliations...</Text>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#d1b05e" />
+          <Text style={styles.loadingLabel}>Loading reconciliations…</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  // ─── Main render ────────────────────────────────────────────────────────────
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <AccountingModuleHeader
+        title="Reconciliations"
+        onBack={() => navigation.goBack()}
+        navigation={navigation}
       />
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Reconciliations</Text>
-        <View style={styles.placeholder} />
-      </View>
 
       <ScrollView
-        style={styles.content}
+        style={styles.body}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refresh}
+            colors={["#d1b05e"]}
+            tintColor="#d1b05e"
+          />
         }>
+        {/* Create button */}
         <View style={styles.actionsSection}>
           <TouchableOpacity
-            style={styles.primaryBtn}
-            onPress={() => navigation.navigate("ReconciliationCreate")}>
-            <Text style={styles.primaryBtnIcon}>+</Text>
-            <Text style={styles.primaryBtnText}>Start Reconciliation</Text>
+            style={styles.createBtn}
+            onPress={() => navigation.navigate("ReconciliationCreate")}
+            activeOpacity={0.8}>
+            <Text style={styles.createBtnIcon}>+</Text>
+            <Text style={styles.createBtnLabel}>Start Reconciliation</Text>
           </TouchableOpacity>
         </View>
 
-        {stats ? (
+        {/* Stats */}
+        {statistics && (
           <View style={styles.statsSection}>
             <Text style={styles.sectionTitle}>Overview</Text>
             <View style={styles.statsGrid}>
@@ -186,7 +153,7 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.statCard}>
-                <Text style={styles.statValue}>{stats.total}</Text>
+                <Text style={styles.statValue}>{statistics.total}</Text>
                 <Text style={styles.statLabel}>Total</Text>
               </LinearGradient>
               <LinearGradient
@@ -194,7 +161,7 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.statCard}>
-                <Text style={styles.statValue}>{stats.completed}</Text>
+                <Text style={styles.statValue}>{statistics.completed}</Text>
                 <Text style={styles.statLabel}>Completed</Text>
               </LinearGradient>
               <LinearGradient
@@ -202,7 +169,7 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.statCard}>
-                <Text style={styles.statValue}>{stats.in_progress}</Text>
+                <Text style={styles.statValue}>{statistics.in_progress}</Text>
                 <Text style={styles.statLabel}>In Progress</Text>
               </LinearGradient>
               <LinearGradient
@@ -210,13 +177,14 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.statCard}>
-                <Text style={styles.statValue}>{stats.draft}</Text>
+                <Text style={styles.statValue}>{statistics.draft}</Text>
                 <Text style={styles.statLabel}>Draft</Text>
               </LinearGradient>
             </View>
           </View>
-        ) : null}
+        )}
 
+        {/* Filters */}
         <View style={styles.filtersSection}>
           <Text style={styles.sectionTitle}>Filters</Text>
           <View style={styles.filterRow}>
@@ -232,7 +200,7 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
                 }
                 style={styles.picker}>
                 <Picker.Item label="All Banks" value="" />
-                {banks.map((bank) => (
+                {banks.map((bank: ReconciliationBankOption) => (
                   <Picker.Item
                     key={bank.id}
                     label={`${bank.bank_name} ${bank.masked_account_number || ""}`}
@@ -263,13 +231,15 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
           <View style={styles.filterRow}>
             <TouchableOpacity
               onPress={() => setShowFromPicker(true)}
-              style={styles.filterButton}>
+              style={styles.filterButton}
+              activeOpacity={0.7}>
               <Text style={styles.filterLabel}>📅 From</Text>
               <Text style={styles.filterValue}>{filters.from_date}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowToPicker(true)}
-              style={styles.filterButton}>
+              style={styles.filterButton}
+              activeOpacity={0.7}>
               <Text style={styles.filterLabel}>📅 To</Text>
               <Text style={styles.filterValue}>{filters.to_date}</Text>
             </TouchableOpacity>
@@ -311,27 +281,35 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
           />
         )}
 
+        {/* List */}
         <View style={styles.listSection}>
           {reconciliations.length === 0 ? (
-            <View style={styles.emptyContainer}>
+            <View style={styles.emptyCard}>
               <Text style={styles.emptyIcon}>✅</Text>
               <Text style={styles.emptyTitle}>No Reconciliations</Text>
-              <Text style={styles.emptyText}>
+              <Text style={styles.emptyBody}>
                 Start a reconciliation to match your bank statement.
               </Text>
+              <TouchableOpacity
+                style={styles.emptyBtn}
+                onPress={() => navigation.navigate("ReconciliationCreate")}
+                activeOpacity={0.8}>
+                <Text style={styles.emptyBtnText}>+ Start Reconciliation</Text>
+              </TouchableOpacity>
             </View>
           ) : (
-            reconciliations.map((item) => {
-              const badge = statusBadge(item.status);
+            reconciliations.map((item: ReconciliationRecord) => {
+              const badge = statusBadgeStyle(item.status);
               return (
                 <TouchableOpacity
                   key={item.id}
                   style={styles.card}
+                  activeOpacity={0.8}
                   onPress={() =>
                     navigation.navigate("ReconciliationShow", { id: item.id })
                   }>
                   <View style={styles.cardHeader}>
-                    <View>
+                    <View style={{ flex: 1 }}>
                       <Text style={styles.cardTitle}>
                         {item.bank?.bank_name || "Bank"}
                       </Text>
@@ -366,55 +344,14 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
           )}
         </View>
 
-        {pagination && pagination.last_page > 1 ? (
-          <View style={styles.paginationContainer}>
-            <View style={styles.paginationInfo}>
-              <Text style={styles.paginationText}>
-                Page {pagination.current_page} of {pagination.last_page}
-              </Text>
-              <Text style={styles.paginationSubtext}>
-                Showing {pagination.from ?? 0} to {pagination.to ?? 0} of{" "}
-                {pagination.total}
-              </Text>
-            </View>
-            <View style={styles.paginationButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.paginationButton,
-                  pagination.current_page === 1 &&
-                    styles.paginationButtonDisabled,
-                ]}
-                onPress={() => handlePageChange(pagination.current_page - 1)}
-                disabled={pagination.current_page === 1}>
-                <Text
-                  style={[
-                    styles.paginationButtonText,
-                    pagination.current_page === 1 &&
-                      styles.paginationButtonTextDisabled,
-                  ]}>
-                  ← Previous
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.paginationButton,
-                  pagination.current_page === pagination.last_page &&
-                    styles.paginationButtonDisabled,
-                ]}
-                onPress={() => handlePageChange(pagination.current_page + 1)}
-                disabled={pagination.current_page === pagination.last_page}>
-                <Text
-                  style={[
-                    styles.paginationButtonText,
-                    pagination.current_page === pagination.last_page &&
-                      styles.paginationButtonTextDisabled,
-                  ]}>
-                  Next →
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : null}
+        {/* Pagination */}
+        {pagination.last_page > 1 && (
+          <Pagination
+            current={pagination.current_page}
+            total={pagination.last_page}
+            onChange={handlePageChange}
+          />
+        )}
 
         <View style={{ height: 30 }} />
       </ScrollView>
@@ -422,131 +359,166 @@ export default function ReconciliationHomeScreen({ navigation }: Props) {
   );
 }
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function Pagination({
+  current,
+  total,
+  onChange,
+}: {
+  current: number;
+  total: number;
+  onChange: (page: number) => void;
+}) {
+  const hasPrev = current > 1;
+  const hasNext = current < total;
+
+  return (
+    <View style={styles.pagination}>
+      <TouchableOpacity
+        style={[styles.pageBtn, !hasPrev && styles.pageBtnDisabled]}
+        onPress={() => hasPrev && onChange(current - 1)}
+        disabled={!hasPrev}
+        activeOpacity={0.7}>
+        <Text
+          style={[styles.pageBtnText, !hasPrev && styles.pageBtnTextDisabled]}>
+          ← Prev
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.pageInfo}>
+        <Text style={styles.pageInfoText}>
+          {current} / {total}
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={[styles.pageBtn, !hasNext && styles.pageBtnDisabled]}
+        onPress={() => hasNext && onChange(current + 1)}
+        disabled={!hasNext}
+        activeOpacity={0.7}>
+        <Text
+          style={[styles.pageBtnText, !hasNext && styles.pageBtnTextDisabled]}>
+          Next →
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
-  },
-  backButton: {
-    paddingVertical: 8,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: SEMANTIC_COLORS.white,
-    fontWeight: "600",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: SEMANTIC_COLORS.white,
-  },
-  placeholder: {
-    width: 60,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  loadingContainer: {
+
+  /* ── Loading ── */
+  loadingWrap: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 40,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
   },
-  loadingText: {
-    marginTop: 12,
+  loadingLabel: {
+    marginTop: 14,
     fontSize: 14,
-    color: BRAND_COLORS.darkPurple,
+    color: "#6b7280",
   },
+
+  /* ── Body ── */
+  body: {
+    flex: 1,
+    backgroundColor: "#f3f4f8",
+  },
+
+  /* ── Actions section ── */
   actionsSection: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
-  primaryBtn: {
+  createBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BRAND_COLORS.gold,
-    paddingVertical: 16,
+    backgroundColor: "#d1b05e",
+    paddingVertical: 15,
     paddingHorizontal: 24,
     borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: "#000",
+    gap: 8,
+    shadowColor: "#d1b05e",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
-  primaryBtnIcon: {
-    fontSize: 24,
+  createBtnIcon: {
+    fontSize: 22,
     fontWeight: "bold",
-    color: BRAND_COLORS.darkPurple,
-    marginRight: 8,
+    color: "#1a0f33",
+    lineHeight: 24,
   },
-  primaryBtnText: {
+  createBtnLabel: {
     fontSize: 16,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    fontWeight: "800",
+    color: "#1a0f33",
+    letterSpacing: 0.3,
   },
+
+  /* ── Stats ── */
   statsSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#1a0f33",
+    marginBottom: 12,
   },
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 10,
   },
   statCard: {
     flex: 1,
     minWidth: "47%",
-    padding: 20,
-    borderRadius: 16,
+    padding: 18,
+    borderRadius: 14,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 3,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 4,
     textAlign: "center",
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: "500",
+    fontWeight: "600",
     textAlign: "center",
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: BRAND_COLORS.darkPurple,
-    marginBottom: 16,
-  },
+
+  /* ── Filters ── */
   filtersSection: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   filterRow: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 10,
   },
   pickerContainer: {
     flex: 1,
@@ -561,58 +533,39 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flex: 1,
-    backgroundColor: SEMANTIC_COLORS.white,
+    backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    borderRadius: 12,
+    borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   filterLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
-    color: "#6b7280",
-    marginBottom: 6,
+    color: "#9ca3af",
+    marginBottom: 4,
   },
   filterValue: {
     fontSize: 13,
     fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    color: "#1a0f33",
   },
+
+  /* ── List ── */
   listSection: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  emptyContainer: {
-    padding: 40,
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOpacity: 0.07,
+    shadowRadius: 5,
     elevation: 2,
   },
   cardHeader: {
@@ -624,7 +577,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    color: "#1a0f33",
   },
   cardSubtitle: {
     fontSize: 12,
@@ -638,6 +591,9 @@ const styles = StyleSheet.create({
   cardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e5e7eb",
+    paddingTop: 8,
   },
   cardLabel: {
     fontSize: 12,
@@ -646,66 +602,103 @@ const styles = StyleSheet.create({
   cardValue: {
     fontSize: 13,
     fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    color: "#1a0f33",
   },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
+    letterSpacing: 0.4,
   },
-  paginationContainer: {
-    padding: 16,
+
+  /* ── Empty ── */
+  emptyCard: {
     backgroundColor: "#fff",
-    marginTop: 20,
-    marginHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 16,
+    padding: 48,
+    alignItems: "center",
+    marginTop: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
     elevation: 3,
   },
-  paginationInfo: {
-    alignItems: "center",
-    marginBottom: 12,
+  emptyIcon: {
+    fontSize: 52,
+    marginBottom: 16,
   },
-  paginationText: {
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1a0f33",
+    marginBottom: 8,
+  },
+  emptyBody: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#1f2937",
-    marginBottom: 4,
-  },
-  paginationSubtext: {
-    fontSize: 12,
     color: "#6b7280",
+    textAlign: "center",
+    lineHeight: 20,
   },
-  paginationButtons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
+  emptyBtn: {
+    marginTop: 20,
+    backgroundColor: "#d1b05e",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
   },
-  paginationButton: {
-    backgroundColor: BRAND_COLORS.gold,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    minWidth: 120,
-    alignItems: "center",
-  },
-  paginationButtonDisabled: {
-    backgroundColor: "#e5e7eb",
-    opacity: 0.6,
-  },
-  paginationButtonText: {
+  emptyBtnText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
+    fontWeight: "700",
+    color: "#1a0f33",
   },
-  paginationButtonTextDisabled: {
+
+  /* ── Pagination ── */
+  pagination: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  pageBtn: {
+    backgroundColor: "#d1b05e",
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: 9,
+  },
+  pageBtnDisabled: {
+    backgroundColor: "#e5e7eb",
+  },
+  pageBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1a0f33",
+  },
+  pageBtnTextDisabled: {
     color: "#9ca3af",
+  },
+  pageInfo: {
+    backgroundColor: "#f3f4f8",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  pageInfoText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#374151",
   },
 });

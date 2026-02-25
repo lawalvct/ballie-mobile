@@ -1,25 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  StatusBar,
   ScrollView,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { BRAND_COLORS } from "../../../../theme/colors";
-import { invoiceService } from "../services/invoiceService";
+import type { AccountingStackParamList } from "../../../../navigation/types";
+import type { ListParams, Invoice } from "../types";
+import { useInvoices } from "../hooks/useInvoices";
+import AccountingModuleHeader from "../../../../components/accounting/AccountingModuleHeader";
 import InvoiceFilters from "../components/InvoiceFilters";
 import InvoiceStats from "../components/InvoiceStats";
 import InvoiceCard from "../components/InvoiceCard";
-import type { AccountingStackParamList } from "../../../../navigation/types";
-import type { ListParams, Invoice, Statistics } from "../types";
 
 type NavigationProp = NativeStackNavigationProp<
   AccountingStackParamList,
@@ -29,28 +28,43 @@ type NavigationProp = NativeStackNavigationProp<
 type RouteProp = {
   key: string;
   name: string;
-  params: {
-    type: "sales" | "purchase";
-  };
+  params: { type: "sales" | "purchase" };
 };
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const formatCurrency = (value: number | string | null | undefined) => {
+  const amount =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? parseFloat(value) || 0
+        : 0;
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const formatDate = (value: string | null | undefined) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-NG", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+};
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function InvoiceHomeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProp>();
   const invoiceType = route.params.type;
 
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    last_page: 1,
-    per_page: 20,
-    total: 0,
-  });
-
   const [filters, setFilters] = useState<ListParams>({
     type: invoiceType,
     status: undefined,
@@ -60,417 +74,159 @@ export default function InvoiceHomeScreen() {
     sort: "voucher_date",
     direction: "desc",
     page: 1,
+    per_page: 20,
   });
 
-  useEffect(() => {
-    loadInvoices();
-  }, [filters]);
+  const { invoices, pagination, statistics, isLoading, isRefreshing, refresh } =
+    useInvoices(filters);
 
-  const loadInvoices = async (loadMore = false) => {
-    try {
-      if (loadMore) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+  const isSales = invoiceType === "sales";
+  const title = isSales ? "Sales Invoices" : "Purchase Invoices";
 
-      const response = await invoiceService.list(filters);
-
-      if (loadMore) {
-        setInvoices([...invoices, ...response.data]);
-      } else {
-        setInvoices(response.data);
-      }
-
-      setPagination(response.pagination);
-      setStatistics(response.statistics);
-    } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to load invoices",
-      );
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const handleLoadMore = () => {
-    if (
-      pagination?.current_page &&
-      pagination?.last_page &&
-      pagination.current_page < pagination.last_page
-    ) {
-      setFilters({ ...filters, page: (filters.page || 1) + 1 });
-    }
-  };
-
-  const handleFilterChange = (newFilters: ListParams) => {
+  const handleFilterChange = (newFilters: ListParams) =>
     setFilters({ ...newFilters, page: 1 });
-  };
 
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      await loadInvoices();
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  const handlePageChange = (page: number) =>
+    setFilters((prev) => ({ ...prev, page }));
 
-  const handleInvoicePress = (invoice: Invoice) => {
+  const handleInvoicePress = (invoice: Invoice) =>
     navigation.navigate("InvoiceShow", { id: invoice.id });
-  };
 
-  const handleCreatePress = () => {
+  const handleCreatePress = () =>
     navigation.navigate("InvoiceCreate", { type: invoiceType });
-  };
 
-  const handleSearch = () => {
-    loadInvoices();
-  };
+  // ─── Loading skeleton ───────────────────────────────────────────────────────
 
-  const handlePageChange = (page: number) => {
-    setFilters({ ...filters, page });
-  };
-
-  const formatCurrency = (value: number | string | null | undefined) => {
-    let amount = 0;
-    if (typeof value === "number") {
-      amount = value;
-    } else if (typeof value === "string") {
-      amount = parseFloat(value) || 0;
-    }
-    return amount.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
-  const formatDate = (value: string | null | undefined) => {
-    if (!value) return "-";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-    });
-  };
-
-  if (loading && !refreshing) {
+  if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <AccountingModuleHeader
+          title={title}
+          onBack={() => navigation.goBack()}
+          navigation={navigation}
         />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {invoiceType === "sales" ? "Sales" : "Purchase"} Invoices
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#d1b05e" />
+          <Text style={styles.loadingLabel}>
+            Loading {title.toLowerCase()}…
           </Text>
-          <View style={styles.placeholder} />
-        </View>
-
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-          <Text style={styles.loadingText}>Loading invoices...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  // ─── Main render ───────────────────────────────────────────────────────────
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <AccountingModuleHeader
+        title={title}
+        onBack={() => navigation.goBack()}
+        navigation={navigation}
       />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {invoiceType === "sales" ? "Sales" : "Purchase"} Invoices
-        </Text>
-        <View style={styles.placeholder} />
-      </View>
-
       <ScrollView
-        style={styles.content}
+        style={styles.body}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refresh}
+            colors={["#d1b05e"]}
+            tintColor="#d1b05e"
+          />
         }>
-        {/* Action Buttons Section */}
+        {/* Create button */}
         <View style={styles.actionsSection}>
-          {/* Primary Action - Create */}
           <TouchableOpacity
-            style={styles.primaryBtn}
+            style={styles.createBtn}
             onPress={handleCreatePress}
             activeOpacity={0.8}>
-            <Text style={styles.primaryBtnIcon}>+</Text>
-            <Text style={styles.primaryBtnText}>
-              Create New {invoiceType === "sales" ? "Sales" : "Purchase"}{" "}
-              Invoice
+            <Text style={styles.createBtnIcon}>+</Text>
+            <Text style={styles.createBtnLabel}>
+              Create New {isSales ? "Sales" : "Purchase"} Invoice
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Stats Section */}
+        {/* Stats */}
         <InvoiceStats statistics={statistics} type={invoiceType} />
 
-        {/* Filters Section */}
-        <InvoiceFilters filters={filters} onFilterChange={handleFilterChange} />
+        {/* Filters */}
+        <View style={styles.filtersWrap}>
+          <InvoiceFilters
+            filters={filters}
+            onFilterChange={handleFilterChange}
+          />
+        </View>
 
-        {/* View Toggle & Results Count */}
-        <View style={styles.viewToggleContainer}>
-          <Text style={styles.resultsCount}>
+        {/* Toolbar: count + view toggle */}
+        <View style={styles.toolbar}>
+          <Text style={styles.countLabel}>
             {invoices.length > 0
-              ? `${pagination.total} invoice${pagination.total !== 1 ? "s" : ""}`
+              ? `${pagination.total.toLocaleString()} invoice${pagination.total !== 1 ? "s" : ""}`
               : "No results"}
           </Text>
-          <View style={styles.viewToggleGroup}>
-            <TouchableOpacity
-              style={[
-                styles.viewToggleButton,
-                viewMode === "card" && styles.viewToggleButtonActive,
-              ]}
-              onPress={() => setViewMode("card")}
-              activeOpacity={0.8}>
-              <Text
+          <View style={styles.viewToggle}>
+            {(["card", "table"] as const).map((mode) => (
+              <TouchableOpacity
+                key={mode}
                 style={[
-                  styles.viewToggleText,
-                  viewMode === "card" && styles.viewToggleTextActive,
-                ]}>
-                Cards
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.viewToggleButton,
-                viewMode === "table" && styles.viewToggleButtonActive,
-              ]}
-              onPress={() => setViewMode("table")}
-              activeOpacity={0.8}>
-              <Text
-                style={[
-                  styles.viewToggleText,
-                  viewMode === "table" && styles.viewToggleTextActive,
-                ]}>
-                Table
-              </Text>
-            </TouchableOpacity>
+                  styles.viewToggleBtn,
+                  viewMode === mode && styles.viewToggleBtnActive,
+                ]}
+                onPress={() => setViewMode(mode)}
+                activeOpacity={0.7}>
+                <Text
+                  style={[
+                    styles.viewToggleBtnText,
+                    viewMode === mode && styles.viewToggleBtnTextActive,
+                  ]}>
+                  {mode === "card" ? "⊞ Cards" : "≡ Table"}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
-        {/* Invoice List */}
+        {/* Invoice list / empty */}
         <View style={styles.listSection}>
           {invoices.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>
-                {invoiceType === "sales" ? "🧾" : "📦"}
-              </Text>
-              <Text style={styles.emptyTitle}>
-                No {invoiceType === "sales" ? "Sales" : "Purchase"} Invoices
-              </Text>
-              <Text style={styles.emptyText}>
-                {filters.search || filters.status || filters.from_date
-                  ? "Try adjusting your filters"
-                  : `Create your first ${invoiceType} invoice to get started`}
-              </Text>
-              {!filters.search && !filters.status && !filters.from_date && (
-                <TouchableOpacity
-                  style={styles.emptyActionButton}
-                  onPress={handleCreatePress}
-                  activeOpacity={0.8}>
-                  <Text style={styles.emptyActionText}>+ Create Invoice</Text>
-                </TouchableOpacity>
-              )}
+            <EmptyState
+              type={invoiceType}
+              hasFilters={
+                !!(filters.search || filters.status || filters.from_date)
+              }
+              onCreate={handleCreatePress}
+            />
+          ) : viewMode === "card" ? (
+            <View style={styles.cardList}>
+              {invoices.map((invoice: Invoice) => (
+                <InvoiceCard
+                  key={invoice.id}
+                  invoice={invoice}
+                  onPress={() => handleInvoicePress(invoice)}
+                />
+              ))}
             </View>
           ) : (
-            <View style={styles.listContainer}>
-              {viewMode === "card" ? (
-                invoices.map((invoice) => (
-                  <InvoiceCard
-                    key={invoice.id}
-                    invoice={invoice}
-                    onPress={() => handleInvoicePress(invoice)}
-                  />
-                ))
-              ) : (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.tableScrollContent}>
-                  <View style={styles.tableContainer}>
-                    <View style={styles.tableHeader}>
-                      <Text
-                        style={[styles.tableHeaderText, styles.tableCellSmall]}>
-                        #
-                      </Text>
-                      <Text
-                        style={[styles.tableHeaderText, styles.tableCellLarge]}>
-                        Party
-                      </Text>
-                      <Text
-                        style={[styles.tableHeaderText, styles.tableCellRef]}>
-                        Ref
-                      </Text>
-                      <Text
-                        style={[
-                          styles.tableHeaderText,
-                          styles.tableCellMedium,
-                        ]}>
-                        Date
-                      </Text>
-                      <Text
-                        style={[
-                          styles.tableHeaderText,
-                          styles.tableCellAmount,
-                        ]}>
-                        Amount
-                      </Text>
-                      <Text
-                        style={[styles.tableHeaderText, styles.tableCellType]}>
-                        Type
-                      </Text>
-                      <Text
-                        style={[
-                          styles.tableHeaderText,
-                          styles.tableCellStatus,
-                        ]}>
-                        Status
-                      </Text>
-                      <Text
-                        style={[
-                          styles.tableHeaderText,
-                          styles.tableCellActions,
-                        ]}>
-                        Actions
-                      </Text>
-                    </View>
-                    {invoices.map((invoice, index) => (
-                      <TouchableOpacity
-                        key={invoice.id}
-                        style={[
-                          styles.tableRow,
-                          index % 2 === 1 && styles.tableRowAlt,
-                        ]}
-                        onPress={() => handleInvoicePress(invoice)}
-                        activeOpacity={0.7}>
-                        <Text
-                          style={[styles.tableCellText, styles.tableCellSmall]}>
-                          {invoice.voucher_number || invoice.id}
-                        </Text>
-                        <Text
-                          style={[styles.tableCellText, styles.tableCellLarge]}>
-                          {invoice.party_name || "Unknown Party"}
-                        </Text>
-                        <Text
-                          style={[styles.tableCellText, styles.tableCellRef]}>
-                          {invoice.reference_number || "-"}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.tableCellText,
-                            styles.tableCellMedium,
-                          ]}>
-                          {formatDate(invoice.voucher_date)}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.tableCellText,
-                            styles.tableCellAmount,
-                          ]}>
-                          ₦{formatCurrency(invoice.total_amount)}
-                        </Text>
-                        <Text
-                          style={[styles.tableCellText, styles.tableCellType]}>
-                          {invoice.type}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.tableCellText,
-                            styles.tableCellStatus,
-                            invoice.status === "posted"
-                              ? styles.statusPosted
-                              : styles.statusDraft,
-                          ]}>
-                          {invoice.status}
-                        </Text>
-                        <View style={styles.tableCellActions}>
-                          <TouchableOpacity
-                            style={styles.tableActionButton}
-                            onPress={() => handleInvoicePress(invoice)}
-                            activeOpacity={0.8}>
-                            <Text style={styles.tableActionText}>View</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </ScrollView>
-              )}
-            </View>
+            <TableView
+              invoices={invoices}
+              onPress={handleInvoicePress}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+            />
           )}
         </View>
 
         {/* Pagination */}
-        {pagination && pagination.last_page > 1 && (
-          <View style={styles.paginationContainer}>
-            <TouchableOpacity
-              style={[
-                styles.paginationButton,
-                pagination.current_page === 1 &&
-                  styles.paginationButtonDisabled,
-              ]}
-              onPress={() => handlePageChange(pagination.current_page - 1)}
-              disabled={pagination.current_page === 1}>
-              <Text
-                style={[
-                  styles.paginationButtonText,
-                  pagination.current_page === 1 &&
-                    styles.paginationButtonTextDisabled,
-                ]}>
-                Previous
-              </Text>
-            </TouchableOpacity>
-
-            <Text style={styles.paginationInfo}>
-              Page {pagination.current_page} of {pagination.last_page}
-            </Text>
-
-            <TouchableOpacity
-              style={[
-                styles.paginationButton,
-                pagination.current_page === pagination.last_page &&
-                  styles.paginationButtonDisabled,
-              ]}
-              onPress={() => handlePageChange(pagination.current_page + 1)}
-              disabled={pagination.current_page === pagination.last_page}>
-              <Text
-                style={[
-                  styles.paginationButtonText,
-                  pagination.current_page === pagination.last_page &&
-                    styles.paginationButtonTextDisabled,
-                ]}>
-                Next
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {pagination.last_page > 1 && (
+          <Pagination
+            current={pagination.current_page}
+            total={pagination.last_page}
+            onChange={handlePageChange}
+          />
         )}
 
         <View style={{ height: 40 }} />
@@ -479,286 +235,465 @@ export default function InvoiceHomeScreen() {
   );
 }
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function EmptyState({
+  type,
+  hasFilters,
+  onCreate,
+}: {
+  type: "sales" | "purchase";
+  hasFilters: boolean;
+  onCreate: () => void;
+}) {
+  return (
+    <View style={styles.emptyCard}>
+      <Text style={styles.emptyIcon}>{type === "sales" ? "🧾" : "📦"}</Text>
+      <Text style={styles.emptyTitle}>
+        No {type === "sales" ? "Sales" : "Purchase"} Invoices
+      </Text>
+      <Text style={styles.emptyBody}>
+        {hasFilters
+          ? "No invoices match your current filters. Try clearing them."
+          : `Create your first ${type} invoice to get started.`}
+      </Text>
+      {!hasFilters && (
+        <TouchableOpacity
+          style={styles.emptyBtn}
+          onPress={onCreate}
+          activeOpacity={0.8}>
+          <Text style={styles.emptyBtnText}>+ Create Invoice</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+function TableView({
+  invoices,
+  onPress,
+  formatCurrency,
+  formatDate,
+}: {
+  invoices: Invoice[];
+  onPress: (i: Invoice) => void;
+  formatCurrency: (v: any) => string;
+  formatDate: (v: any) => string;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.tableScroll}>
+      <View style={styles.table}>
+        {/* Table header */}
+        <View style={styles.tableHead}>
+          {["Invoice #", "Party", "Ref", "Date", "Amount", "Status", ""].map(
+            (col, i) => (
+              <Text
+                key={i}
+                style={[styles.tableHeadCell, TABLE_WIDTHS[i]]}
+                numberOfLines={1}>
+                {col}
+              </Text>
+            ),
+          )}
+        </View>
+
+        {/* Table rows */}
+        {invoices.map((invoice, idx) => {
+          const statusColor =
+            invoice.status === "posted" ? "#16a34a" : "#d97706";
+          return (
+            <TouchableOpacity
+              key={invoice.id}
+              style={[styles.tableRow, idx % 2 !== 0 && styles.tableRowAlt]}
+              onPress={() => onPress(invoice)}
+              activeOpacity={0.7}>
+              <Text
+                style={[styles.tableCell, TABLE_WIDTHS[0], styles.tableBold]}
+                numberOfLines={1}>
+                {invoice.voucher_number}
+              </Text>
+              <Text
+                style={[styles.tableCell, TABLE_WIDTHS[1]]}
+                numberOfLines={1}>
+                {invoice.party_name ?? "—"}
+              </Text>
+              <Text
+                style={[styles.tableCell, TABLE_WIDTHS[2]]}
+                numberOfLines={1}>
+                {invoice.reference_number ?? "—"}
+              </Text>
+              <Text
+                style={[styles.tableCell, TABLE_WIDTHS[3]]}
+                numberOfLines={1}>
+                {formatDate(invoice.voucher_date)}
+              </Text>
+              <Text
+                style={[
+                  styles.tableCell,
+                  TABLE_WIDTHS[4],
+                  styles.tableBold,
+                  { color: "#d1b05e" },
+                ]}
+                numberOfLines={1}>
+                ₦{formatCurrency(invoice.total_amount)}
+              </Text>
+              <View style={[TABLE_WIDTHS[5], styles.tableStatusCell]}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: statusColor + "18" },
+                  ]}>
+                  <Text style={[styles.statusText, { color: statusColor }]}>
+                    {invoice.status.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+              <View style={[TABLE_WIDTHS[6], styles.tableActionCell]}>
+                <TouchableOpacity
+                  style={styles.tableViewBtn}
+                  onPress={() => onPress(invoice)}
+                  activeOpacity={0.8}>
+                  <Text style={styles.tableViewBtnText}>View →</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+}
+
+const TABLE_WIDTHS = [
+  { width: 110 },
+  { width: 180 },
+  { width: 120 },
+  { width: 110 },
+  { width: 130 },
+  { width: 90 },
+  { width: 90 },
+] as const;
+
+function Pagination({
+  current,
+  total,
+  onChange,
+}: {
+  current: number;
+  total: number;
+  onChange: (page: number) => void;
+}) {
+  const hasPrev = current > 1;
+  const hasNext = current < total;
+
+  return (
+    <View style={styles.pagination}>
+      <TouchableOpacity
+        style={[styles.pageBtn, !hasPrev && styles.pageBtnDisabled]}
+        onPress={() => hasPrev && onChange(current - 1)}
+        disabled={!hasPrev}
+        activeOpacity={0.7}>
+        <Text
+          style={[styles.pageBtnText, !hasPrev && styles.pageBtnTextDisabled]}>
+          ← Prev
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.pageInfo}>
+        <Text style={styles.pageInfoText}>
+          {current} / {total}
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={[styles.pageBtn, !hasNext && styles.pageBtnDisabled]}
+        onPress={() => hasNext && onChange(current + 1)}
+        disabled={!hasNext}
+        activeOpacity={0.7}>
+        <Text
+          style={[styles.pageBtnText, !hasNext && styles.pageBtnTextDisabled]}>
+          Next →
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
-  },
-  backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  backButtonText: {
-    color: BRAND_COLORS.gold,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  placeholder: {
-    width: 60,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-    backgroundColor: "#f5f5f5",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: BRAND_COLORS.darkPurple,
-  },
+
+  /* ── Actions section ── */
   actionsSection: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 4,
   },
-  primaryBtn: {
+  createBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BRAND_COLORS.gold,
-    paddingVertical: 16,
+    backgroundColor: "#d1b05e",
+    paddingVertical: 15,
     paddingHorizontal: 24,
     borderRadius: 12,
-    shadowColor: "#000",
+    gap: 8,
+    shadowColor: "#d1b05e",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
-  primaryBtnIcon: {
-    fontSize: 24,
+  createBtnIcon: {
+    fontSize: 22,
     fontWeight: "bold",
-    color: BRAND_COLORS.darkPurple,
-    marginRight: 8,
+    color: "#1a0f33",
+    lineHeight: 24,
   },
-  primaryBtnText: {
+  createBtnLabel: {
     fontSize: 16,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
-    letterSpacing: 0.5,
+    fontWeight: "800",
+    color: "#1a0f33",
+    letterSpacing: 0.3,
   },
-  viewToggleContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+
+  /* ── Loading ── */
+  loadingWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f3f4f8",
+  },
+  loadingLabel: {
+    marginTop: 14,
+    fontSize: 14,
+    color: "#6b7280",
+  },
+
+  /* ── Body ── */
+  body: {
+    flex: 1,
+    backgroundColor: "#f3f4f8",
+  },
+  filtersWrap: {
+    paddingTop: 4,
+  },
+
+  /* ── Toolbar ── */
+  toolbar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
-  resultsCount: {
-    fontSize: 14,
+  countLabel: {
+    fontSize: 13,
     fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
+    color: "#374151",
   },
-  viewToggleGroup: {
+  viewToggle: {
     flexDirection: "row",
     backgroundColor: "#e5e7eb",
     borderRadius: 10,
-    padding: 4,
+    padding: 3,
   },
-  viewToggleButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+  viewToggleBtn: {
+    paddingVertical: 5,
+    paddingHorizontal: 12,
     borderRadius: 8,
   },
-  viewToggleButtonActive: {
+  viewToggleBtnActive: {
     backgroundColor: "#fff",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
     elevation: 2,
   },
-  viewToggleText: {
-    fontSize: 13,
+  viewToggleBtnText: {
+    fontSize: 12,
     fontWeight: "600",
     color: "#6b7280",
   },
-  viewToggleTextActive: {
-    color: BRAND_COLORS.darkPurple,
+  viewToggleBtnTextActive: {
+    color: "#1a0f33",
   },
+
+  /* ── Card list ── */
   listSection: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
   },
-  listContainer: {
-    gap: 12,
+  cardList: {
+    gap: 10,
   },
-  tableScrollContent: {
-    paddingBottom: 8,
+
+  /* ── Table ── */
+  tableScroll: {
+    marginBottom: 8,
   },
-  tableContainer: {
+  table: {
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    minWidth: 860,
+    minWidth: 830,
   },
-  tableHeader: {
+  tableHead: {
     flexDirection: "row",
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
     paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
-  tableHeaderText: {
-    color: "#fff",
-    fontSize: 12,
+  tableHeadCell: {
+    fontSize: 11,
     fontWeight: "700",
+    color: "rgba(255,255,255,0.7)",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#e5e7eb",
-    backgroundColor: "#fff",
+    alignItems: "center",
   },
   tableRowAlt: {
     backgroundColor: "#f9fafb",
   },
-  tableCellText: {
+  tableCell: {
     fontSize: 12,
-    color: "#111827",
+    color: "#374151",
   },
-  tableCellSmall: {
-    width: 90,
+  tableBold: {
+    fontWeight: "700",
   },
-  tableCellMedium: {
-    width: 120,
+  tableStatusCell: {
+    justifyContent: "center",
   },
-  tableCellLarge: {
-    width: 200,
-  },
-  tableCellRef: {
-    width: 130,
-  },
-  tableCellAmount: {
-    width: 130,
-    textAlign: "right",
-  },
-  tableCellType: {
-    width: 90,
-    textTransform: "capitalize",
-  },
-  tableCellStatus: {
-    width: 100,
-    textAlign: "right",
-    textTransform: "capitalize",
-  },
-  tableCellActions: {
-    width: 110,
+  tableActionCell: {
     alignItems: "flex-end",
+    justifyContent: "center",
   },
-  tableActionButton: {
-    paddingVertical: 6,
+  tableViewBtn: {
+    backgroundColor: "#1a0f33",
+    paddingVertical: 5,
     paddingHorizontal: 10,
-    backgroundColor: BRAND_COLORS.gold,
+    borderRadius: 7,
+  },
+  tableViewBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#d1b05e",
+  },
+
+  /* ── Status badge ── */
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 8,
+    alignSelf: "flex-start",
   },
-  tableActionText: {
-    fontSize: 12,
+  statusText: {
+    fontSize: 10,
     fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    letterSpacing: 0.4,
   },
-  statusPosted: {
-    color: "#16a34a",
-    fontWeight: "700",
-  },
-  statusDraft: {
-    color: "#f59e0b",
-    fontWeight: "700",
-  },
-  emptyContainer: {
-    padding: 60,
-    alignItems: "center",
+
+  /* ── Empty ── */
+  emptyCard: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    marginBottom: 20,
+    borderRadius: 16,
+    padding: 48,
+    alignItems: "center",
+    marginTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   emptyIcon: {
-    fontSize: 48,
+    fontSize: 52,
     marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    fontWeight: "800",
+    color: "#1a0f33",
     marginBottom: 8,
   },
-  emptyText: {
+  emptyBody: {
     fontSize: 14,
     color: "#6b7280",
     textAlign: "center",
+    lineHeight: 20,
   },
-  emptyActionButton: {
+  emptyBtn: {
     marginTop: 20,
+    backgroundColor: "#d1b05e",
     paddingVertical: 12,
     paddingHorizontal: 24,
-    backgroundColor: BRAND_COLORS.gold,
     borderRadius: 10,
   },
-  emptyActionText: {
+  emptyBtnText: {
     fontSize: 14,
     fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    color: "#1a0f33",
   },
-  paginationContainer: {
+
+  /* ── Pagination ── */
+  pagination: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    justifyContent: "space-between",
+    marginHorizontal: 16,
+    marginTop: 16,
     backgroundColor: "#fff",
-    marginTop: 20,
-    marginHorizontal: 20,
     borderRadius: 12,
+    padding: 14,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.07,
     shadowRadius: 4,
     elevation: 2,
   },
-  paginationButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: BRAND_COLORS.gold,
-    borderRadius: 8,
+  pageBtn: {
+    backgroundColor: "#d1b05e",
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: 9,
   },
-  paginationButtonDisabled: {
+  pageBtnDisabled: {
     backgroundColor: "#e5e7eb",
   },
-  paginationButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
+  pageBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1a0f33",
   },
-  paginationButtonTextDisabled: {
+  pageBtnTextDisabled: {
     color: "#9ca3af",
   },
-  paginationInfo: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
+  pageInfo: {
+    backgroundColor: "#f3f4f8",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  pageInfoText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#374151",
   },
 });

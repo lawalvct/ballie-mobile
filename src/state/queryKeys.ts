@@ -57,6 +57,7 @@ export const queryKeys = {
     list: (params?: Record<string, any>) =>
       [...queryKeys.vouchers.lists(), params] as const,
     detail: (id: number) => [...queryKeys.vouchers.all, "detail", id] as const,
+    statistics: () => [...queryKeys.vouchers.all, "statistics"] as const,
   },
 
   voucherTypes: {
@@ -71,6 +72,7 @@ export const queryKeys = {
       [...queryKeys.ledgerAccounts.lists(), params] as const,
     detail: (id: number) =>
       [...queryKeys.ledgerAccounts.all, "detail", id] as const,
+    statistics: () => [...queryKeys.ledgerAccounts.all, "statistics"] as const,
   },
 
   accountGroups: {
@@ -85,6 +87,7 @@ export const queryKeys = {
     list: (params?: Record<string, any>) =>
       [...queryKeys.banks.lists(), params] as const,
     detail: (id: number) => [...queryKeys.banks.all, "detail", id] as const,
+    statistics: () => [...queryKeys.banks.all, "statistics"] as const,
   },
 
   invoices: {
@@ -93,6 +96,7 @@ export const queryKeys = {
     list: (params?: Record<string, any>) =>
       [...queryKeys.invoices.lists(), params] as const,
     detail: (id: number) => [...queryKeys.invoices.all, "detail", id] as const,
+    statistics: () => [...queryKeys.invoices.all, "statistics"] as const,
   },
 
   quotations: {
@@ -118,6 +122,9 @@ export const queryKeys = {
     lists: () => [...queryKeys.reconciliation.all, "list"] as const,
     list: (params?: Record<string, any>) =>
       [...queryKeys.reconciliation.lists(), params] as const,
+    detail: (id: number) =>
+      [...queryKeys.reconciliation.all, "detail", id] as const,
+    statistics: () => [...queryKeys.reconciliation.all, "statistics"] as const,
   },
 
   // ── CRM ────────────────────────────────────────────────────────────────────

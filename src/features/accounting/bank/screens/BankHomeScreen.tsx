@@ -1,29 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   ScrollView,
   RefreshControl,
   TextInput,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { Picker } from "@react-native-picker/picker";
 import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
-import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
-import { bankService } from "../services/bankService";
-import type {
-  BankAccount,
-  ListParams,
-  PaginationInfo,
-  Statistics,
-} from "../types";
+import AccountingModuleHeader from "../../../../components/accounting/AccountingModuleHeader";
+import { useBanks } from "../hooks/useBanks";
+import type { BankAccount, ListParams } from "../types";
 
 const statusBadgeMap: Record<string, { bg: string; text: string }> = {
   active: { bg: "#d1fae5", text: "#065f46" },
@@ -35,14 +29,7 @@ const statusBadgeMap: Record<string, { bg: string; text: string }> = {
 type Props = NativeStackScreenProps<AccountingStackParamList, "BankHome">;
 
 export default function BankHomeScreen({ navigation }: Props) {
-  const [banks, setBanks] = useState<BankAccount[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
-  const [bankNames, setBankNames] = useState<string[]>([]);
-  const [searchText, setSearchText] = useState<string>("");
-
+  const [searchText, setSearchText] = useState("");
   const [filters, setFilters] = useState<ListParams>({
     sort_by: "created_at",
     sort_order: "desc",
@@ -50,132 +37,99 @@ export default function BankHomeScreen({ navigation }: Props) {
     per_page: 20,
   });
 
-  useEffect(() => {
-    loadData();
-  }, [filters]);
+  const {
+    banks,
+    pagination,
+    statistics,
+    bankNames,
+    isLoading,
+    isRefreshing,
+    refresh,
+  } = useBanks(filters);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const response = await bankService.list(filters);
-      setBanks(response.banks || []);
-      setPagination(response.pagination || null);
-      setStatistics(response.statistics || null);
-      setBankNames(response.bank_names || []);
-    } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to load bank accounts",
-        [{ text: "OK" }],
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ─── Handlers ──────────────────────────────────────────────────────────────
 
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      await loadData();
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleSearch = () => {
+  const handleSearch = () =>
     setFilters((prev) => ({
       ...prev,
       page: 1,
       search: searchText.trim() || undefined,
     }));
-  };
 
-  const handleFilterChange = (key: keyof ListParams, value: string) => {
+  const handleFilterChange = (key: keyof ListParams, value: string) =>
     setFilters((prev) => ({
       ...prev,
       page: 1,
       [key]: value || undefined,
     }));
-  };
 
-  const handlePageChange = (page: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      page,
-    }));
-  };
+  const handlePageChange = (page: number) =>
+    setFilters((prev) => ({ ...prev, page }));
+
+  const handleCreated = () => refresh();
 
   const toNumber = (value: number | string | null | undefined) =>
     typeof value === "number" ? value : value ? Number(value) : 0;
 
-  if (loading && !refreshing) {
+  // ─── Loading ────────────────────────────────────────────────────────────────
+
+  if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <AccountingModuleHeader
+          title="Bank Accounts"
+          onBack={() => navigation.goBack()}
+          navigation={navigation}
         />
-
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Bank Accounts</Text>
-          <View style={styles.placeholder} />
-        </View>
-
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-          <Text style={styles.loadingText}>Loading bank accounts...</Text>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#d1b05e" />
+          <Text style={styles.loadingLabel}>Loading bank accounts…</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  // ─── Main render ────────────────────────────────────────────────────────────
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <AccountingModuleHeader
+        title="Bank Accounts"
+        onBack={() => navigation.goBack()}
+        navigation={navigation}
       />
 
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bank Accounts</Text>
-        <View style={styles.placeholder} />
-      </View>
-
       <ScrollView
-        style={styles.content}
+        style={styles.body}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refresh}
+            colors={["#d1b05e"]}
+            tintColor="#d1b05e"
+          />
         }>
+        {/* Create button */}
         <View style={styles.actionsSection}>
           <TouchableOpacity
-            style={styles.primaryBtn}
+            style={styles.createBtn}
             onPress={() =>
               navigation.navigate({
                 name: "BankCreate",
-                params: {
-                  onCreated: loadData,
-                },
+                params: { onCreated: handleCreated },
               })
             }
             activeOpacity={0.8}>
-            <Text style={styles.primaryBtnIcon}>+</Text>
-            <Text style={styles.primaryBtnText}>Add Bank Account</Text>
+            <Text style={styles.createBtnIcon}>+</Text>
+            <Text style={styles.createBtnLabel}>Add Bank Account</Text>
           </TouchableOpacity>
         </View>
 
-        {statistics ? (
+        {/* Stats */}
+        {statistics && (
           <View style={styles.statsSection}>
             <Text style={styles.sectionTitle}>Overview</Text>
             <View style={styles.statsGrid}>
@@ -217,8 +171,9 @@ export default function BankHomeScreen({ navigation }: Props) {
               </LinearGradient>
             </View>
           </View>
-        ) : null}
+        )}
 
+        {/* Search + Filters */}
         <View style={styles.filtersSection}>
           <View style={styles.searchRow}>
             <TextInput
@@ -232,7 +187,8 @@ export default function BankHomeScreen({ navigation }: Props) {
             />
             <TouchableOpacity
               style={styles.searchButton}
-              onPress={handleSearch}>
+              onPress={handleSearch}
+              activeOpacity={0.8}>
               <Text style={styles.searchButtonText}>Search</Text>
             </TouchableOpacity>
           </View>
@@ -267,7 +223,7 @@ export default function BankHomeScreen({ navigation }: Props) {
                 }
                 style={styles.picker}>
                 <Picker.Item label="All Banks" value="" />
-                {bankNames.map((name) => (
+                {bankNames.map((name: string) => (
                   <Picker.Item key={name} label={name} value={name} />
                 ))}
               </Picker>
@@ -275,17 +231,33 @@ export default function BankHomeScreen({ navigation }: Props) {
           </View>
         </View>
 
+        {/* Bank list */}
         <View style={styles.listSection}>
           {banks.length === 0 ? (
-            <View style={styles.emptyContainer}>
+            <View style={styles.emptyCard}>
               <Text style={styles.emptyIcon}>🏦</Text>
               <Text style={styles.emptyTitle}>No Bank Accounts</Text>
-              <Text style={styles.emptyText}>
-                Create your first bank account to get started
+              <Text style={styles.emptyBody}>
+                {filters.search || filters.status || filters.bank_name
+                  ? "No accounts match your current filters. Try clearing them."
+                  : "Create your first bank account to get started."}
               </Text>
+              {!filters.search && !filters.status && !filters.bank_name && (
+                <TouchableOpacity
+                  style={styles.emptyBtn}
+                  onPress={() =>
+                    navigation.navigate({
+                      name: "BankCreate",
+                      params: { onCreated: handleCreated },
+                    })
+                  }
+                  activeOpacity={0.8}>
+                  <Text style={styles.emptyBtnText}>+ Add Bank Account</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
-            banks.map((bank) => {
+            banks.map((bank: BankAccount) => {
               const statusStyle = statusBadgeMap[bank.status || ""] || {
                 bg: "#e5e7eb",
                 text: "#6b7280",
@@ -358,56 +330,14 @@ export default function BankHomeScreen({ navigation }: Props) {
           )}
         </View>
 
-        {pagination && pagination.last_page > 1 ? (
-          <View style={styles.paginationContainer}>
-            <View style={styles.paginationInfo}>
-              <Text style={styles.paginationText}>
-                Page {pagination.current_page} of {pagination.last_page}
-              </Text>
-              <Text style={styles.paginationSubtext}>
-                Showing {pagination.from ?? 0} to {pagination.to ?? 0} of{" "}
-                {pagination.total}
-              </Text>
-            </View>
-            <View style={styles.paginationButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.paginationButton,
-                  pagination.current_page === 1 &&
-                    styles.paginationButtonDisabled,
-                ]}
-                onPress={() => handlePageChange(pagination.current_page - 1)}
-                disabled={pagination.current_page === 1}>
-                <Text
-                  style={[
-                    styles.paginationButtonText,
-                    pagination.current_page === 1 &&
-                      styles.paginationButtonTextDisabled,
-                  ]}>
-                  ← Previous
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.paginationButton,
-                  pagination.current_page === pagination.last_page &&
-                    styles.paginationButtonDisabled,
-                ]}
-                onPress={() => handlePageChange(pagination.current_page + 1)}
-                disabled={pagination.current_page === pagination.last_page}>
-                <Text
-                  style={[
-                    styles.paginationButtonText,
-                    pagination.current_page === pagination.last_page &&
-                      styles.paginationButtonTextDisabled,
-                  ]}>
-                  Next →
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : null}
+        {/* Pagination */}
+        {pagination.last_page > 1 && (
+          <Pagination
+            current={pagination.current_page}
+            total={pagination.last_page}
+            onChange={handlePageChange}
+          />
+        )}
 
         <View style={{ height: 30 }} />
       </ScrollView>
@@ -415,126 +345,161 @@ export default function BankHomeScreen({ navigation }: Props) {
   );
 }
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function Pagination({
+  current,
+  total,
+  onChange,
+}: {
+  current: number;
+  total: number;
+  onChange: (page: number) => void;
+}) {
+  const hasPrev = current > 1;
+  const hasNext = current < total;
+
+  return (
+    <View style={styles.pagination}>
+      <TouchableOpacity
+        style={[styles.pageBtn, !hasPrev && styles.pageBtnDisabled]}
+        onPress={() => hasPrev && onChange(current - 1)}
+        disabled={!hasPrev}
+        activeOpacity={0.7}>
+        <Text
+          style={[styles.pageBtnText, !hasPrev && styles.pageBtnTextDisabled]}>
+          ← Prev
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.pageInfo}>
+        <Text style={styles.pageInfoText}>
+          {current} / {total}
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={[styles.pageBtn, !hasNext && styles.pageBtnDisabled]}
+        onPress={() => hasNext && onChange(current + 1)}
+        disabled={!hasNext}
+        activeOpacity={0.7}>
+        <Text
+          style={[styles.pageBtnText, !hasNext && styles.pageBtnTextDisabled]}>
+          Next →
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
-  },
-  backButton: {
-    paddingVertical: 8,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: SEMANTIC_COLORS.white,
-    fontWeight: "600",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: SEMANTIC_COLORS.white,
-  },
-  placeholder: {
-    width: 60,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  loadingContainer: {
+
+  /* ── Loading ── */
+  loadingWrap: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 40,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
   },
-  loadingText: {
-    marginTop: 12,
+  loadingLabel: {
+    marginTop: 14,
     fontSize: 14,
-    color: BRAND_COLORS.darkPurple,
+    color: "#6b7280",
   },
+
+  /* ── Body ── */
+  body: {
+    flex: 1,
+    backgroundColor: "#f3f4f8",
+  },
+
+  /* ── Actions section ── */
   actionsSection: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
-  primaryBtn: {
+  createBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BRAND_COLORS.gold,
-    paddingVertical: 16,
+    backgroundColor: "#d1b05e",
+    paddingVertical: 15,
     paddingHorizontal: 24,
     borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: "#000",
+    gap: 8,
+    shadowColor: "#d1b05e",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
-  primaryBtnIcon: {
-    fontSize: 24,
+  createBtnIcon: {
+    fontSize: 22,
     fontWeight: "bold",
-    color: BRAND_COLORS.darkPurple,
-    marginRight: 8,
+    color: "#1a0f33",
+    lineHeight: 24,
   },
-  primaryBtnText: {
+  createBtnLabel: {
     fontSize: 16,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    fontWeight: "800",
+    color: "#1a0f33",
+    letterSpacing: 0.3,
   },
+
+  /* ── Stats ── */
   statsSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#1a0f33",
+    marginBottom: 12,
   },
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 10,
   },
   statCard: {
     flex: 1,
     minWidth: "47%",
-    padding: 20,
-    borderRadius: 16,
+    padding: 18,
+    borderRadius: 14,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 3,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 4,
     textAlign: "center",
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: "500",
+    fontWeight: "600",
     textAlign: "center",
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: BRAND_COLORS.darkPurple,
-    marginBottom: 16,
-  },
+
+  /* ── Filters ── */
   filtersSection: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   searchRow: {
     flexDirection: "row",
@@ -549,23 +514,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
-    color: BRAND_COLORS.darkPurple,
+    color: "#1a0f33",
   },
   searchButton: {
-    backgroundColor: BRAND_COLORS.gold,
+    backgroundColor: "#d1b05e",
     paddingHorizontal: 18,
     borderRadius: 10,
     justifyContent: "center",
   },
   searchButtonText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
+    fontWeight: "700",
+    color: "#1a0f33",
   },
   filterRow: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 12,
+    marginTop: 10,
   },
   pickerContainer: {
     flex: 1,
@@ -578,18 +543,20 @@ const styles = StyleSheet.create({
   picker: {
     height: 48,
   },
+
+  /* ── List ── */
   listSection: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   bankCard: {
-    backgroundColor: SEMANTIC_COLORS.white,
-    borderRadius: 16,
+    backgroundColor: "#fff",
+    borderRadius: 14,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.07,
     shadowRadius: 6,
     elevation: 3,
   },
@@ -603,29 +570,32 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    flex: 1,
   },
   bankName: {
     fontSize: 16,
     fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    color: "#1a0f33",
   },
   primaryBadge: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     color: "#059669",
     backgroundColor: "#d1fae5",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
+    letterSpacing: 0.3,
   },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
+    letterSpacing: 0.4,
   },
   accountName: {
     fontSize: 13,
@@ -649,6 +619,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e5e7eb",
+    paddingTop: 10,
   },
   balanceLabel: {
     fontSize: 11,
@@ -657,81 +630,96 @@ const styles = StyleSheet.create({
   balanceValue: {
     fontSize: 15,
     fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    color: "#1a0f33",
   },
   balanceRight: {
     alignItems: "flex-end",
   },
-  emptyContainer: {
-    padding: 40,
-    alignItems: "center",
+
+  /* ── Empty ── */
+  emptyCard: {
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 16,
+    padding: 48,
+    alignItems: "center",
+    marginTop: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   emptyIcon: {
-    fontSize: 48,
+    fontSize: 52,
     marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
+    fontWeight: "800",
+    color: "#1a0f33",
     marginBottom: 8,
   },
-  emptyText: {
+  emptyBody: {
     fontSize: 14,
     color: "#6b7280",
     textAlign: "center",
+    lineHeight: 20,
   },
-  paginationContainer: {
-    padding: 16,
-    backgroundColor: "#fff",
+  emptyBtn: {
     marginTop: 20,
-    marginHorizontal: 20,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    backgroundColor: "#d1b05e",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
   },
-  paginationInfo: {
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  paginationText: {
+  emptyBtnText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#1f2937",
-    marginBottom: 4,
+    fontWeight: "700",
+    color: "#1a0f33",
   },
-  paginationSubtext: {
-    fontSize: 12,
-    color: "#6b7280",
-  },
-  paginationButtons: {
+
+  /* ── Pagination ── */
+  pagination: {
     flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-  },
-  paginationButton: {
-    backgroundColor: BRAND_COLORS.gold,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    minWidth: 120,
     alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  paginationButtonDisabled: {
+  pageBtn: {
+    backgroundColor: "#d1b05e",
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: 9,
+  },
+  pageBtnDisabled: {
     backgroundColor: "#e5e7eb",
-    opacity: 0.6,
   },
-  paginationButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
+  pageBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1a0f33",
   },
-  paginationButtonTextDisabled: {
+  pageBtnTextDisabled: {
     color: "#9ca3af",
+  },
+  pageInfo: {
+    backgroundColor: "#f3f4f8",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  pageInfoText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#374151",
   },
 });
