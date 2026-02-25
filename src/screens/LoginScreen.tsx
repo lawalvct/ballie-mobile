@@ -184,7 +184,7 @@ export default function LoginScreen({
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              Secure • Encrypted • Trusted by 10,000+ businesses
+              Secure • Encrypted • Trusted by 500+ businesses
             </Text>
           </View>
         </ScrollView>

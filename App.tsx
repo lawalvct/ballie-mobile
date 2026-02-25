@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, Alert } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./src/state";
 import Splash1 from "./src/screens/Splash1";
 import Splash2 from "./src/screens/Splash2";
 import LoginScreen from "./src/screens/LoginScreen";
@@ -50,7 +52,7 @@ interface RegistrationData {
 function AppContent() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("splash1");
   const [registrationData, setRegistrationData] = useState<RegistrationData>(
-    {}
+    {},
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -140,7 +142,7 @@ function AppContent() {
       await login(
         response.data.token,
         response.data.user,
-        response.data.tenant
+        response.data.tenant,
       );
 
       // After registration, always start at onboarding welcome
@@ -148,9 +150,9 @@ function AppContent() {
       setCurrentScreen("onboardingWelcome");
 
       Alert.alert(
-        "Welcome to Ballie! 🎉",
+        "Welcome to Ballie!",
         response.data.message ||
-          "Registration successful! Your 30-day free trial has started."
+          "Registration successful! Your 30-day free trial has started.",
       );
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -177,7 +179,7 @@ function AppContent() {
       const response = await onboardingAPI.skip(tenant.slug);
       Alert.alert(
         "Setup Complete! ✅",
-        response.data.data?.message || "Your business is ready to go!"
+        response.data.data?.message || "Your business is ready to go!",
       );
       setNeedsOnboarding(false);
       setCurrentScreen("onboardingComplete");
@@ -236,7 +238,7 @@ function AppContent() {
             text: "Proceed to Dashboard",
             onPress: () => setNeedsOnboarding(false),
           },
-        ]
+        ],
       );
     }
   };
@@ -398,10 +400,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <AppContent />
-      </SafeAreaProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <AppContent />
+        </SafeAreaProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
