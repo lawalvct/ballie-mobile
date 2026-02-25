@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -6,56 +6,51 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
-  Platform,
 } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
+
+const TAB_BAR_HEIGHT = 62;
+
+const TABS = [
+  { id: "Dashboard", label: "Dashboard", icon: "📊" },
+  { id: "Accounting", label: "Accounting", icon: "💰" },
+  { id: "Inventory", label: "Inventory", icon: "📦" },
+  // { id: "POS", label: "POS", icon: "💳" },
+  { id: "CRM", label: "CRM", icon: "👥" },
+  { id: "Payroll", label: "Payroll", icon: "💵" },
+  { id: "Reports", label: "Reports", icon: "📈" },
+  { id: "Audit", label: "Audit", icon: "🔍" },
+  { id: "Ecommerce", label: "E-com", icon: "🛒" },
+  { id: "Admins", label: "Admins", icon: "👔" },
+  { id: "Statutory", label: "Statutory", icon: "📜" },
+] as const;
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
-  const [showPointer, setShowPointer] = useState(true);
-  const [pointerAnim] = useState(new Animated.Value(0));
-  const [pointerOpacity] = useState(new Animated.Value(1));
+  const insets = useSafeAreaInsets();
   const [containerWidth, setContainerWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
-  const insets = useSafeAreaInsets();
+  const [showPointer, setShowPointer] = useState(false);
+  const pointerAnim = useRef(new Animated.Value(0)).current;
+  const pointerOpacity = useRef(new Animated.Value(1)).current;
+  const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // For Android with 3-button navigation, insets.bottom is often 0 even though
-  // the navigation bar exists. We use a fixed minimum padding of 56dp for Android
-  // which covers both gesture nav (~24dp) and 3-button nav (~48dp) with some buffer.
-  // This ensures the tab bar is always tappable above the system navigation.
-  const ANDROID_NAV_BAR_PADDING = 56;
-
-  const bottomInset =
-    Platform.OS === "android"
-      ? Math.max(insets.bottom, ANDROID_NAV_BAR_PADDING)
-      : insets.bottom;
-
-  const tabs = [
-    { id: "Dashboard", label: "Dashboard", icon: "📊" },
-    { id: "Accounting", label: "Accounting", icon: "💰" },
-    { id: "Inventory", label: "Inventory", icon: "📦" },
-    // { id: "POS", label: "POS", icon: "💳" },
-    { id: "CRM", label: "CRM", icon: "👥" },
-    { id: "Payroll", label: "Payroll", icon: "💵" },
-    { id: "Reports", label: "Reports", icon: "📈" },
-    { id: "Audit", label: "Audit", icon: "🔍" },
-    { id: "Ecommerce", label: "E-commerce", icon: "🛒" },
-
-    { id: "Admins", label: "Admins", icon: "👔" },
-    { id: "Statutory", label: "Statutory", icon: "📜" },
-  ];
+  // Safe area bottom covers both gesture nav and 3-button nav correctly.
+  // Add a small minimum so the bar doesn't look glued to the edge on
+  // devices that report insets.bottom === 0 (some older Android builds).
+  const bottomPad = Math.max(insets.bottom, 4);
 
   const isOverflowing = useMemo(
     () => contentWidth > containerWidth + 8,
     [contentWidth, containerWidth],
   );
+
   const shouldShowHint = useMemo(() => {
-    if (contentWidth === 0 || containerWidth === 0) {
-      return tabs.length > 5;
-    }
+    if (contentWidth === 0 || containerWidth === 0) return TABS.length > 5;
     return isOverflowing;
-  }, [contentWidth, containerWidth, isOverflowing, tabs.length]);
+  }, [contentWidth, containerWidth, isOverflowing]);
 
   useEffect(() => {
     if (!shouldShowHint) {
@@ -64,38 +59,25 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     }
 
     setShowPointer(true);
+    pointerOpacity.setValue(1);
 
-    Animated.loop(
+    const bounce = Animated.loop(
       Animated.sequence([
         Animated.timing(pointerAnim, {
           toValue: 1,
-          duration: 1000,
+          duration: 900,
           useNativeDriver: true,
         }),
         Animated.timing(pointerAnim, {
           toValue: 0,
-          duration: 1000,
+          duration: 900,
           useNativeDriver: true,
         }),
       ]),
-    ).start();
+    );
+    bounce.start();
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pointerOpacity, {
-          toValue: 0.5,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pointerOpacity, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-
-    const timer = setTimeout(() => {
+    hintTimerRef.current = setTimeout(() => {
       Animated.timing(pointerOpacity, {
         toValue: 0,
         duration: 400,
@@ -103,97 +85,89 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       }).start(() => setShowPointer(false));
     }, 5000);
 
-    return () => clearTimeout(timer);
-  }, [shouldShowHint, pointerAnim, pointerOpacity]);
+    return () => {
+      bounce.stop();
+      if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+    };
+  }, [shouldShowHint]);
 
-  const handleScroll = () => {
-    // Hide pointer when user starts scrolling
-    setShowPointer(false);
-  };
+  const handleScroll = () => setShowPointer(false);
 
   const translateX = pointerAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 12],
+    outputRange: [0, 10],
   });
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingBottom: bottomInset, height: 70 + bottomInset },
-      ]}>
+    <View style={[styles.wrapper, { paddingBottom: bottomPad }]}>
+      {/* Tab content area — fixed height */}
       <View
-        style={styles.scrollWrapper}
-        onLayout={(event) => setContainerWidth(event.nativeEvent.layout.width)}>
+        style={styles.tabArea}
+        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: 10 + bottomInset },
-          ]}
-          onContentSizeChange={(width) => setContentWidth(width)}
+          contentContainerStyle={styles.scrollContent}
+          onContentSizeChange={(w) => setContentWidth(w)}
           onScroll={handleScroll}
-          scrollEventThrottle={16}>
-          {tabs.map((tab, index) => {
+          scrollEventThrottle={64}>
+          {TABS.map((tab, index) => {
             const isFocused = state.index === index;
-
             return (
               <TouchableOpacity
                 key={tab.id}
                 style={styles.tab}
-                onPress={() => navigation.navigate(tab.id)}>
-                <Text style={[styles.icon, isFocused && styles.activeIcon]}>
+                onPress={() => navigation.navigate(tab.id)}
+                activeOpacity={0.7}>
+                <Text style={[styles.icon, isFocused && styles.iconActive]}>
                   {tab.icon}
                 </Text>
-                <Text style={[styles.label, isFocused && styles.activeLabel]}>
+                <Text
+                  style={[styles.label, isFocused && styles.labelActive]}
+                  numberOfLines={1}>
                   {tab.label}
                 </Text>
+                {isFocused && <View style={styles.activeBar} />}
               </TouchableOpacity>
             );
           })}
         </ScrollView>
 
+        {/* Fade edges when scrollable */}
         {isOverflowing && (
           <>
             <LinearGradient
-              colors={["rgba(60, 44, 100, 0)", "rgba(60, 44, 100, 0.9)"]}
+              colors={["rgba(15,10,30,0.95)", "rgba(15,10,30,0)"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.rightFade}
+              style={styles.fadeLeft}
               pointerEvents="none"
             />
             <LinearGradient
-              colors={["rgba(60, 44, 100, 0.9)", "rgba(60, 44, 100, 0)"]}
+              colors={["rgba(15,10,30,0)", "rgba(15,10,30,0.95)"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.leftFade}
+              style={styles.fadeRight}
               pointerEvents="none"
             />
           </>
         )}
       </View>
 
-      {/* Scroll Indicator Pointer */}
+      {/* Swipe hint */}
       {showPointer && shouldShowHint && (
         <Animated.View
           style={[
-            styles.pointerContainer,
-            {
-              transform: [{ translateX }],
-              opacity: pointerOpacity,
-            },
+            styles.hintPill,
+            { transform: [{ translateX }], opacity: pointerOpacity },
           ]}>
           <LinearGradient
             colors={["#f7d68f", "#d1b05e", "#b89950"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.pointerBackground}
+            style={StyleSheet.absoluteFill}
           />
-          <View style={styles.pointerContent}>
-            <Text style={styles.pointerText}>Swipe tabs</Text>
-            <Text style={styles.pointerArrow}>→</Text>
-          </View>
+          <Text style={styles.hintText}>Swipe →</Text>
         </Animated.View>
       )}
     </View>
@@ -201,95 +175,102 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#3c2c64",
-    height: 70,
-    borderTopWidth: 0,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  /* Outer wrapper – sits at the very bottom of the screen.
+     paddingBottom is set dynamically from safe area insets
+     so the bar clears the system nav on both gesture and
+     3-button Android devices (and the home indicator on iOS). */
+  wrapper: {
+    backgroundColor: BRAND_COLORS.darkPurple,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(255,255,255,0.06)",
+    elevation: 12,
+    shadowColor: BRAND_COLORS.darkPurple,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
-  scrollWrapper: {
-    flex: 1,
+
+  /* Fixed-height area that holds the scrollable tabs */
+  tabArea: {
+    height: TAB_BAR_HEIGHT,
+    overflow: "hidden",
   },
+
   scrollContent: {
-    paddingHorizontal: 8,
-    paddingBottom: 10,
-    paddingTop: 10,
+    paddingHorizontal: 6,
     alignItems: "center",
+    height: TAB_BAR_HEIGHT,
   },
+
   tab: {
-    minWidth: 80,
-    paddingHorizontal: 12,
-    justifyContent: "center",
+    width: 72,
     alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 8,
+    paddingBottom: 6,
   },
+
   icon: {
-    fontSize: 24,
-    opacity: 0.6,
-    marginBottom: 4,
+    fontSize: 22,
+    opacity: 0.45,
+    marginBottom: 3,
   },
-  activeIcon: {
+  iconActive: {
     opacity: 1,
   },
+
   label: {
-    fontSize: 11,
-    color: "#a48cb4",
+    fontSize: 10,
     fontWeight: "600",
+    color: "rgba(255,255,255,0.35)",
   },
-  activeLabel: {
+  labelActive: {
     color: "#d1b05e",
-    fontWeight: "bold",
+    fontWeight: "700",
   },
-  leftFade: {
+
+  /* Gold underline on active tab */
+  activeBar: {
+    position: "absolute",
+    bottom: 4,
+    width: 20,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#d1b05e",
+  },
+
+  fadeLeft: {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
-    width: 30,
+    width: 28,
   },
-  rightFade: {
+  fadeRight: {
     position: "absolute",
     right: 0,
     top: 0,
     bottom: 0,
-    width: 36,
+    width: 28,
   },
-  pointerContainer: {
+
+  hintPill: {
     position: "absolute",
-    right: 16,
-    top: 10,
-    borderRadius: 20,
+    right: 14,
+    top: 8,
+    borderRadius: 16,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     elevation: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    shadowColor: BRAND_COLORS.darkPurple,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  pointerBackground: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  pointerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  pointerText: {
-    fontSize: 13,
-    color: "#2a1e4a",
-    fontWeight: "700",
-    letterSpacing: 0.3,
-  },
-  pointerArrow: {
-    fontSize: 16,
-    color: "#2a1e4a",
-    fontWeight: "bold",
+  hintText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: BRAND_COLORS.darkPurple,
   },
 });
