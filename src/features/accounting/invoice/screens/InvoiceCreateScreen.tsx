@@ -418,7 +418,8 @@ export default function InvoiceCreateScreen() {
         `Invoice ${status === "draft" ? "saved as draft" : "created and posted"} successfully`,
         "success",
       );
-      navigation.navigate("InvoiceShow", { id: invoice.id });
+      // replace so "Back" from InvoiceShow goes to InvoiceHome, not back here
+      navigation.replace("InvoiceShow", { id: invoice.id });
     } catch (err: any) {
       // apiClient interceptor rejects with error.response?.data directly
       const apiMessage =

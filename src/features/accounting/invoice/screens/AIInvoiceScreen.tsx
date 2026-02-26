@@ -213,7 +213,8 @@ export default function AIInvoiceScreen() {
 
       const invoice = await invoiceService.create(payload);
       showToast("Invoice created and posted successfully!", "success");
-      navigation.navigate("InvoiceShow", { id: invoice.id });
+      // replace so "Back" from InvoiceShow goes to InvoiceHome, not back here
+      navigation.replace("InvoiceShow", { id: invoice.id });
     } catch (err: any) {
       const apiMessage =
         typeof err === "string"
