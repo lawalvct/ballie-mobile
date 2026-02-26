@@ -5,9 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
@@ -219,21 +220,27 @@ export default function PayrollActionsScreen() {
   const navigation = useNavigation<NavigationProp>();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
 
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Text style={styles.backArrow}>‹</Text>
+          <Text style={styles.backLabel}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>All Payroll Actions</Text>
-        <View style={styles.placeholder} />
-      </View>
+        <View style={styles.headerMid}>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            All Payroll Actions
+          </Text>
+        </View>
+      </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {SECTIONS.map((section) => (
@@ -286,36 +293,42 @@ export default function PayrollActionsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    paddingVertical: 14,
+    gap: 12,
   },
-  backButton: {
-    paddingVertical: 8,
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  backButtonText: {
-    fontSize: 16,
-    color: SEMANTIC_COLORS.white,
+  backArrow: {
+    fontSize: 30,
+    lineHeight: 30,
+    color: "rgba(164,212,255,0.85)",
+  },
+  backLabel: {
+    fontSize: 15,
     fontWeight: "600",
+    color: "rgba(164,212,255,0.85)",
+    marginLeft: 2,
+  },
+  headerMid: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: SEMANTIC_COLORS.white,
-  },
-  placeholder: {
-    width: 60,
+    fontWeight: "800",
+    color: "#fff",
+    letterSpacing: -0.3,
   },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
   },
   section: {
     marginTop: 24,
