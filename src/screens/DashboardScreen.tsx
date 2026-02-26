@@ -1,163 +1,139 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { StatusBar } from "expo-status-bar";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
-import { useAuth } from "../context/AuthContext";
-import AppHeader from "../components/AppHeader";
+import ModuleScreenLayout from "../components/ModuleScreenLayout";
 
 export default function DashboardScreen() {
-  const { user, tenant, logout } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" backgroundColor="#3c2c64" translucent={false} />
-      <AppHeader
-        businessName={tenant?.name}
-        userName={user?.name}
-        userRole={user?.role}
-      />
+    <ModuleScreenLayout>
+      {/* Financial Overview */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Financial Overview</Text>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Financial Overview */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Financial Overview</Text>
+        <View style={styles.statsGrid}>
+          <LinearGradient
+            colors={["#249484", "#69a2a4"]}
+            style={[styles.statCard, styles.largeCard]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}>
+            <Text style={styles.statLabel}>Total Revenue</Text>
+            <Text style={styles.statValue}>₦2,450,890</Text>
+            <Text style={styles.statChange}>+12.5% from last month</Text>
+          </LinearGradient>
 
-          <View style={styles.statsGrid}>
+          <View style={styles.smallCardsRow}>
             <LinearGradient
-              colors={["#249484", "#69a2a4"]}
-              style={[styles.statCard, styles.largeCard]}
+              colors={["#ef4444", "#dc2626"]}
+              style={[styles.statCard, styles.smallCard]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}>
-              <Text style={styles.statLabel}>Total Revenue</Text>
-              <Text style={styles.statValue}>₦2,450,890</Text>
-              <Text style={styles.statChange}>+12.5% from last month</Text>
+              <Text style={styles.statLabel}>Expenses</Text>
+              <Text style={styles.statValueSmall}>₦823,456</Text>
             </LinearGradient>
 
-            <View style={styles.smallCardsRow}>
-              <LinearGradient
-                colors={["#ef4444", "#dc2626"]}
-                style={[styles.statCard, styles.smallCard]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}>
-                <Text style={styles.statLabel}>Expenses</Text>
-                <Text style={styles.statValueSmall}>₦823,456</Text>
-              </LinearGradient>
+            <LinearGradient
+              colors={["#d1b05e", "#c9a556"]}
+              style={[styles.statCard, styles.smallCard]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}>
+              <Text style={styles.statLabel}>Net Profit</Text>
+              <Text style={styles.statValueSmall}>₦1,627,434</Text>
+            </LinearGradient>
+          </View>
+        </View>
+      </View>
 
-              <LinearGradient
-                colors={["#d1b05e", "#c9a556"]}
-                style={[styles.statCard, styles.smallCard]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}>
-                <Text style={styles.statLabel}>Net Profit</Text>
-                <Text style={styles.statValueSmall}>₦1,627,434</Text>
-              </LinearGradient>
+      {/* Quick Actions */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.actionsGrid}>
+          <TouchableOpacity style={styles.actionCard}>
+            <View style={styles.actionIcon}>
+              <Text style={styles.actionEmoji}>📄</Text>
             </View>
-          </View>
-        </View>
+            <Text style={styles.actionLabel}>New Invoice</Text>
+          </TouchableOpacity>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
-            <TouchableOpacity style={styles.actionCard}>
-              <View style={styles.actionIcon}>
-                <Text style={styles.actionEmoji}>📄</Text>
-              </View>
-              <Text style={styles.actionLabel}>New Invoice</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionCard}>
-              <View style={styles.actionIcon}>
-                <Text style={styles.actionEmoji}>💰</Text>
-              </View>
-              <Text style={styles.actionLabel}>Add Expense</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionCard}>
-              <View style={styles.actionIcon}>
-                <Text style={styles.actionEmoji}>👥</Text>
-              </View>
-              <Text style={styles.actionLabel}>New Customer</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionCard}>
-              <View style={styles.actionIcon}>
-                <Text style={styles.actionEmoji}>📊</Text>
-              </View>
-              <Text style={styles.actionLabel}>Reports</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Recent Transactions */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Transactions</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAll}>View All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.transactionsList}>
-            <TransactionItem
-              title="Invoice #INV-2025-001"
-              amount="₦145,000"
-              date="Today, 2:30 PM"
-              type="income"
-            />
-            <TransactionItem
-              title="Office Supplies"
-              amount="₦12,500"
-              date="Today, 10:15 AM"
-              type="expense"
-            />
-            <TransactionItem
-              title="Invoice #INV-2025-002"
-              amount="₦89,000"
-              date="Yesterday, 4:45 PM"
-              type="income"
-            />
-            <TransactionItem
-              title="Internet Bill"
-              amount="₦25,000"
-              date="Yesterday, 11:20 AM"
-              type="expense"
-            />
-          </View>
-        </View>
-
-        {/* Pending Approvals */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pending Approvals</Text>
-          <View style={styles.pendingCard}>
-            <View style={styles.pendingBadge}>
-              <Text style={styles.pendingCount}>3</Text>
+          <TouchableOpacity style={styles.actionCard}>
+            <View style={styles.actionIcon}>
+              <Text style={styles.actionEmoji}>💰</Text>
             </View>
-            <View style={styles.pendingContent}>
-              <Text style={styles.pendingTitle}>Expense Reports</Text>
-              <Text style={styles.pendingDescription}>
-                3 expense reports awaiting your approval
-              </Text>
+            <Text style={styles.actionLabel}>Add Expense</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionCard}>
+            <View style={styles.actionIcon}>
+              <Text style={styles.actionEmoji}>👥</Text>
             </View>
-            <TouchableOpacity style={styles.reviewButton}>
-              <Text style={styles.reviewButtonText}>Review</Text>
-            </TouchableOpacity>
-          </View>
+            <Text style={styles.actionLabel}>New Customer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionCard}>
+            <View style={styles.actionIcon}>
+              <Text style={styles.actionEmoji}>📊</Text>
+            </View>
+            <Text style={styles.actionLabel}>Reports</Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+
+      {/* Recent Transactions */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAll}>View All</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.transactionsList}>
+          <TransactionItem
+            title="Invoice #INV-2025-001"
+            amount="₦145,000"
+            date="Today, 2:30 PM"
+            type="income"
+          />
+          <TransactionItem
+            title="Office Supplies"
+            amount="₦12,500"
+            date="Today, 10:15 AM"
+            type="expense"
+          />
+          <TransactionItem
+            title="Invoice #INV-2025-002"
+            amount="₦89,000"
+            date="Yesterday, 4:45 PM"
+            type="income"
+          />
+          <TransactionItem
+            title="Internet Bill"
+            amount="₦25,000"
+            date="Yesterday, 11:20 AM"
+            type="expense"
+          />
+        </View>
+      </View>
+
+      {/* Pending Approvals */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Pending Approvals</Text>
+        <View style={styles.pendingCard}>
+          <View style={styles.pendingBadge}>
+            <Text style={styles.pendingCount}>3</Text>
+          </View>
+          <View style={styles.pendingContent}>
+            <Text style={styles.pendingTitle}>Expense Reports</Text>
+            <Text style={styles.pendingDescription}>
+              3 expense reports awaiting your approval
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.reviewButton}>
+            <Text style={styles.reviewButtonText}>Review</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ModuleScreenLayout>
   );
 }
 
@@ -197,14 +173,6 @@ function TransactionItem({ title, amount, date, type }: TransactionItemProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#3c2c64",
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
   section: {
     paddingHorizontal: 20,
     marginTop: 24,

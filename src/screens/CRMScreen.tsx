@@ -1,15 +1,6 @@
 ﻿import React, { useCallback, useEffect, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  Alert,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import AppHeader from "../components/AppHeader";
-import { useAuth } from "../context/AuthContext";
+import { Alert } from "react-native";
+import ModuleScreenLayout from "../components/ModuleScreenLayout";
 import CRMOverview from "../components/crm/CRMOverview";
 import QuickActions from "../components/crm/QuickActions";
 import CustomersSection from "../components/crm/CustomersSection";
@@ -35,7 +26,6 @@ import type {
 import type { Statistics as InvoiceStatistics } from "../features/accounting/invoice/types";
 
 export default function CRMScreen() {
-  const { user, tenant } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState<CustomerListItem[]>([]);
@@ -124,57 +114,25 @@ export default function CRMScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" backgroundColor="#3c2c64" translucent={false} />
-      <AppHeader
-        businessName={tenant?.name}
-        userName={user?.name}
-        userRole={user?.role}
+    <ModuleScreenLayout refreshing={refreshing} onRefresh={onRefresh}>
+      <CRMOverview
+        totalCustomers={customerStats?.total_customers || 0}
+        totalVendors={vendorStats?.total_vendors || 0}
+        pendingInvoices={invoiceStats?.draft_invoices || 0}
+        outstandingReceivable={customerStatementStats?.total_receivable || 0}
+        loading={loading}
       />
-
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={["#3c2c64"]}
-            tintColor="#3c2c64"
-          />
-        }>
-        <CRMOverview
-          totalCustomers={customerStats?.total_customers || 0}
-          totalVendors={vendorStats?.total_vendors || 0}
-          pendingInvoices={invoiceStats?.draft_invoices || 0}
-          outstandingReceivable={customerStatementStats?.total_receivable || 0}
-          loading={loading}
-        />
-        <QuickActions />
-        <CustomersSection customers={customers} loading={loading} />
-        <VendorsSection vendors={vendors} loading={loading} />
-        <DocumentsSection
-          invoiceCount={invoiceCount}
-          quotationCount={quotationCount}
-          purchaseOrderCount={purchaseOrderCount}
-          receiptCount={receiptCount}
-          loading={loading}
-        />
-        <StatementsAndPayments />
-
-        <View style={{ height: 30 }} />
-      </ScrollView>
-    </SafeAreaView>
+      <QuickActions />
+      <CustomersSection customers={customers} loading={loading} />
+      <VendorsSection vendors={vendors} loading={loading} />
+      <DocumentsSection
+        invoiceCount={invoiceCount}
+        quotationCount={quotationCount}
+        purchaseOrderCount={purchaseOrderCount}
+        receiptCount={receiptCount}
+        loading={loading}
+      />
+      <StatementsAndPayments />
+    </ModuleScreenLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#3c2c64",
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-});

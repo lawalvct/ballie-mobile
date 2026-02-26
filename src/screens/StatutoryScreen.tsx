@@ -1,40 +1,24 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import AppHeader from "../components/AppHeader";
-import { useAuth } from "../context/AuthContext";
+import ModuleScreenLayout from "../components/ModuleScreenLayout";
 
 export default function StatutoryScreen() {
-  const { user, tenant } = useAuth();
-
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" backgroundColor="#3c2c64" translucent={false} />
-      <AppHeader
-        businessName={tenant?.name}
-        userName={user?.name}
-        userRole={user?.role}
-      />
-
+    <ModuleScreenLayout>
       <View style={styles.content}>
         <Text style={styles.title}>Statutory Compliance</Text>
         <Text style={styles.subtitle}>Coming Soon</Text>
       </View>
-    </SafeAreaView>
+    </ModuleScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#3c2c64",
-  },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 60,
   },
   title: {
     fontSize: 24,

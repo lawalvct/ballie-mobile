@@ -3,19 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
-import AppHeader from "../components/AppHeader";
-import { useAuth } from "../context/AuthContext";
+import ModuleScreenLayout from "../components/ModuleScreenLayout";
 
 export default function POSScreen() {
-  const { user, tenant } = useAuth();
   const [selectedRegister, setSelectedRegister] = useState("");
   const [openingBalance, setOpeningBalance] = useState("");
   const [openingNotes, setOpeningNotes] = useState("");
@@ -53,144 +48,125 @@ export default function POSScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" backgroundColor="#3c2c64" translucent={false} />
-      <AppHeader
-        businessName={tenant?.name}
-        userName={user?.name}
-        userRole={user?.role}
-      />
+    <ModuleScreenLayout>
+      {/* Header Section */}
+      <LinearGradient
+        colors={["#3c2c64", "#5a4a7e"]}
+        style={styles.headerCard}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}>
+        <Text style={styles.headerIcon}>💳</Text>
+        <Text style={styles.headerTitle}>Cash Register Session</Text>
+        <Text style={styles.headerSubtitle}>
+          Open a cash register session to start selling
+        </Text>
+      </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header Section */}
-        <LinearGradient
-          colors={["#3c2c64", "#5a4a7e"]}
-          style={styles.headerCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}>
-          <Text style={styles.headerIcon}>💳</Text>
-          <Text style={styles.headerTitle}>Cash Register Session</Text>
-          <Text style={styles.headerSubtitle}>
-            Open a cash register session to start selling
-          </Text>
-        </LinearGradient>
-
-        {/* Form Section */}
-        <View style={styles.formSection}>
-          {/* Select Cash Register */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Select Cash Register</Text>
-            <View style={styles.selectContainer}>
-              {registers.map((register) => (
-                <TouchableOpacity
-                  key={register.id}
+      {/* Form Section */}
+      <View style={styles.formSection}>
+        {/* Select Cash Register */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Select Cash Register</Text>
+          <View style={styles.selectContainer}>
+            {registers.map((register) => (
+              <TouchableOpacity
+                key={register.id}
+                style={[
+                  styles.registerOption,
+                  selectedRegister === register.name &&
+                    styles.registerOptionSelected,
+                ]}
+                onPress={() => setSelectedRegister(register.name)}>
+                <View
                   style={[
-                    styles.registerOption,
+                    styles.radioButton,
                     selectedRegister === register.name &&
-                      styles.registerOptionSelected,
-                  ]}
-                  onPress={() => setSelectedRegister(register.name)}>
-                  <View
-                    style={[
-                      styles.radioButton,
-                      selectedRegister === register.name &&
-                        styles.radioButtonSelected,
-                    ]}>
-                    {selectedRegister === register.name && (
-                      <View style={styles.radioButtonInner} />
-                    )}
-                  </View>
-                  <Text
-                    style={[
-                      styles.registerOptionText,
-                      selectedRegister === register.name &&
-                        styles.registerOptionTextSelected,
-                    ]}>
-                    {register.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Opening Balance */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Opening Balance (₦)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter opening balance"
-              placeholderTextColor="#9ca3af"
-              value={openingBalance}
-              onChangeText={setOpeningBalance}
-              keyboardType="numeric"
-            />
-          </View>
-
-          {/* Quick Amount Buttons */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Quick Amount</Text>
-            <View style={styles.quickAmountGrid}>
-              {quickAmounts.map((amount, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.quickAmountButton}
-                  onPress={() => handleQuickAmount(amount.value)}>
-                  <Text style={styles.quickAmountText}>{amount.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Opening Notes */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Opening Notes (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Add any notes about this session..."
-              placeholderTextColor="#9ca3af"
-              value={openingNotes}
-              onChangeText={setOpeningNotes}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
-              <Text style={styles.clearButtonText}>Clear</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.openButton}
-              onPress={handleOpenSession}>
-              <LinearGradient
-                colors={["#d1b05e", "#c9a556"]}
-                style={styles.openButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}>
-                <Text style={styles.openButtonText}>Open Session</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+                      styles.radioButtonSelected,
+                  ]}>
+                  {selectedRegister === register.name && (
+                    <View style={styles.radioButtonInner} />
+                  )}
+                </View>
+                <Text
+                  style={[
+                    styles.registerOptionText,
+                    selectedRegister === register.name &&
+                      styles.registerOptionTextSelected,
+                  ]}>
+                  {register.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
-        <View style={{ height: 30 }} />
-      </ScrollView>
-    </SafeAreaView>
+        {/* Opening Balance */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Opening Balance (₦)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter opening balance"
+            placeholderTextColor="#9ca3af"
+            value={openingBalance}
+            onChangeText={setOpeningBalance}
+            keyboardType="numeric"
+          />
+        </View>
+
+        {/* Quick Amount Buttons */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Quick Amount</Text>
+          <View style={styles.quickAmountGrid}>
+            {quickAmounts.map((amount, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.quickAmountButton}
+                onPress={() => handleQuickAmount(amount.value)}>
+                <Text style={styles.quickAmountText}>{amount.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Opening Notes */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Opening Notes (Optional)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Add any notes about this session..."
+            placeholderTextColor="#9ca3af"
+            value={openingNotes}
+            onChangeText={setOpeningNotes}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
+            <Text style={styles.clearButtonText}>Clear</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.openButton}
+            onPress={handleOpenSession}>
+            <LinearGradient
+              colors={["#d1b05e", "#c9a556"]}
+              style={styles.openButtonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}>
+              <Text style={styles.openButtonText}>Open Session</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ModuleScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#3c2c64",
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
   headerCard: {
     padding: 24,
     margin: 20,
