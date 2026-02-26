@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -11,12 +17,17 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from "expo-speech-recognition";
 import { BRAND_COLORS } from "../../../../theme/colors";
 import AccountingModuleHeader from "../../../../components/accounting/AccountingModuleHeader";
 import { useAuth } from "../../../../context/AuthContext";
@@ -86,6 +97,241 @@ export default function AIInvoiceScreen() {
 
   /* ── local submitting state for "Submit Directly" ── */
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /* ── Voice input (speech-to-text) ── */
+  const [isListening, setIsListening] = useState(false);
+  const [voicePartial, setVoicePartial] = useState("");
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Pulsing animation while recording
+  useEffect(() => {
+    if (isListening) {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.25,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      loop.start();
+      return () => loop.stop();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isListening, pulseAnim]);
+
+  // Speech recognition event handlers
+  useSpeechRecognitionEvent("start", () => {
+    setIsListening(true);
+    setVoicePartial("");
+  });
+
+  useSpeechRecognitionEvent("result", (event) => {
+    const transcript = event.results?.[0]?.transcript ?? "";
+    if (event.isFinal) {
+      // Append final result to existing description
+      setDescription((prev) => {
+        const separator = prev.trim() ? " " : "";
+        return prev.trim() + separator + transcript;
+      });
+      setVoicePartial("");
+    } else {
+      setVoicePartial(transcript);
+    }
+  });
+
+  useSpeechRecognitionEvent("end", () => {
+    setIsListening(false);
+    setVoicePartial("");
+  });
+
+  useSpeechRecognitionEvent("error", (event) => {
+    console.warn("[Voice] Error:", event.error, event.message);
+    setIsListening(false);
+    setVoicePartial("");
+    if (event.error === "not-allowed") {
+      Alert.alert(
+        "Microphone Permission",
+        "Please allow microphone access in your device settings to use voice input.",
+      );
+    } else if (event.error !== "no-speech" && event.error !== "aborted") {
+      showToast("Voice input failed. Please try again.", "error");
+    }
+  });
+
+  const handleVoiceToggle = useCallback(async () => {
+    if (isListening) {
+      ExpoSpeechRecognitionModule.stop();
+      return;
+    }
+
+    // Request permissions
+    const { granted } =
+      await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!granted) {
+      Alert.alert(
+        "Permission Required",
+        "Microphone and speech recognition permissions are needed for voice input.",
+      );
+      return;
+    }
+
+    // Start listening — tuned for Nigerian/African English users
+    ExpoSpeechRecognitionModule.start({
+      lang: "en-NG", // Nigerian English (falls back to en-US on devices that lack en-NG)
+      interimResults: true,
+      addsPunctuation: true,
+      continuous: false,
+      contextualStrings: [
+        // ── Currency & amounts ──
+        "naira",
+        "kobo",
+        "thousand",
+        "million",
+        "billion",
+        // ── Common Nigerian staple products ──
+        "rice",
+        "bags of rice",
+        "cement",
+        "bags of cement",
+        "palm oil",
+        "groundnut oil",
+        "vegetable oil",
+        "soya oil",
+        "garri",
+        "semovita",
+        "semolina",
+        "eba",
+        "fufu",
+        "akpu",
+        "flour",
+        "wheat flour",
+        "corn flour",
+        "noodles",
+        "indomie",
+        "spaghetti",
+        "macaroni",
+        "sugar",
+        "salt",
+        "tomatoes",
+        "tomato paste",
+        "pepper",
+        "onions",
+        "yam",
+        "plantain",
+        "beans",
+        "millet",
+        "sorghum",
+        "zobo",
+        "kunu",
+        "akara",
+        "moi moi",
+        "milk",
+        "tin milk",
+        "butter",
+        "margarine",
+        "biscuit",
+        "water sachet",
+        "bottled water",
+        "soft drink",
+        "malt",
+        "beer",
+        "stout",
+        "whiskey",
+        "wine",
+        "kerosene",
+        "petrol",
+        "diesel",
+        "cooking gas",
+        "LPG",
+        "detergent",
+        "soap",
+        "bleach",
+        "toiletries",
+        "ankara",
+        "fabric",
+        "cloth",
+        "lace",
+        // ── Units common in Nigerian trade ──
+        "bags",
+        "cartons",
+        "crates",
+        "bottles",
+        "pieces",
+        "litres",
+        "liters",
+        "kilogram",
+        "kilograms",
+        "grams",
+        "dozen",
+        "packs",
+        "rolls",
+        "reams",
+        "kegs",
+        "drums",
+        "tons",
+        "tonnes",
+        "plots",
+        "bundles",
+        "sheets",
+        "rods",
+        // ── Invoice & transaction terms ──
+        "invoice",
+        "purchase",
+        "sales",
+        "receipt",
+        "delivery",
+        "sold",
+        "bought",
+        "supply",
+        "supplied",
+        "with VAT",
+        "plus VAT",
+        "VAT inclusive",
+        "VAT exclusive",
+        "discount",
+        "rebate",
+        "balance",
+        "proforma",
+        "waybill",
+        "LPO",
+        // ── Nigerian business name suffixes / prefixes ──
+        "Alhaji",
+        "Alhaja",
+        "Mama",
+        "Papa",
+        "Chief",
+        "Malam",
+        "Mallam",
+        "Engineer",
+        "Doctor",
+        "Pastor",
+        "Apostle",
+        "construction",
+        "supplies",
+        "ventures",
+        "enterprises",
+        "trading",
+        "limited",
+        "Nigeria",
+        "global",
+        "Nigeria Limited",
+        // ── Common payment references ──
+        "bank transfer",
+        "POS",
+        "cash",
+        "cheque",
+        "online transfer",
+      ],
+    });
+  }, [isListening]);
 
   /* ── derived ── */
   const subtotal = useMemo(() => {
@@ -301,19 +547,52 @@ export default function AIInvoiceScreen() {
 
         {/* Text input */}
         <View style={styles.inputCard}>
-          <Text style={styles.inputLabel}>Describe your invoice</Text>
+          <View style={styles.inputLabelRow}>
+            <Text style={styles.inputLabel}>Describe your invoice</Text>
+            <TouchableOpacity
+              onPress={handleVoiceToggle}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Animated.View
+                style={[
+                  styles.micButton,
+                  isListening && styles.micButtonActive,
+                  { transform: [{ scale: pulseAnim }] },
+                ]}>
+                <Text style={styles.micIcon}>{isListening ? "⏹" : "🎤"}</Text>
+              </Animated.View>
+            </TouchableOpacity>
+          </View>
+
+          {isListening && (
+            <View style={styles.listeningBanner}>
+              <View style={styles.listeningDot} />
+              <Text style={styles.listeningText}>Listening… speak now</Text>
+            </View>
+          )}
+
           <TextInput
             style={styles.textArea}
             multiline
             numberOfLines={4}
             placeholder='e.g., "Sold 5 bags of rice at 45000 each to Alhaji Musa with VAT"'
             placeholderTextColor="#9ca3af"
-            value={description}
-            onChangeText={setDescription}
+            value={
+              voicePartial
+                ? description + (description.trim() ? " " : "") + voicePartial
+                : description
+            }
+            onChangeText={(text) => {
+              if (!isListening) setDescription(text);
+            }}
             maxLength={1000}
             textAlignVertical="top"
+            editable={!isListening}
           />
-          <Text style={styles.charCount}>{description.length}/1000</Text>
+          <View style={styles.charCountRow}>
+            {isListening && <Text style={styles.voiceHint}>Tap ⏹ to stop</Text>}
+            <Text style={styles.charCount}>{description.length}/1000</Text>
+          </View>
         </View>
 
         {/* Example prompt chips */}
@@ -685,11 +964,54 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  inputLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
   inputLabel: {
     fontSize: 14,
     fontWeight: "600",
     color: "#374151",
+  },
+  micButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#e5e7eb",
+  },
+  micButtonActive: {
+    backgroundColor: "#fef2f2",
+    borderColor: "#ef4444",
+  },
+  micIcon: {
+    fontSize: 18,
+  },
+  listeningBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fef2f2",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     marginBottom: 8,
+  },
+  listeningDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#ef4444",
+  },
+  listeningText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#991b1b",
   },
   textArea: {
     borderWidth: 1.5,
@@ -702,11 +1024,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#fafafa",
     lineHeight: 22,
   },
+  charCountRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 6,
+  },
+  voiceHint: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#ef4444",
+  },
   charCount: {
-    textAlign: "right",
     fontSize: 12,
     color: "#9ca3af",
-    marginTop: 6,
+    marginLeft: "auto",
   },
 
   /* ── Chips ── */
