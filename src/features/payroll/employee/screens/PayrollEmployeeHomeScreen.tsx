@@ -1,31 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   RefreshControl,
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Picker } from "@react-native-picker/picker";
 import type { PayrollStackParamList } from "../../../../navigation/types";
-import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
+import { BRAND_COLORS } from "../../../../theme/colors";
+import PayrollModuleHeader from "../../../../components/payroll/PayrollModuleHeader";
+import { useEmployees } from "../hooks/useEmployees";
+import { usePayrollFilterData } from "../hooks/usePayrollFilterData";
 import { employeeService } from "../services/employeeService";
-import { departmentService } from "../../department/services/departmentService";
-import { positionService } from "../../position/services/positionService";
 import type {
   PayrollEmployee,
   PayrollEmployeeListParams,
-  PayrollEmployeePagination,
   PayrollEmployeeStatus,
 } from "../types";
-import type { PayrollDepartment } from "../../department/types";
-import type { PayrollPosition } from "../../position/types";
 import { showConfirm, showToast } from "../../../../utils/toast";
 
 type Props = NativeStackScreenProps<
@@ -41,13 +39,7 @@ const STATUS_OPTIONS: { label: string; value?: PayrollEmployeeStatus }[] = [
 ];
 
 export default function PayrollEmployeeHomeScreen({ navigation }: Props) {
-  const [employees, setEmployees] = useState<PayrollEmployee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [pagination, setPagination] =
-    useState<PayrollEmployeePagination | null>(null);
-  const [departments, setDepartments] = useState<PayrollDepartment[]>([]);
-  const [positions, setPositions] = useState<PayrollPosition[]>([]);
+  // ─── UI filter state ────────────────────────────────────────────────────────
   const [searchText, setSearchText] = useState("");
   const [positionText, setPositionText] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<
@@ -63,48 +55,10 @@ export default function PayrollEmployeeHomeScreen({ navigation }: Props) {
     per_page: 15,
   });
 
-  useEffect(() => {
-    loadFilterData();
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [filters]);
-
-  const loadFilterData = async () => {
-    try {
-      const [deptRes, posRes] = await Promise.all([
-        departmentService.list({ per_page: 1000 }),
-        positionService.list({ per_page: 1000 }),
-      ]);
-      setDepartments(deptRes.departments || []);
-      setPositions(posRes.positions || []);
-    } catch (_error) {
-      // ignore filter load errors
-    }
-  };
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const response = await employeeService.list(filters);
-      setEmployees(response.employees || []);
-      setPagination(response.pagination || null);
-    } catch (error: any) {
-      showToast(error.message || "Failed to load employees", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      await loadData();
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  // ─── Data via TanStack Query ────────────────────────────────────────────────
+  const { employees, pagination, isLoading, isRefreshing, refresh } =
+    useEmployees(filters);
+  const { departments, positions } = usePayrollFilterData();
 
   const handleSearch = () => {
     setFilters({
@@ -133,7 +87,7 @@ export default function PayrollEmployeeHomeScreen({ navigation }: Props) {
         try {
           await employeeService.delete(employee.id);
           showToast("Employee deleted successfully", "success");
-          loadData();
+          refresh();
         } catch (error: any) {
           showToast(error.message || "Failed to delete employee", "error");
         }
@@ -142,22 +96,15 @@ export default function PayrollEmployeeHomeScreen({ navigation }: Props) {
     );
   };
 
-  if (loading && !refreshing) {
+  if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <PayrollModuleHeader
+          title="Employees"
+          onBack={() => navigation.goBack()}
+          navigation={navigation}
         />
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Employees</Text>
-          <View style={styles.placeholder} />
-        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
           <Text style={styles.loadingText}>Loading employees...</Text>
@@ -167,32 +114,31 @@ export default function PayrollEmployeeHomeScreen({ navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <PayrollModuleHeader
+        title="Employees"
+        onBack={() => navigation.goBack()}
+        navigation={navigation}
       />
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Employees</Text>
-        <View style={styles.placeholder} />
-      </View>
 
       <ScrollView
         style={styles.content}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refresh}
+            colors={["#d1b05e"]}
+            tintColor="#d1b05e"
+          />
         }>
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={styles.primaryBtn}
             onPress={() =>
               navigation.navigate("PayrollEmployeeCreate", {
-                onCreated: loadData,
+                onCreated: refresh,
               })
             }
             activeOpacity={0.8}>
@@ -377,7 +323,7 @@ export default function PayrollEmployeeHomeScreen({ navigation }: Props) {
                     onPress={() =>
                       navigation.navigate("PayrollEmployeeEdit", {
                         id: employee.id,
-                        onUpdated: loadData,
+                        onUpdated: refresh,
                       })
                     }>
                     <Text style={styles.actionButtonText}>Edit</Text>
@@ -453,43 +399,18 @@ export default function PayrollEmployeeHomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
-  },
-  backButton: {
-    paddingVertical: 8,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: SEMANTIC_COLORS.white,
-    fontWeight: "600",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: SEMANTIC_COLORS.white,
-  },
-  placeholder: {
-    width: 60,
+    backgroundColor: "#1a0f33",
   },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
   },
   loadingText: {
     marginTop: 12,
