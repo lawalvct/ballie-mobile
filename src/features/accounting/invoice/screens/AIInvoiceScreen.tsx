@@ -1,20 +1,12 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
+﻿import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   Animated,
@@ -24,17 +16,20 @@ import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from "expo-speech-recognition";
 import { BRAND_COLORS } from "../../../../theme/colors";
 import AccountingModuleHeader from "../../../../components/accounting/AccountingModuleHeader";
 import { useAuth } from "../../../../context/AuthContext";
 import { showToast } from "../../../../utils/toast";
 import { invoiceService } from "../services/invoiceService";
 import type { AccountingStackParamList } from "../../../../navigation/types";
-import type { ParsedInvoice, ParsedItem, AIInvoicePrefillData } from "../types";
+import type { ParsedInvoice, AIInvoicePrefillData } from "../types";
+import { useVoiceInput } from "../hooks/useVoiceInput";
+import {
+  EXAMPLE_PROMPTS,
+  formatNumber,
+  formatDate,
+} from "./aiInvoiceConstants";
+import { styles } from "./aiInvoiceStyles";
 
 type NavigationProp = NativeStackNavigationProp<
   AccountingStackParamList,
@@ -49,291 +44,27 @@ type ScreenState =
   | "applying"
   | "error";
 
-const { width: SCREEN_W } = Dimensions.get("window");
-
-/* ─── Example prompts ──────────────────────────────────────────────────────── */
-const EXAMPLE_PROMPTS = [
-  "Sold 10 bags of cement at 5500 to ABC Construction",
-  "Purchase 200 units of palm oil at 1200 from Mama T Suppliers",
-  "Invoice 5 laptops at 350k each to TechHub Ltd with VAT",
-  "Bought 50 reams of A4 paper at 4500 from Office Mart",
-];
-
-/* ─── Helpers ──────────────────────────────────────────────────────────────── */
-const formatNumber = (num: number): string => {
-  if (!num || isNaN(num)) return "0.00";
-  return parseFloat(String(num)).toLocaleString("en-NG", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-};
-
-const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr + "T00:00:00");
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-/* ════════════════════════════════════════════════════════════════════════════ */
+/*  */
 
 export default function AIInvoiceScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { tenant } = useAuth();
 
-  // Version marker — check Metro console to confirm new bundle is loaded
-  console.log("[AIInvoiceScreen] LOADED — v2026-02-26-fix3");
+  console.log("[AIInvoiceScreen] LOADED  v2026-02-26-refactor");
 
-  /* ── state ── */
+  /*  state  */
   const [screenState, setScreenState] = useState<ScreenState>("idle");
   const [description, setDescription] = useState("");
-  const [parsedInvoice, setParsedInvoice] = useState<ParsedInvoice | null>(
-    null,
-  );
+  const [parsedInvoice, setParsedInvoice] = useState<ParsedInvoice | null>(null);
   const [aiInterpretation, setAiInterpretation] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  /* ── local submitting state for "Submit Directly" ── */
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /* ── Voice input (speech-to-text) ── */
-  const [isListening, setIsListening] = useState(false);
-  const [voicePartial, setVoicePartial] = useState("");
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  /*  voice input (speech-to-text)  */
+  const { isListening, voicePartial, pulseAnim, handleVoiceToggle } =
+    useVoiceInput(setDescription);
 
-  // Pulsing animation while recording
-  useEffect(() => {
-    if (isListening) {
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.25,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-      loop.start();
-      return () => loop.stop();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [isListening, pulseAnim]);
-
-  // Speech recognition event handlers
-  useSpeechRecognitionEvent("start", () => {
-    setIsListening(true);
-    setVoicePartial("");
-  });
-
-  useSpeechRecognitionEvent("result", (event) => {
-    const transcript = event.results?.[0]?.transcript ?? "";
-    if (event.isFinal) {
-      // Append final result to existing description
-      setDescription((prev) => {
-        const separator = prev.trim() ? " " : "";
-        return prev.trim() + separator + transcript;
-      });
-      setVoicePartial("");
-    } else {
-      setVoicePartial(transcript);
-    }
-  });
-
-  useSpeechRecognitionEvent("end", () => {
-    setIsListening(false);
-    setVoicePartial("");
-  });
-
-  useSpeechRecognitionEvent("error", (event) => {
-    console.warn("[Voice] Error:", event.error, event.message);
-    setIsListening(false);
-    setVoicePartial("");
-    if (event.error === "not-allowed") {
-      Alert.alert(
-        "Microphone Permission",
-        "Please allow microphone access in your device settings to use voice input.",
-      );
-    } else if (event.error !== "no-speech" && event.error !== "aborted") {
-      showToast("Voice input failed. Please try again.", "error");
-    }
-  });
-
-  const handleVoiceToggle = useCallback(async () => {
-    if (isListening) {
-      ExpoSpeechRecognitionModule.stop();
-      return;
-    }
-
-    // Request permissions
-    const { granted } =
-      await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!granted) {
-      Alert.alert(
-        "Permission Required",
-        "Microphone and speech recognition permissions are needed for voice input.",
-      );
-      return;
-    }
-
-    // Start listening — tuned for Nigerian/African English users
-    ExpoSpeechRecognitionModule.start({
-      lang: "en-NG", // Nigerian English (falls back to en-US on devices that lack en-NG)
-      interimResults: true,
-      addsPunctuation: true,
-      continuous: false,
-      contextualStrings: [
-        // ── Currency & amounts ──
-        "naira",
-        "kobo",
-        "thousand",
-        "million",
-        "billion",
-        // ── Common Nigerian staple products ──
-        "rice",
-        "bags of rice",
-        "cement",
-        "bags of cement",
-        "palm oil",
-        "groundnut oil",
-        "vegetable oil",
-        "soya oil",
-        "garri",
-        "semovita",
-        "semolina",
-        "eba",
-        "fufu",
-        "akpu",
-        "flour",
-        "wheat flour",
-        "corn flour",
-        "noodles",
-        "indomie",
-        "spaghetti",
-        "macaroni",
-        "sugar",
-        "salt",
-        "tomatoes",
-        "tomato paste",
-        "pepper",
-        "onions",
-        "yam",
-        "plantain",
-        "beans",
-        "millet",
-        "sorghum",
-        "zobo",
-        "kunu",
-        "akara",
-        "moi moi",
-        "milk",
-        "tin milk",
-        "butter",
-        "margarine",
-        "biscuit",
-        "water sachet",
-        "bottled water",
-        "soft drink",
-        "malt",
-        "beer",
-        "stout",
-        "whiskey",
-        "wine",
-        "kerosene",
-        "petrol",
-        "diesel",
-        "cooking gas",
-        "LPG",
-        "detergent",
-        "soap",
-        "bleach",
-        "toiletries",
-        "ankara",
-        "fabric",
-        "cloth",
-        "lace",
-        // ── Units common in Nigerian trade ──
-        "bags",
-        "cartons",
-        "crates",
-        "bottles",
-        "pieces",
-        "litres",
-        "liters",
-        "kilogram",
-        "kilograms",
-        "grams",
-        "dozen",
-        "packs",
-        "rolls",
-        "reams",
-        "kegs",
-        "drums",
-        "tons",
-        "tonnes",
-        "plots",
-        "bundles",
-        "sheets",
-        "rods",
-        // ── Invoice & transaction terms ──
-        "invoice",
-        "purchase",
-        "sales",
-        "receipt",
-        "delivery",
-        "sold",
-        "bought",
-        "supply",
-        "supplied",
-        "with VAT",
-        "plus VAT",
-        "VAT inclusive",
-        "VAT exclusive",
-        "discount",
-        "rebate",
-        "balance",
-        "proforma",
-        "waybill",
-        "LPO",
-        // ── Nigerian business name suffixes / prefixes ──
-        "Alhaji",
-        "Alhaja",
-        "Mama",
-        "Papa",
-        "Chief",
-        "Malam",
-        "Mallam",
-        "Engineer",
-        "Doctor",
-        "Pastor",
-        "Apostle",
-        "construction",
-        "supplies",
-        "ventures",
-        "enterprises",
-        "trading",
-        "limited",
-        "Nigeria",
-        "global",
-        "Nigeria Limited",
-        // ── Common payment references ──
-        "bank transfer",
-        "POS",
-        "cash",
-        "cheque",
-        "online transfer",
-      ],
-    });
-  }, [isListening]);
-
-  /* ── derived ── */
+  /*  derived  */
   const subtotal = useMemo(() => {
     if (!parsedInvoice) return 0;
     return parsedInvoice.items.reduce(
@@ -360,7 +91,7 @@ export default function AIInvoiceScreen() {
     );
   }, [parsedInvoice]);
 
-  /* ── AI generate ── */
+  /*  AI generate  */
   const handleGenerate = useCallback(async () => {
     const trimmed = description.trim();
     if (!trimmed || trimmed.length < 5) {
@@ -387,8 +118,6 @@ export default function AIInvoiceScreen() {
         setScreenState("error");
       }
     } catch (err: any) {
-      // apiClient interceptor rejects with error.response?.data directly,
-      // so `err` IS the API body (not nested under err.response.data)
       console.error("[AI-Generate] ERROR:", JSON.stringify(err, null, 2));
       const message =
         typeof err === "string"
@@ -399,7 +128,7 @@ export default function AIInvoiceScreen() {
     }
   }, [description, tenant]);
 
-  /* ── Submit directly ── */
+  /*  Submit directly  */
   const handleSubmitDirectly = useCallback(async () => {
     if (!parsedInvoice || !canSubmitDirectly) return;
 
@@ -407,12 +136,9 @@ export default function AIInvoiceScreen() {
     setIsSubmitting(true);
 
     try {
-      // ─── Resolve the correct party record ID ───
-      // The AI parse endpoint returns `party_id` as the **ledger account ID**,
-      // but the invoice store endpoint expects the **party record ID** (from the
-      // parties / customers table).  When "Apply to Form" works it's because the
-      // party-search auto-match in InvoiceCreateScreen resolves the real party.id.
-      // We replicate that lookup here.
+      // The AI parse endpoint returns party_id as a ledger account ID,
+      // but the invoice store needs the party record ID.
+      // Resolve it by searching customers/vendors by name.
       let resolvedPartyId = parsedInvoice.party_id!;
 
       if (parsedInvoice.party_name) {
@@ -439,7 +165,6 @@ export default function AIInvoiceScreen() {
         }
       }
 
-      // ─── Build payload (same shape as InvoiceCreateScreen) ───
       const payload = {
         voucher_type_id: parsedInvoice.voucher_type_id!,
         voucher_date: parsedInvoice.invoice_date,
@@ -459,7 +184,6 @@ export default function AIInvoiceScreen() {
 
       const invoice = await invoiceService.create(payload);
       showToast("Invoice created and posted successfully!", "success");
-      // replace so "Back" from InvoiceShow goes to InvoiceHome, not back here
       navigation.replace("InvoiceShow", { id: invoice.id });
     } catch (err: any) {
       const apiMessage =
@@ -482,7 +206,7 @@ export default function AIInvoiceScreen() {
     }
   }, [parsedInvoice, canSubmitDirectly, navigation]);
 
-  /* ── Apply to form ── */
+  /*  Apply to form  */
   const handleApplyToForm = useCallback(() => {
     if (!parsedInvoice) return;
 
@@ -516,7 +240,7 @@ export default function AIInvoiceScreen() {
     });
   }, [parsedInvoice, navigation]);
 
-  /* ── Try again ── */
+  /*  Try again  */
   const handleTryAgain = useCallback(() => {
     setParsedInvoice(null);
     setAiInterpretation("");
@@ -524,9 +248,8 @@ export default function AIInvoiceScreen() {
     setScreenState("idle");
   }, []);
 
-  /* ═══════════════════════════════════  RENDER  ═══════════════════════════ */
+  /*   RENDER   */
 
-  /* ── Idle / Input state ── */
   const renderInput = () => (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -535,12 +258,13 @@ export default function AIInvoiceScreen() {
         style={styles.content}
         contentContainerStyle={styles.contentInner}
         keyboardShouldPersistTaps="handled">
+
         {/* Hero card */}
         <View style={styles.heroCard}>
-          <Text style={styles.heroEmoji}>🤖</Text>
+          <Text style={styles.heroEmoji}></Text>
           <Text style={styles.heroTitle}>BallieAI Invoice Creator</Text>
           <Text style={styles.heroSubtitle}>
-            Just tell me what you sold or bought — I'll build the invoice for
+            Just tell me what you sold or bought  I'll build the invoice for
             you automatically.
           </Text>
         </View>
@@ -559,7 +283,7 @@ export default function AIInvoiceScreen() {
                   isListening && styles.micButtonActive,
                   { transform: [{ scale: pulseAnim }] },
                 ]}>
-                <Text style={styles.micIcon}>{isListening ? "⏹" : "🎤"}</Text>
+                <Text style={styles.micIcon}>{isListening ? "" : ""}</Text>
               </Animated.View>
             </TouchableOpacity>
           </View>
@@ -567,7 +291,7 @@ export default function AIInvoiceScreen() {
           {isListening && (
             <View style={styles.listeningBanner}>
               <View style={styles.listeningDot} />
-              <Text style={styles.listeningText}>Listening… speak now</Text>
+              <Text style={styles.listeningText}>Listening speak now</Text>
             </View>
           )}
 
@@ -590,13 +314,15 @@ export default function AIInvoiceScreen() {
             editable={!isListening}
           />
           <View style={styles.charCountRow}>
-            {isListening && <Text style={styles.voiceHint}>Tap ⏹ to stop</Text>}
+            {isListening && (
+              <Text style={styles.voiceHint}>Tap  to stop</Text>
+            )}
             <Text style={styles.charCount}>{description.length}/1000</Text>
           </View>
         </View>
 
         {/* Example prompt chips */}
-        <Text style={styles.chipSectionLabel}>💡 Try an example:</Text>
+        <Text style={styles.chipSectionLabel}> Try an example:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -618,7 +344,7 @@ export default function AIInvoiceScreen() {
         {/* Error banner */}
         {screenState === "error" && errorMessage && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorIcon}>⚠️</Text>
+            <Text style={styles.errorIcon}></Text>
             <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
         )}
@@ -638,20 +364,19 @@ export default function AIInvoiceScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.generateBtnGradient}>
-            <Text style={styles.generateBtnText}>✨ Generate Invoice</Text>
+            <Text style={styles.generateBtnText}> Generate Invoice</Text>
           </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 
-  /* ── Loading state ── */
   const renderLoading = () => (
     <View style={styles.loadingContainer}>
       <View style={styles.loadingCard}>
         <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
         <Text style={styles.loadingTitle}>
-          BallieAI is analyzing your description…
+          BallieAI is analyzing your description
         </Text>
         <Text style={styles.loadingSubtitle}>
           Matching products, customers & amounts
@@ -665,7 +390,6 @@ export default function AIInvoiceScreen() {
     </View>
   );
 
-  /* ── Preview state ── */
   const renderPreview = () => {
     if (!parsedInvoice) return null;
 
@@ -676,6 +400,7 @@ export default function AIInvoiceScreen() {
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.previewInner}>
+
         {/* Invoice type badge */}
         <View style={styles.typeBadgeRow}>
           <View
@@ -687,8 +412,8 @@ export default function AIInvoiceScreen() {
             ]}>
             <Text style={styles.typeBadgeText}>
               {parsedInvoice.invoice_type === "sales"
-                ? "📤 Sales Invoice"
-                : "📥 Purchase Invoice"}
+                ? " Sales Invoice"
+                : " Purchase Invoice"}
             </Text>
           </View>
           {parsedInvoice.voucher_type_name && (
@@ -698,22 +423,22 @@ export default function AIInvoiceScreen() {
           )}
         </View>
 
-        {/* Party card */}
+        {/* Party */}
         <View style={styles.card}>
           <Text style={styles.cardLabel}>
             {parsedInvoice.party_type === "customer" ? "Customer" : "Vendor"}
           </Text>
           {parsedInvoice.party_id ? (
             <View style={styles.matchedRow}>
-              <Text style={styles.matchIcon}>✅</Text>
+              <Text style={styles.matchIcon}></Text>
               <Text style={styles.matchedText}>{parsedInvoice.party_name}</Text>
             </View>
           ) : (
             <View style={styles.unmatchedRow}>
-              <Text style={styles.warnIcon}>⚠️</Text>
+              <Text style={styles.warnIcon}></Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.unmatchedText}>
-                  "{parsedInvoice.party_name_suggested}" — Not found in records
+                  "{parsedInvoice.party_name_suggested}"  Not found in records
                 </Text>
                 <Text style={styles.unmatchedHint}>
                   Use "Apply to Form" to select manually
@@ -723,12 +448,12 @@ export default function AIInvoiceScreen() {
           )}
         </View>
 
-        {/* Date card */}
+        {/* Date */}
         <View style={styles.card}>
           <View style={styles.dateRow}>
             <Text style={styles.cardLabel}>Date</Text>
             <Text style={styles.dateValue}>
-              📅 {formatDate(parsedInvoice.invoice_date)}
+               {formatDate(parsedInvoice.invoice_date)}
             </Text>
           </View>
         </View>
@@ -748,7 +473,7 @@ export default function AIInvoiceScreen() {
               ]}>
               <View style={styles.itemHeader}>
                 <Text style={styles.itemMatchIcon}>
-                  {item.product_id ? "✅" : "⚠️"}
+                  {item.product_id ? "" : ""}
                 </Text>
                 <Text style={styles.itemName} numberOfLines={2}>
                   {item.product_name ||
@@ -758,10 +483,10 @@ export default function AIInvoiceScreen() {
               </View>
               <View style={styles.itemMeta}>
                 <Text style={styles.itemQty}>
-                  {item.quantity} × ₦{formatNumber(item.rate)}
+                  {item.quantity}  {formatNumber(item.rate)}
                 </Text>
                 <Text style={styles.itemAmount}>
-                  ₦{formatNumber(item.amount)}
+                  {formatNumber(item.amount)}
                 </Text>
               </View>
               {item.not_found && (
@@ -771,7 +496,7 @@ export default function AIInvoiceScreen() {
               )}
               {item.product_id != null && item.current_stock !== undefined && (
                 <Text style={styles.itemStock}>
-                  📦 Stock: {item.current_stock} {item.unit ?? ""}
+                   Stock: {item.current_stock} {item.unit ?? ""}
                 </Text>
               )}
             </View>
@@ -782,25 +507,25 @@ export default function AIInvoiceScreen() {
         <View style={styles.totalsCard}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Subtotal</Text>
-            <Text style={styles.totalValue}>₦{formatNumber(subtotal)}</Text>
+            <Text style={styles.totalValue}>{formatNumber(subtotal)}</Text>
           </View>
           {parsedInvoice.vat_enabled && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>VAT (7.5%)</Text>
-              <Text style={styles.totalValue}>₦{formatNumber(vatAmount)}</Text>
+              <Text style={styles.totalValue}>{formatNumber(vatAmount)}</Text>
             </View>
           )}
           <View style={[styles.totalRow, styles.grandTotalRow]}>
             <Text style={styles.grandTotalLabel}>Grand Total</Text>
             <Text style={styles.grandTotalValue}>
-              ₦{formatNumber(grandTotal)}
+              {formatNumber(grandTotal)}
             </Text>
           </View>
         </View>
 
         {/* AI Interpretation */}
         <View style={styles.interpretationCard}>
-          <Text style={styles.interpretationLabel}>🤖 AI Interpretation</Text>
+          <Text style={styles.interpretationLabel}> AI Interpretation</Text>
           <Text style={styles.interpretationText}>
             {parsedInvoice.interpretation}
           </Text>
@@ -809,7 +534,7 @@ export default function AIInvoiceScreen() {
         {/* Warnings */}
         {hasUnmatchedItems && (
           <View style={styles.warningBanner}>
-            <Text style={styles.warningBannerIcon}>⚠️</Text>
+            <Text style={styles.warningBannerIcon}></Text>
             <Text style={styles.warningBannerText}>
               Some items or the customer/vendor could not be matched. Use "Apply
               to Form" to review and select manually.
@@ -833,9 +558,7 @@ export default function AIInvoiceScreen() {
                 {screenState === "submitting" ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.submitDirectText}>
-                    🚀 Submit Directly
-                  </Text>
+                  <Text style={styles.submitDirectText}> Submit Directly</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -850,7 +573,7 @@ export default function AIInvoiceScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.actionBtnGradient}>
-              <Text style={styles.applyFormText}>📝 Apply to Form</Text>
+              <Text style={styles.applyFormText}> Apply to Form</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -858,7 +581,7 @@ export default function AIInvoiceScreen() {
             style={styles.tryAgainBtn}
             onPress={handleTryAgain}
             activeOpacity={0.7}>
-            <Text style={styles.tryAgainText}>🔄 Try Again</Text>
+            <Text style={styles.tryAgainText}> Try Again</Text>
           </TouchableOpacity>
         </View>
 
@@ -867,22 +590,22 @@ export default function AIInvoiceScreen() {
     );
   };
 
-  /* ── Submitting overlay ── */
   const renderSubmitting = () => (
     <View style={styles.loadingContainer}>
       <View style={styles.loadingCard}>
         <ActivityIndicator size="large" color={BRAND_COLORS.green} />
-        <Text style={styles.loadingTitle}>Creating your invoice…</Text>
+        <Text style={styles.loadingTitle}>Creating your invoice</Text>
         <Text style={styles.loadingSubtitle}>Posting to your books</Text>
       </View>
     </View>
   );
 
+  /*  Main render  */
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="light" />
       <AccountingModuleHeader
-        title="✨ Create with AI"
+        title=" Create with AI"
         onBack={() => navigation.goBack()}
         navigation={navigation}
       />
@@ -897,542 +620,3 @@ export default function AIInvoiceScreen() {
     </SafeAreaView>
   );
 }
-
-/* ════════════════════════════════════════════════════════════════════════════ */
-/*  STYLES                                                                     */
-/* ════════════════════════════════════════════════════════════════════════════ */
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f3f4f6",
-  },
-
-  /* ── Content ── */
-  content: {
-    flex: 1,
-  },
-  contentInner: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  previewInner: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-
-  /* ── Hero card ── */
-  heroCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  heroEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  heroTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  heroSubtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-
-  /* ── Input card ── */
-  inputCard: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  inputLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-  },
-  micButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#f3f4f6",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "#e5e7eb",
-  },
-  micButtonActive: {
-    backgroundColor: "#fef2f2",
-    borderColor: "#ef4444",
-  },
-  micIcon: {
-    fontSize: 18,
-  },
-  listeningBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#fef2f2",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 8,
-  },
-  listeningDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#ef4444",
-  },
-  listeningText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#991b1b",
-  },
-  textArea: {
-    borderWidth: 1.5,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    color: "#1f2937",
-    minHeight: 110,
-    backgroundColor: "#fafafa",
-    lineHeight: 22,
-  },
-  charCountRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 6,
-  },
-  voiceHint: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#ef4444",
-  },
-  charCount: {
-    fontSize: 12,
-    color: "#9ca3af",
-    marginLeft: "auto",
-  },
-
-  /* ── Chips ── */
-  chipSectionLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#6b7280",
-    marginBottom: 10,
-  },
-  chipScroll: {
-    marginBottom: 20,
-  },
-  chipContainer: {
-    gap: 10,
-    paddingRight: 8,
-  },
-  chip: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: BRAND_COLORS.gold,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    maxWidth: SCREEN_W * 0.7,
-  },
-  chipText: {
-    fontSize: 13,
-    color: BRAND_COLORS.darkPurple,
-    lineHeight: 18,
-  },
-
-  /* ── Error ── */
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "#fecaca",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-  },
-  errorIcon: {
-    fontSize: 18,
-    marginRight: 10,
-  },
-  errorText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#991b1b",
-    lineHeight: 20,
-  },
-
-  /* ── Generate button ── */
-  generateBtn: {
-    borderRadius: 14,
-    overflow: "hidden",
-    marginTop: 4,
-  },
-  generateBtnGradient: {
-    paddingVertical: 16,
-    alignItems: "center",
-    borderRadius: 14,
-  },
-  generateBtnText: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  disabledBtn: {
-    opacity: 0.45,
-  },
-
-  /* ── Loading ── */
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
-  },
-  loadingCard: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 40,
-    alignItems: "center",
-    width: "100%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  loadingTitle: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: BRAND_COLORS.darkPurple,
-    marginTop: 20,
-    textAlign: "center",
-  },
-  loadingSubtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 6,
-    textAlign: "center",
-  },
-  loadingDots: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 20,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: BRAND_COLORS.gold,
-  },
-
-  /* ── Preview — Type badge ── */
-  typeBadgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 14,
-    gap: 10,
-  },
-  typeBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  salesBadge: {
-    backgroundColor: "#dcfce7",
-  },
-  purchaseBadge: {
-    backgroundColor: "#dbeafe",
-  },
-  typeBadgeText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1f2937",
-  },
-  voucherTypeName: {
-    fontSize: 13,
-    color: "#6b7280",
-    fontStyle: "italic",
-  },
-
-  /* ── Preview — Cards ── */
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#6b7280",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  matchedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  matchIcon: {
-    fontSize: 16,
-  },
-  matchedText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#166534",
-  },
-  unmatchedRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-  },
-  warnIcon: {
-    fontSize: 16,
-    marginTop: 1,
-  },
-  unmatchedText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#92400e",
-  },
-  unmatchedHint: {
-    fontSize: 12,
-    color: "#b45309",
-    marginTop: 2,
-  },
-
-  /* ── Date ── */
-  dateRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dateValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#374151",
-  },
-
-  /* ── Items ── */
-  itemRow: {
-    paddingVertical: 10,
-  },
-  itemRowWarning: {
-    backgroundColor: "#fffbeb",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    marginHorizontal: -4,
-  },
-  itemRowBorder: {
-    borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-  },
-  itemHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-  itemMatchIcon: {
-    fontSize: 14,
-  },
-  itemName: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#1f2937",
-  },
-  itemMeta: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingLeft: 28,
-  },
-  itemQty: {
-    fontSize: 14,
-    color: "#6b7280",
-  },
-  itemAmount: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
-  },
-  itemNotFound: {
-    paddingLeft: 28,
-    fontSize: 12,
-    color: "#b45309",
-    marginTop: 4,
-    fontStyle: "italic",
-  },
-  itemStock: {
-    paddingLeft: 28,
-    fontSize: 12,
-    color: "#6b7280",
-    marginTop: 2,
-  },
-
-  /* ── Totals ── */
-  totalsCard: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-  },
-  totalLabel: {
-    fontSize: 14,
-    color: "#6b7280",
-  },
-  totalValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-  },
-  grandTotalRow: {
-    borderTopWidth: 1.5,
-    borderTopColor: BRAND_COLORS.gold,
-    marginTop: 8,
-    paddingTop: 12,
-  },
-  grandTotalLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: BRAND_COLORS.darkPurple,
-  },
-  grandTotalValue: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: BRAND_COLORS.darkPurple,
-  },
-
-  /* ── Interpretation ── */
-  interpretationCard: {
-    backgroundColor: "#f0f9ff",
-    borderWidth: 1,
-    borderColor: "#bfdbfe",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-  },
-  interpretationLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: BRAND_COLORS.blue,
-    marginBottom: 6,
-  },
-  interpretationText: {
-    fontSize: 14,
-    color: "#1e40af",
-    lineHeight: 20,
-  },
-
-  /* ── Warning banner ── */
-  warningBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "#fffbeb",
-    borderWidth: 1,
-    borderColor: "#fde68a",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-    gap: 10,
-  },
-  warningBannerIcon: {
-    fontSize: 18,
-  },
-  warningBannerText: {
-    flex: 1,
-    fontSize: 13,
-    color: "#92400e",
-    lineHeight: 19,
-  },
-
-  /* ── Action buttons ── */
-  actionSection: {
-    gap: 10,
-    marginTop: 4,
-  },
-  submitDirectBtn: {
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  applyFormBtn: {
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  actionBtnGradient: {
-    paddingVertical: 16,
-    alignItems: "center",
-    borderRadius: 14,
-  },
-  submitDirectText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  applyFormText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  tryAgainBtn: {
-    paddingVertical: 14,
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#d1d5db",
-    borderRadius: 14,
-    backgroundColor: "#fff",
-  },
-  tryAgainText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#6b7280",
-  },
-});
