@@ -97,6 +97,8 @@ export const queryKeys = {
       [...queryKeys.invoices.lists(), params] as const,
     detail: (id: number) => [...queryKeys.invoices.all, "detail", id] as const,
     statistics: () => [...queryKeys.invoices.all, "statistics"] as const,
+    formData: (type: "sales" | "purchase") =>
+      [...queryKeys.invoices.all, "formData", type] as const,
   },
 
   quotations: {

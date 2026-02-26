@@ -20,16 +20,17 @@ This comprehensive guide provides all the information needed to build the mobile
 ## Table of Contents
 
 1. [Mobile App Screen Architecture](#mobile-app-screen-architecture)
-2. [Create Invoice Page - Fields & Logic](#create-invoice-page---fields--logic)
-3. [API Endpoints with Sample Payloads](#api-endpoints-with-sample-payloads)
-4. [Invoice Details/Show Screen](#invoice-detailsshow-screen)
-5. [API Endpoints Summary](#api-endpoints-summary)
-6. [Business Rules & Validations](#business-rules--validations)
-7. [Stock Management Logic](#stock-management-logic)
-8. [Accounting Entry Logic](#accounting-entry-logic)
-9. [VAT Calculation Logic](#vat-calculation-logic)
-10. [Error Handling](#error-handling)
-11. [Testing Checklist](#testing-checklist)
+2. [Create Invoice with AI](#create-invoice-with-ai)
+3. [Create Invoice Page - Fields & Logic](#create-invoice-page---fields--logic)
+4. [API Endpoints with Sample Payloads](#api-endpoints-with-sample-payloads)
+5. [Invoice Details/Show Screen](#invoice-detailsshow-screen)
+6. [API Endpoints Summary](#api-endpoints-summary)
+7. [Business Rules & Validations](#business-rules--validations)
+8. [Stock Management Logic](#stock-management-logic)
+9. [Accounting Entry Logic](#accounting-entry-logic)
+10. [VAT Calculation Logic](#vat-calculation-logic)
+11. [Error Handling](#error-handling)
+12. [Testing Checklist](#testing-checklist)
 
 ---
 
@@ -47,6 +48,29 @@ This comprehensive guide provides all the information needed to build the mobile
     │   ├── Search Bar
     │   ├── Invoice Cards/List Items
     │   └── FAB (Create New Invoice)
+    │       ├── "Manual Invoice" → Create Invoice Screen
+    │       └── "Create with AI ✨" → AI Invoice Screen
+    │
+    ├── AI Invoice Screen ✨ NEW
+    │   ├── Header (Back, Title "Create with AI")
+    │   ├── Text Input Area (multiline, placeholder)
+    │   ├── Example Prompts (tappable chips)
+    │   ├── "Generate Invoice" Button
+    │   ├── Loading State (AI processing animation)
+    │   ├── AI Preview Card (parsed result)
+    │   │   ├── Invoice Type & Voucher Type
+    │   │   ├── Party Name (with match status ✓/⚠)
+    │   │   ├── Invoice Date
+    │   │   ├── Items Table (name, qty, rate, amount)
+    │   │   │   └── Unmatched items shown with ⚠ warning
+    │   │   ├── VAT Toggle Status
+    │   │   ├── Grand Total
+    │   │   └── AI Interpretation Note
+    │   ├── Warning Messages (unmatched items/party)
+    │   └── Action Buttons
+    │       ├── "Apply to Form" → Pre-fills Create Invoice Screen
+    │       ├── "Submit Directly" → Posts invoice (only if ALL matched)
+    │       └── "Try Again" → Back to input
     │
     ├── Create Invoice Screen ⭐
     │   ├── Header (Back, Save Actions)
@@ -162,6 +186,782 @@ This comprehensive guide provides all the information needed to build the mobile
         └── Quick Add Customer/Vendor (Modal/Bottom Sheet)
 
 ````
+
+---
+
+## Create Invoice with AI
+
+This feature allows users to describe an invoice in plain English (or pidgin/informal language) and the AI will parse it into a structured invoice with matched customers, vendors, products, and amounts.
+
+### How It Works (3-Step Flow)
+
+```
+Step 1: INPUT          Step 2: PREVIEW         Step 3: ACTION
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│ User types   │      │ AI returns   │      │ User either:  │
+│ natural      │ ──►  │ structured   │ ──►  │ • Applies to  │
+│ language     │      │ invoice      │      │   form (edit) │
+│ description  │      │ preview      │      │ • Submits     │
+│              │      │              │      │   directly    │
+└──────────────┘      └──────────────┘      └──────────────┘
+```
+
+### API Endpoint
+
+```
+POST /api/v1/tenant/{tenant}/accounting/invoices/ai-parse
+```
+
+**Authentication:** Bearer token (Sanctum)
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+Accept: application/json
+```
+
+### Request Payload
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `description` | string | Yes | Natural language description (5-1000 chars) |
+| `tenant_id` | integer | Yes | The tenant ID (from login response) |
+| `voucher_type_id` | integer | No | Pre-selected voucher type ID (optional) |
+
+**Sample Request:**
+```json
+{
+  "description": "Sold 5 bags of rice at 45000 each to Alhaji Musa with VAT",
+  "tenant_id": 1,
+  "voucher_type_id": null
+}
+```
+
+**More Example Descriptions the AI Understands:**
+```
+"Invoice 10 cartons of indomie at 3500 to Mama Nkechi"
+"Purchase 200 bags of cement at 5500 from Dangote Supplies"
+"Sold 3 HP laptops at 450k each and 5 USB cables at 2000 to TechHub Ltd"
+"Bill Adamu for 20 bags of sugar @28000 and 10 bags flour @18000"
+"Bought office chairs 15 pieces at 35000 from Furniture Masters"
+```
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "parsed_invoice": {
+    "invoice_type": "sales",
+    "voucher_type_id": 2,
+    "voucher_type_name": "Sales Invoice",
+    "party_id": 15,
+    "party_name": "Alhaji Musa",
+    "party_type": "customer",
+    "invoice_date": "2026-01-21",
+    "reference_number": null,
+    "narration": "Sold 5 bags of rice at 45000 each to Alhaji Musa with VAT",
+    "items": [
+      {
+        "product_id": 42,
+        "product_name": "Bag of Rice (50kg)",
+        "description": "Bag of Rice (50kg)",
+        "quantity": 5,
+        "rate": 45000,
+        "amount": 225000,
+        "purchase_rate": 38000,
+        "current_stock": 120,
+        "unit": "Bags"
+      }
+    ],
+    "vat_enabled": true,
+    "interpretation": "Sales invoice for 5 bags of rice at ₦45,000 each to customer Alhaji Musa. VAT will be applied at 7.5%."
+  },
+  "ai_interpretation": "I identified this as a sales transaction..."
+}
+```
+
+### Response When Some Items/Party Not Matched
+
+```json
+{
+  "success": true,
+  "parsed_invoice": {
+    "invoice_type": "sales",
+    "voucher_type_id": 2,
+    "voucher_type_name": "Sales Invoice",
+    "party_id": null,
+    "party_name": null,
+    "party_name_suggested": "New Customer Name",
+    "party_type": "customer",
+    "invoice_date": "2026-01-21",
+    "reference_number": null,
+    "narration": "Sold 3 widgets to New Customer Name",
+    "items": [
+      {
+        "product_id": null,
+        "product_name_suggested": "Widget",
+        "description": "Widget",
+        "quantity": 3,
+        "rate": 5000,
+        "amount": 15000,
+        "not_found": true
+      }
+    ],
+    "vat_enabled": false,
+    "interpretation": "Sales invoice detected. Note: Customer and product could not be matched to existing records."
+  },
+  "ai_interpretation": "..."
+}
+```
+
+### Error Responses
+
+**Empty/Short Description (400):**
+```json
+{
+  "success": false,
+  "message": "Please provide a description of the invoice you want to create."
+}
+```
+
+**Invalid Tenant (404):**
+```json
+{
+  "success": false,
+  "message": "Tenant not found."
+}
+```
+
+**AI Service Error (500):**
+```json
+{
+  "success": false,
+  "message": "Unable to parse the invoice description. Please try again or create the invoice manually.",
+  "error": "Error details..."
+}
+```
+
+> **Note:** When the AI service is unavailable, the backend falls back to a heuristic (rule-based) parser. The response format stays the same but the `interpretation` field will say "Parsed using offline rules because AI is temporarily unavailable." The heuristic parser handles simpler descriptions well.
+
+### Response Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `invoice_type` | string | `"sales"` or `"purchase"` |
+| `voucher_type_id` | int\|null | Matched voucher type ID, null if not found |
+| `voucher_type_name` | string\|null | Voucher type display name |
+| `party_id` | int\|null | Matched customer/vendor ledger account ID, null if not found |
+| `party_name` | string\|null | Matched party name from database |
+| `party_name_suggested` | string\|null | AI-suggested name when no match found |
+| `party_type` | string | `"customer"` or `"vendor"` |
+| `invoice_date` | string | ISO date `YYYY-MM-DD` (defaults to today) |
+| `reference_number` | string\|null | Extracted reference number if any |
+| `narration` | string | Original description or generated narration |
+| `items` | array | List of invoice line items (see below) |
+| `vat_enabled` | boolean | Whether VAT was detected in description |
+| `interpretation` | string | AI explanation of how it parsed the input |
+
+**Item Fields (when matched):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `product_id` | int | Product ID from database |
+| `product_name` | string | Product name from database |
+| `description` | string | Item description |
+| `quantity` | number | Parsed quantity |
+| `rate` | number | Unit price (uses AI-parsed rate, or falls back to product's sales/purchase rate) |
+| `amount` | number | `quantity × rate` |
+| `purchase_rate` | number | Product's purchase rate (for reference) |
+| `current_stock` | number | Current stock level |
+| `unit` | string | Unit of measurement (e.g., `"Bags"`, `"Pcs"`) |
+
+**Item Fields (when NOT matched - `not_found: true`):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `product_id` | null | Always null |
+| `product_name_suggested` | string | AI's best guess at the product name |
+| `description` | string | Item description |
+| `quantity` | number | Parsed quantity |
+| `rate` | number | Parsed price (may be 0 if not detected) |
+| `amount` | number | `quantity × rate` |
+| `not_found` | boolean | Always `true` |
+
+### Mobile Screen Implementation Guide
+
+#### Screen State Machine
+
+```
+IDLE → LOADING → PREVIEW → (APPLYING | SUBMITTING | IDLE)
+```
+
+Manage screen state with a simple state variable:
+
+```typescript
+type AIInvoiceState = 'idle' | 'loading' | 'preview' | 'applying' | 'submitting' | 'error';
+
+interface AIInvoiceScreenState {
+  state: AIInvoiceState;
+  description: string;
+  parsedInvoice: ParsedInvoice | null;
+  errorMessage: string | null;
+}
+```
+
+#### State 1: Input (idle)
+
+Show a text input area with example prompt chips:
+
+```tsx
+// AI Invoice Input Screen
+<View style={styles.container}>
+  <Text style={styles.title}>Describe your invoice</Text>
+  <Text style={styles.subtitle}>
+    Tell BallieAI what you want to invoice in plain English
+  </Text>
+
+  <TextInput
+    style={styles.textArea}
+    multiline
+    numberOfLines={4}
+    placeholder="e.g., Sold 5 bags of rice at 45000 each to Alhaji Musa with VAT"
+    value={description}
+    onChangeText={setDescription}
+    maxLength={1000}
+  />
+
+  {/* Example prompt chips */}
+  <Text style={styles.chipLabel}>Try these examples:</Text>
+  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    {EXAMPLE_PROMPTS.map((prompt, i) => (
+      <TouchableOpacity
+        key={i}
+        style={styles.chip}
+        onPress={() => setDescription(prompt)}
+      >
+        <Text style={styles.chipText}>{prompt}</Text>
+      </TouchableOpacity>
+    ))}
+  </ScrollView>
+
+  <TouchableOpacity
+    style={[styles.generateBtn, !description.trim() && styles.disabledBtn]}
+    disabled={!description.trim() || description.length < 5}
+    onPress={handleGenerate}
+  >
+    <Text style={styles.generateBtnText}>✨ Generate Invoice</Text>
+  </TouchableOpacity>
+</View>
+```
+
+**Example Prompts Array:**
+```typescript
+const EXAMPLE_PROMPTS = [
+  "Sold 10 bags of cement at 5500 to ABC Construction",
+  "Purchase 200 units of palm oil at 1200 from Mama T Suppliers",
+  "Invoice 5 laptops at 350k each to TechHub Ltd with VAT",
+  "Bought 50 reams of A4 paper at 4500 from Office Mart",
+];
+```
+
+#### State 2: Loading
+
+```tsx
+// While AI is processing
+<View style={styles.loadingContainer}>
+  <ActivityIndicator size="large" color="#3B82F6" />
+  <Text style={styles.loadingText}>BallieAI is analyzing your description...</Text>
+  <Text style={styles.loadingSubtext}>Matching products and customers</Text>
+</View>
+```
+
+#### State 3: Preview
+
+Display the parsed invoice for review:
+
+```tsx
+// AI Invoice Preview
+<ScrollView style={styles.previewContainer}>
+  {/* Invoice Type Badge */}
+  <View style={styles.typeBadge}>
+    <Text style={styles.typeBadgeText}>
+      {parsedInvoice.invoice_type === 'sales' ? '📤 Sales Invoice' : '📥 Purchase Invoice'}
+    </Text>
+    {parsedInvoice.voucher_type_name && (
+      <Text style={styles.voucherType}>{parsedInvoice.voucher_type_name}</Text>
+    )}
+  </View>
+
+  {/* Party Info */}
+  <View style={styles.partyCard}>
+    <Text style={styles.label}>
+      {parsedInvoice.party_type === 'customer' ? 'Customer' : 'Vendor'}
+    </Text>
+    {parsedInvoice.party_id ? (
+      <View style={styles.matchedRow}>
+        <Text style={styles.matchIcon}>✓</Text>
+        <Text style={styles.partyName}>{parsedInvoice.party_name}</Text>
+      </View>
+    ) : (
+      <View style={styles.unmatchedRow}>
+        <Text style={styles.warningIcon}>⚠</Text>
+        <Text style={styles.suggestedName}>
+          "{parsedInvoice.party_name_suggested}" — Not found in records
+        </Text>
+      </View>
+    )}
+  </View>
+
+  {/* Date */}
+  <View style={styles.infoRow}>
+    <Text style={styles.label}>Date</Text>
+    <Text style={styles.value}>
+      {formatDate(parsedInvoice.invoice_date)}
+    </Text>
+  </View>
+
+  {/* Items Table */}
+  <View style={styles.itemsSection}>
+    <Text style={styles.sectionTitle}>Items</Text>
+    {parsedInvoice.items.map((item, index) => (
+      <View key={index} style={[styles.itemRow, item.not_found && styles.itemWarning]}>
+        <View style={styles.itemHeader}>
+          {item.product_id ? (
+            <Text style={styles.matchIcon}>✓</Text>
+          ) : (
+            <Text style={styles.warningIcon}>⚠</Text>
+          )}
+          <Text style={styles.itemName}>
+            {item.product_name || item.product_name_suggested}
+          </Text>
+        </View>
+        <View style={styles.itemDetails}>
+          <Text>{item.quantity} × ₦{formatNumber(item.rate)}</Text>
+          <Text style={styles.itemAmount}>₦{formatNumber(item.amount)}</Text>
+        </View>
+        {item.not_found && (
+          <Text style={styles.notFoundText}>Product not found in records</Text>
+        )}
+        {item.product_id && item.current_stock !== undefined && (
+          <Text style={styles.stockInfo}>Stock: {item.current_stock} {item.unit}</Text>
+        )}
+      </View>
+    ))}
+  </View>
+
+  {/* Totals */}
+  <View style={styles.totalsSection}>
+    <View style={styles.totalRow}>
+      <Text>Subtotal</Text>
+      <Text>₦{formatNumber(subtotal)}</Text>
+    </View>
+    {parsedInvoice.vat_enabled && (
+      <View style={styles.totalRow}>
+        <Text>VAT (7.5%)</Text>
+        <Text>₦{formatNumber(subtotal * 0.075)}</Text>
+      </View>
+    )}
+    <View style={[styles.totalRow, styles.grandTotal]}>
+      <Text style={styles.grandTotalLabel}>Grand Total</Text>
+      <Text style={styles.grandTotalValue}>
+        ₦{formatNumber(parsedInvoice.vat_enabled ? subtotal * 1.075 : subtotal)}
+      </Text>
+    </View>
+  </View>
+
+  {/* AI Interpretation */}
+  <View style={styles.interpretationCard}>
+    <Text style={styles.interpretationLabel}>🤖 AI Interpretation</Text>
+    <Text style={styles.interpretationText}>{parsedInvoice.interpretation}</Text>
+  </View>
+
+  {/* Warnings */}
+  {hasUnmatchedItems && (
+    <View style={styles.warningBanner}>
+      <Text style={styles.warningText}>
+        ⚠ Some items or the customer/vendor could not be matched.
+        Use "Apply to Form" to review and select manually.
+      </Text>
+    </View>
+  )}
+
+  {/* Action Buttons */}
+  <View style={styles.actionButtons}>
+    {canSubmitDirectly && (
+      <TouchableOpacity style={styles.submitBtn} onPress={handleSubmitDirectly}>
+        <Text style={styles.submitBtnText}>Submit Directly</Text>
+      </TouchableOpacity>
+    )}
+
+    <TouchableOpacity style={styles.applyBtn} onPress={handleApplyToForm}>
+      <Text style={styles.applyBtnText}>Apply to Form</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity style={styles.retryBtn} onPress={handleTryAgain}>
+      <Text style={styles.retryBtnText}>Try Again</Text>
+    </TouchableOpacity>
+  </View>
+</ScrollView>
+```
+
+### Business Logic for Action Buttons
+
+#### "Submit Directly" Button Visibility
+
+The **Submit Directly** button should ONLY be visible when ALL of these conditions are met:
+
+```typescript
+const canSubmitDirectly = useMemo(() => {
+  if (!parsedInvoice) return false;
+
+  // Must have a matched party
+  if (!parsedInvoice.party_id) return false;
+
+  // Must have a matched voucher type
+  if (!parsedInvoice.voucher_type_id) return false;
+
+  // Must have at least one item
+  if (!parsedInvoice.items || parsedInvoice.items.length === 0) return false;
+
+  // ALL items must have a matched product_id
+  const allItemsMatched = parsedInvoice.items.every(item => item.product_id !== null);
+  if (!allItemsMatched) return false;
+
+  return true;
+}, [parsedInvoice]);
+```
+
+#### "Submit Directly" — Calls the Standard Invoice Store Endpoint
+
+When the user taps "Submit Directly", transform the AI result into the standard invoice store payload and POST it:
+
+```
+POST /api/v1/tenant/{tenant}/accounting/invoices
+```
+
+**Transform AI Response → Invoice Store Payload:**
+
+```typescript
+const handleSubmitDirectly = async () => {
+  if (!parsedInvoice || !canSubmitDirectly) return;
+
+  setState('submitting');
+
+  // Calculate totals
+  const itemsSubtotal = parsedInvoice.items.reduce(
+    (sum, item) => sum + (item.quantity * item.rate), 0
+  );
+  const vatAmount = parsedInvoice.vat_enabled ? itemsSubtotal * 0.075 : 0;
+
+  // Build the standard invoice store payload
+  const payload = {
+    customer_id: parsedInvoice.party_id,
+    voucher_type_id: parsedInvoice.voucher_type_id,
+    voucher_date: parsedInvoice.invoice_date,
+    reference_number: parsedInvoice.reference_number || '',
+    narration: parsedInvoice.narration || '',
+    inventory_items: parsedInvoice.items.map(item => ({
+      product_id: item.product_id,
+      description: item.description || item.product_name,
+      quantity: item.quantity,
+      rate: item.rate,
+      amount: (item.quantity * item.rate).toFixed(2),
+      purchase_rate: item.purchase_rate || 0,
+    })),
+    action: 'save_and_post_new_sales',
+    // VAT fields (only if VAT enabled)
+    ...(parsedInvoice.vat_enabled && {
+      vat_enabled: '1',
+      vat_amount: vatAmount.toFixed(2),
+      vat_applies_to: 'items_only',
+      vatAppliesTo: 'items_only',
+    }),
+  };
+
+  try {
+    const response = await api.post(
+      `/api/v1/tenant/${tenantSlug}/accounting/invoices`,
+      payload
+    );
+    // Success! Navigate to invoice details or list
+    navigation.navigate('InvoiceDetails', { id: response.data.data.id });
+  } catch (error) {
+    Alert.alert('Error', 'Failed to create invoice. Please try "Apply to Form" instead.');
+    setState('preview');
+  }
+};
+```
+
+#### "Apply to Form" — Navigate to Create Invoice Screen Pre-filled
+
+When the user taps "Apply to Form", navigate to the regular Create Invoice screen with the AI data pre-loaded:
+
+```typescript
+const handleApplyToForm = () => {
+  // Navigate to Create Invoice screen with pre-filled data
+  navigation.navigate('CreateInvoice', {
+    prefillData: {
+      type: parsedInvoice.invoice_type,
+      voucher_type_id: parsedInvoice.voucher_type_id,
+      voucher_date: parsedInvoice.invoice_date,
+      reference_number: parsedInvoice.reference_number,
+      narration: parsedInvoice.narration,
+      customer_id: parsedInvoice.party_id,
+      customer_name: parsedInvoice.party_name,
+      party_type: parsedInvoice.party_type,
+      vat_enabled: parsedInvoice.vat_enabled,
+      items: parsedInvoice.items.map(item => ({
+        product_id: item.product_id || null,
+        product_name: item.product_name || item.product_name_suggested || '',
+        description: item.description || '',
+        quantity: item.quantity || 1,
+        rate: item.rate || 0,
+        amount: item.amount || 0,
+        unit: item.unit || 'Pcs',
+        current_stock: item.current_stock ?? null,
+        purchase_rate: item.purchase_rate || 0,
+        not_found: item.not_found || false,
+      })),
+    },
+  });
+};
+```
+
+**In the Create Invoice Screen**, check for `prefillData` in route params and populate the form:
+
+```typescript
+// In CreateInvoiceScreen.tsx
+const route = useRoute();
+const prefillData = route.params?.prefillData;
+
+useEffect(() => {
+  if (prefillData) {
+    // Set invoice type (sales/purchase)
+    setInvoiceType(prefillData.type);
+
+    // Set voucher type
+    if (prefillData.voucher_type_id) {
+      setVoucherTypeId(prefillData.voucher_type_id);
+    }
+
+    // Set date
+    if (prefillData.voucher_date) {
+      setVoucherDate(prefillData.voucher_date);
+    }
+
+    // Set party
+    if (prefillData.customer_id) {
+      setSelectedPartyId(prefillData.customer_id);
+      setSelectedPartyName(prefillData.customer_name);
+    }
+
+    // Set items
+    if (prefillData.items?.length > 0) {
+      setItems(prefillData.items.map(item => ({
+        ...item,
+        // Items with not_found=true need manual product selection
+        needsManualSelection: item.not_found === true,
+      })));
+    }
+
+    // Set narration
+    if (prefillData.narration) {
+      setNarration(prefillData.narration);
+    }
+
+    // Set VAT
+    if (prefillData.vat_enabled) {
+      setVatEnabled(true);
+    }
+
+    // Show a toast so user knows to review
+    Toast.show({
+      type: 'info',
+      text1: 'AI Invoice Applied',
+      text2: 'Please review the details and fix any ⚠ warnings',
+    });
+  }
+}, [prefillData]);
+```
+
+### Complete API Call Example (Expo / React Native)
+
+```typescript
+import axios from 'axios';
+import { Alert } from 'react-native';
+
+const API_BASE = 'https://your-domain.com/api/v1';
+
+interface ParseInvoiceRequest {
+  description: string;
+  tenant_id: number;
+  voucher_type_id?: number | null;
+}
+
+interface ParsedItem {
+  product_id: number | null;
+  product_name?: string;
+  product_name_suggested?: string;
+  description: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+  purchase_rate?: number;
+  current_stock?: number;
+  unit?: string;
+  not_found?: boolean;
+}
+
+interface ParsedInvoice {
+  invoice_type: 'sales' | 'purchase';
+  voucher_type_id: number | null;
+  voucher_type_name: string | null;
+  party_id: number | null;
+  party_name: string | null;
+  party_name_suggested?: string;
+  party_type: 'customer' | 'vendor';
+  invoice_date: string;
+  reference_number: string | null;
+  narration: string;
+  items: ParsedItem[];
+  vat_enabled: boolean;
+  interpretation: string;
+}
+
+interface AIParseResponse {
+  success: boolean;
+  parsed_invoice: ParsedInvoice;
+  ai_interpretation: string;
+}
+
+export const parseInvoiceWithAI = async (
+  tenantSlug: string,
+  token: string,
+  data: ParseInvoiceRequest
+): Promise<AIParseResponse> => {
+  const response = await axios.post<AIParseResponse>(
+    `${API_BASE}/tenant/${tenantSlug}/accounting/invoices/ai-parse`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    }
+  );
+  return response.data;
+};
+
+// Usage in component
+const handleGenerate = async () => {
+  if (!description.trim() || description.length < 5) {
+    Alert.alert('Error', 'Please enter at least 5 characters');
+    return;
+  }
+
+  setState('loading');
+  setErrorMessage(null);
+
+  try {
+    const result = await parseInvoiceWithAI(tenantSlug, authToken, {
+      description: description.trim(),
+      tenant_id: tenantId,  // number from login response
+      voucher_type_id: null,
+    });
+
+    if (result.success) {
+      setParsedInvoice(result.parsed_invoice);
+      setState('preview');
+    } else {
+      setErrorMessage('Could not parse the description. Try rephrasing.');
+      setState('error');
+    }
+  } catch (error: any) {
+    const message = error.response?.data?.message
+      || 'Something went wrong. Please try again.';
+    setErrorMessage(message);
+    setState('error');
+  }
+};
+```
+
+### Helper Utilities
+
+```typescript
+// Format number with commas for Nigerian Naira display
+export const formatNumber = (num: number): string => {
+  if (!num || isNaN(num)) return '0.00';
+  return parseFloat(String(num)).toLocaleString('en-NG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+// Calculate subtotal from items
+export const calculateSubtotal = (items: ParsedItem[]): number => {
+  return items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+};
+
+// Check if all items and party are matched
+export const isFullyMatched = (invoice: ParsedInvoice): boolean => {
+  if (!invoice.party_id) return false;
+  if (!invoice.voucher_type_id) return false;
+  return invoice.items.every(item => item.product_id !== null);
+};
+
+// Check which items are unmatched
+export const getUnmatchedItems = (items: ParsedItem[]): ParsedItem[] => {
+  return items.filter(item => item.not_found === true || item.product_id === null);
+};
+
+// Format date for display
+export const formatDate = (dateStr: string): string => {
+  const date = new Date(dateStr + 'T00:00:00');
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  // Returns: "Jan. 21, 2026"
+};
+```
+
+### Edge Cases to Handle
+
+| Scenario | What Happens | Mobile Action |
+|----------|-------------|---------------|
+| AI service down | Backend uses heuristic parser automatically | Same UI — `interpretation` says "offline rules" |
+| No products match | Items returned with `not_found: true` | Show ⚠ on items, hide "Submit Directly" |
+| No customer/vendor match | `party_id` is null, `party_name_suggested` set | Show ⚠, hide "Submit Directly" |
+| AI returns empty items | Items array may be empty or have 1 "Unknown" item | Show warning, suggest "Apply to Form" |
+| Description too short | 400 error returned | Show inline error, keep input focused |
+| Multiple products in one description | AI returns multiple items in the array | All items shown in preview table |
+| Price with "k" suffix (e.g., "450k") | AI/heuristic parses as 450,000 | Display correctly in preview |
+| Both sales and purchase keywords | AI uses context to decide; heuristic defaults to sales | Show detected type in preview for review |
+| VAT mentioned ("with VAT", "plus tax", "7.5%") | `vat_enabled` set to `true` | Show VAT row in totals |
+
+### Testing Checklist for AI Invoice
+
+- [ ] Text input accepts 5-1000 characters
+- [ ] "Generate" button disabled when input < 5 chars
+- [ ] Loading state shows while AI processes
+- [ ] Preview displays all matched items with ✓
+- [ ] Preview displays unmatched items with ⚠
+- [ ] Unmatched party shows suggested name with ⚠
+- [ ] "Submit Directly" hidden when any item/party unmatched
+- [ ] "Submit Directly" creates invoice and navigates to details
+- [ ] "Apply to Form" pre-fills Create Invoice screen correctly
+- [ ] Unmatched items in form highlight for manual selection
+- [ ] "Try Again" resets to input state
+- [ ] Error state shows user-friendly message
+- [ ] VAT toggle reflected correctly in preview totals
+- [ ] Grand total calculates correctly (subtotal + VAT if enabled)
+- [ ] Network error handled gracefully
+- [ ] Works with both sales and purchase descriptions
+- [ ] Example chips populate the text input when tapped
 
 ---
 
@@ -2045,6 +2845,7 @@ vat_amount = (2,425,000 + 25,000) * 0.075 = ₦ 183,750
 
 | Endpoint                    | Method | Purpose                            | Status     |
 | --------------------------- | ------ | ---------------------------------- | ---------- |
+| `/ai-parse`                 | POST   | Parse natural language → invoice   | ✅ Working |
 | `/create`                   | GET    | Get form data for creating invoice | ✅ Working |
 | `/`                         | POST   | Create new invoice                 | ✅ Working |
 | `/`                         | GET    | List invoices with filters         | ✅ Working |
@@ -2136,6 +2937,6 @@ For additional help:
 
 ---
 
-**Version:** 2.0
-**Last Updated:** January 21, 2026
+**Version:** 3.0
+**Last Updated:** February 26, 2026
 **Maintained By:** Backend Development Team

@@ -16,7 +16,6 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as FileSystem from "expo-file-system/legacy";
-import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { BRAND_COLORS } from "../../../../theme/colors";
 import { invoiceService } from "../services/invoiceService";
@@ -448,26 +447,19 @@ export default function InvoiceShowScreen() {
       }
 
       if (Platform.OS === "android") {
-        const { status, canAskAgain } =
-          await MediaLibrary.requestPermissionsAsync();
-
-        if (status === "granted") {
-          const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
-          await MediaLibrary.createAlbumAsync("Download", asset, false);
-
-          showToast("✅ PDF downloaded successfully", "success");
-          Alert.alert("PDF Downloaded", "Invoice saved to Downloads.", [
-            { text: "OK" },
-          ]);
+        // Use expo-sharing to let user save/open the PDF — no extra permissions needed
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(downloadResult.uri, {
+            mimeType: "application/pdf",
+            dialogTitle: `Save ${fileName}`,
+            UTI: "com.adobe.pdf",
+          });
+          showToast("✅ PDF ready", "success");
         } else {
           showToast("✅ PDF downloaded successfully", "success");
-          Alert.alert(
-            "PDF Downloaded",
-            canAskAgain
-              ? "Invoice saved to app storage. Allow storage access to save in Downloads."
-              : "Invoice saved to app storage. Storage access is blocked in system settings.",
-            [{ text: "OK" }],
-          );
+          Alert.alert("PDF Downloaded", "Invoice saved to app storage.", [
+            { text: "OK" },
+          ]);
         }
       } else {
         showToast("✅ PDF downloaded successfully", "success");

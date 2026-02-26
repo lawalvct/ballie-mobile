@@ -189,9 +189,14 @@ export type AccountingStackParamList = {
 
   // Invoice Management Module
   InvoiceHome: { type: "sales" | "purchase" };
-  InvoiceCreate: { type: "sales" | "purchase"; onCreated?: () => void };
+  InvoiceCreate: {
+    type: "sales" | "purchase";
+    onCreated?: () => void;
+    prefillData?: import("../features/accounting/invoice/types").AIInvoicePrefillData;
+  };
   InvoiceShow: { id: number };
   InvoiceEdit: { id: number; onUpdated?: (id: number) => void };
+  AIInvoice: undefined;
 
   // Purchase Order (LPO) Module
   PurchaseOrderHome: undefined;

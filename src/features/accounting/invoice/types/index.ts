@@ -38,8 +38,10 @@ export interface Product {
   type: "goods" | "service";
   unit: string;
   unit_id: number;
-  sales_price: number;
-  purchase_price: number;
+  sales_price?: number;
+  purchase_price?: number;
+  sales_rate?: number;
+  purchase_rate?: number;
   current_stock: number;
   low_stock_threshold: number;
   is_active: boolean;
@@ -211,4 +213,66 @@ export interface ListResponse {
   prev_page_url: string | null;
   to: number;
   total: number;
+}
+
+/* ── AI Invoice Parsing ── */
+
+export interface ParsedItem {
+  product_id: number | null;
+  product_name?: string;
+  product_name_suggested?: string;
+  description: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+  purchase_rate?: number;
+  current_stock?: number;
+  unit?: string;
+  not_found?: boolean;
+}
+
+export interface ParsedInvoice {
+  invoice_type: "sales" | "purchase";
+  voucher_type_id: number | null;
+  voucher_type_name: string | null;
+  party_id: number | null;
+  party_name: string | null;
+  party_name_suggested?: string;
+  party_type: "customer" | "vendor";
+  invoice_date: string;
+  reference_number: string | null;
+  narration: string;
+  items: ParsedItem[];
+  vat_enabled: boolean;
+  interpretation: string;
+}
+
+export interface AIParseResponse {
+  success: boolean;
+  parsed_invoice: ParsedInvoice;
+  ai_interpretation: string;
+}
+
+export interface AIInvoicePrefillData {
+  type: "sales" | "purchase";
+  voucher_type_id: number | null;
+  voucher_date: string;
+  reference_number: string | null;
+  narration: string;
+  customer_id: number | null;
+  customer_name: string | null;
+  party_type: "customer" | "vendor";
+  vat_enabled: boolean;
+  items: {
+    product_id: number | null;
+    product_name: string;
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+    unit: string;
+    current_stock: number | null;
+    purchase_rate: number;
+    not_found: boolean;
+  }[];
 }

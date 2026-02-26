@@ -34,6 +34,7 @@ import InvoiceHomeScreen from "../features/accounting/invoice/screens/InvoiceHom
 import InvoiceCreateScreen from "../features/accounting/invoice/screens/InvoiceCreateScreen";
 import InvoiceShowScreen from "../features/accounting/invoice/screens/InvoiceShowScreen";
 import InvoiceEditScreen from "../features/accounting/invoice/screens/InvoiceEditScreen";
+import AIInvoiceScreen from "../features/accounting/invoice/screens/AIInvoiceScreen";
 // Purchase Order (LPO) Feature
 import PurchaseOrderHomeScreen from "../features/accounting/purchaseorder/screens/PurchaseOrderHomeScreen";
 import PurchaseOrderCreateScreen from "../features/accounting/purchaseorder/screens/PurchaseOrderCreateScreen";
@@ -262,6 +263,11 @@ function AccountingStack() {
         name="InvoiceEdit"
         component={InvoiceEditScreen}
         options={{ title: "Edit Invoice" }}
+      />
+      <Stack.Screen
+        name="AIInvoice"
+        component={AIInvoiceScreen}
+        options={{ headerShown: false }}
       />
 
       {/* Purchase Order (LPO) Module */}

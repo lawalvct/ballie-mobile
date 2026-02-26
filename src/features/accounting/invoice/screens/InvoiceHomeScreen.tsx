@@ -148,6 +148,13 @@ export default function InvoiceHomeScreen() {
               Create New {isSales ? "Sales" : "Purchase"} Invoice
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.aiBtn}
+            onPress={() => navigation.navigate("AIInvoice")}
+            activeOpacity={0.8}>
+            <Text style={styles.aiBtnIcon}>✨</Text>
+            <Text style={styles.aiBtnLabel}>Create with AI</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Stats */}
@@ -461,6 +468,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     color: "#1a0f33",
+    letterSpacing: 0.3,
+  },
+  aiBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#3c2c64",
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    gap: 8,
+    marginTop: 10,
+  },
+  aiBtnIcon: {
+    fontSize: 18,
+  },
+  aiBtnLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#fff",
     letterSpacing: 0.3,
   },
 

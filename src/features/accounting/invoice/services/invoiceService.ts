@@ -13,6 +13,7 @@ import type {
   Party,
   Product,
   LedgerAccount,
+  AIParseResponse,
 } from "../types";
 
 class InvoiceService {
@@ -96,11 +97,29 @@ class InvoiceService {
    * Create a new invoice
    */
   async create(data: CreateInvoicePayload): Promise<InvoiceDetails> {
-    const response = await apiClient.post<{
-      success: boolean;
-      data: InvoiceDetails;
-    }>(this.baseUrl, data);
-    return (response as any).data;
+    console.log("[InvoiceService.create] URL:", this.baseUrl);
+    console.log(
+      "[InvoiceService.create] Payload:",
+      JSON.stringify(data, null, 2),
+    );
+    try {
+      const response = await apiClient.post<{
+        success: boolean;
+        data: InvoiceDetails;
+      }>(this.baseUrl, data);
+      console.log(
+        "[InvoiceService.create] Raw response:",
+        JSON.stringify(response, null, 2),
+      );
+      return (response as any).data;
+    } catch (error: any) {
+      console.error("[InvoiceService.create] ERROR:", error);
+      console.error(
+        "[InvoiceService.create] Error JSON:",
+        JSON.stringify(error, null, 2),
+      );
+      throw error;
+    }
   }
 
   /**
@@ -294,6 +313,25 @@ class InvoiceService {
   }
 
   /**
+   * Get full product details by ID from the inventory API.
+   * Used as fallback when invoice form-data products have null prices.
+   * Returns the product with sales_rate / purchase_rate populated.
+   */
+  async getProductById(id: number): Promise<any> {
+    try {
+      const response = await apiClient.get<{ success: boolean; data: any }>(
+        `/inventory/products/${id}`,
+      );
+      // apiClient response interceptor already unwraps response.data
+      const payload = response as any;
+      return payload?.data ?? payload ?? null;
+    } catch (error) {
+      console.warn(`[InvoiceService] Failed to fetch product ${id}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Record payment against invoice
    */
   async recordPayment(
@@ -330,6 +368,54 @@ class InvoiceService {
         };
       };
     }>(`${this.baseUrl}/${id}/record-payment`, data);
+    return (response as any).data;
+  }
+
+  /**
+   * Parse a natural-language invoice description using AI.
+   * POST /accounting/invoices/ai-parse
+   */
+  async aiParse(data: {
+    description: string;
+    tenant_id: number;
+    voucher_type_id?: number | null;
+  }): Promise<AIParseResponse> {
+    const response = await apiClient.post<AIParseResponse>(
+      `${this.baseUrl}/ai-parse`,
+      data,
+    );
+    // apiClient interceptor already unwraps response.data
+    return response as unknown as AIParseResponse;
+  }
+
+  /**
+   * Submit an AI-parsed invoice directly.
+   * Uses the exact field names the backend expects:
+   *   customer_id, inventory_items, action, vat_* fields
+   */
+  async aiSubmitDirect(data: {
+    customer_id: number;
+    voucher_type_id: number;
+    voucher_date: string;
+    reference_number?: string | null;
+    narration?: string;
+    inventory_items: {
+      product_id: number;
+      description: string;
+      quantity: number;
+      rate: number;
+      amount: string;
+      purchase_rate: number;
+    }[];
+    action: string;
+    vat_enabled?: string;
+    vat_amount?: string;
+    vat_applies_to?: string;
+  }): Promise<InvoiceDetails> {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: InvoiceDetails;
+    }>(this.baseUrl, data);
     return (response as any).data;
   }
 }
