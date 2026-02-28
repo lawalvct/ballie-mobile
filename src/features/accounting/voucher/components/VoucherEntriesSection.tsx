@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import type { LedgerAccountOption } from "../types";
+import SearchableAccountPicker from "./SearchableAccountPicker";
 
 type VoucherEntry = {
   ledger_account_id: number | undefined;
@@ -106,30 +106,14 @@ export default function VoucherEntriesSection({
             <Text style={styles.label}>
               Ledger Account <Text style={styles.required}>*</Text>
             </Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={entry.ledger_account_id || ""}
-                onValueChange={(value) =>
-                  onUpdateEntry(
-                    index,
-                    "ledger_account_id",
-                    value === "" ? undefined : Number(value),
-                  )
-                }
-                style={styles.picker}>
-                <Picker.Item label="Select Account" value="" />
-                {ledgerAccounts.map((account) => (
-                  <Picker.Item
-                    key={account.id}
-                    label={
-                      account.display_name ||
-                      `${account.name} (${account.code})`
-                    }
-                    value={account.id}
-                  />
-                ))}
-              </Picker>
-            </View>
+            <SearchableAccountPicker
+              selectedId={entry.ledger_account_id}
+              accounts={ledgerAccounts}
+              placeholder="Select Account"
+              onSelect={(value) =>
+                onUpdateEntry(index, "ledger_account_id", value)
+              }
+            />
           </View>
 
           <View style={styles.amountRow}>

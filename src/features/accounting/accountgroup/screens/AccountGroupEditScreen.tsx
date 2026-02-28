@@ -8,10 +8,11 @@ import {
   TextInput,
   Switch,
   ActivityIndicator,
-  StatusBar,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
@@ -125,7 +126,7 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
         const firstError = Object.values(error.errors)[0];
         showToast(
           Array.isArray(firstError) ? firstError[0] : (firstError as string),
-          "error"
+          "error",
         );
       } else {
         showToast(error.message || "Failed to update account group", "error");
@@ -137,42 +138,50 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
 
   const availableParents =
     formData?.parent_groups.filter(
-      (parent) => parent.nature === originalData?.nature && parent.id !== id
+      (parent) => parent.nature === originalData?.nature && parent.id !== id,
     ) || [];
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
-        />
-        <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <LinearGradient
+          colors={["#1a0f33", "#2d1f5e"]}
+          style={styles.loadingGradient}>
           <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
           <Text style={styles.loadingText}>Loading...</Text>
-        </View>
+        </LinearGradient>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Account Group</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      {/* ── Gradient Header ── */}
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            Edit Account Group
+          </Text>
+          <View style={{ width: 60 }} />
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentInner}
+        showsVerticalScrollIndicator={false}>
         {/* Nature Display (Read-only) */}
         <View style={styles.section}>
           <Text style={styles.label}>Account Nature</Text>
@@ -311,47 +320,51 @@ export default function AccountGroupEditScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
-  loadingContainer: {
+  loadingGradient: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    gap: 16,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#6b7280",
+    fontSize: 14,
+    color: "rgba(255,255,255,0.7)",
   },
+  /* ── Header ── */
   header: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
   },
-  backButton: {
-    paddingVertical: 8,
-  },
-  backButtonText: {
+  backText: {
     fontSize: 16,
-    color: SEMANTIC_COLORS.white,
+    color: "rgba(164,212,255,0.9)",
     fontWeight: "600",
+    minWidth: 60,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: SEMANTIC_COLORS.white,
+    fontWeight: "800",
+    color: "#fff",
+    flex: 1,
+    textAlign: "center",
+    letterSpacing: -0.3,
   },
-  placeholder: {
-    width: 50,
-  },
+  /* ── Body ── */
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  contentInner: {
+    paddingBottom: 40,
   },
 
   section: {

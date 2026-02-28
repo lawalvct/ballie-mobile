@@ -11,6 +11,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../navigation/types";
 import AccountingModuleHeader from "../components/accounting/AccountingModuleHeader";
@@ -80,21 +83,109 @@ export default function LedgerAccountHomeScreen({ navigation }: Props) {
 
   const handleExportExcel = async () => {
     try {
-      showToast("Exporting to Excel…", "success");
-      await ledgerAccountService.exportExcel(filters);
-      showToast("✅ Export ready", "success");
+      showToast("📊 Generating Excel…", "info");
+
+      const token = await AsyncStorage.getItem("auth_token");
+      const tenantSlug = await AsyncStorage.getItem("tenant_slug");
+
+      if (!token || !tenantSlug) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
+      const cleanParams = Object.entries(filters)
+        .filter(([_, v]) => v !== undefined && v !== null && v !== "")
+        .map(
+          ([k, v]) =>
+            `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`,
+        )
+        .join("&");
+      const excelUrl = `https://ballie.co/api/v1/tenant/${tenantSlug}/accounting/ledger-accounts/export/excel${
+        cleanParams ? "?" + cleanParams : ""
+      }`;
+
+      const fileName = `LedgerAccounts-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      const downloadResult = await FileSystem.downloadAsync(excelUrl, fileUri, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+      });
+
+      if (downloadResult.status !== 200) {
+        throw new Error(
+          `Failed to download Excel. Server returned status: ${downloadResult.status}`,
+        );
+      }
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadResult.uri, {
+          mimeType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          dialogTitle: "Save Ledger Accounts Excel",
+          UTI: "com.microsoft.excel.xlsx",
+        });
+        showToast("✅ Excel ready to save", "success");
+      } else {
+        Alert.alert("Success", `Excel saved to: ${downloadResult.uri}`);
+      }
     } catch (error: any) {
-      showToast(error.message || "Failed to export", "error");
+      showToast(error.message || "Failed to export Excel", "error");
     }
   };
 
   const handleExportPdf = async () => {
     try {
-      showToast("Exporting to PDF…", "success");
-      await ledgerAccountService.exportPdf(filters);
-      showToast("✅ Export ready", "success");
+      showToast("📄 Generating PDF…", "info");
+
+      const token = await AsyncStorage.getItem("auth_token");
+      const tenantSlug = await AsyncStorage.getItem("tenant_slug");
+
+      if (!token || !tenantSlug) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
+      const cleanParams = Object.entries(filters)
+        .filter(([_, v]) => v !== undefined && v !== null && v !== "")
+        .map(
+          ([k, v]) =>
+            `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`,
+        )
+        .join("&");
+      const pdfUrl = `https://ballie.co/api/v1/tenant/${tenantSlug}/accounting/ledger-accounts/export/pdf${
+        cleanParams ? "?" + cleanParams : ""
+      }`;
+
+      const fileName = `LedgerAccounts-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+      const downloadResult = await FileSystem.downloadAsync(pdfUrl, fileUri, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/pdf",
+        },
+      });
+
+      if (downloadResult.status !== 200) {
+        throw new Error(
+          `Failed to download PDF. Server returned status: ${downloadResult.status}`,
+        );
+      }
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadResult.uri, {
+          mimeType: "application/pdf",
+          dialogTitle: "Save Ledger Accounts PDF",
+          UTI: "com.adobe.pdf",
+        });
+        showToast("✅ PDF ready to save", "success");
+      } else {
+        Alert.alert("Success", `PDF saved to: ${downloadResult.uri}`);
+      }
     } catch (error: any) {
-      showToast(error.message || "Failed to export", "error");
+      showToast(error.message || "Failed to export PDF", "error");
     }
   };
 

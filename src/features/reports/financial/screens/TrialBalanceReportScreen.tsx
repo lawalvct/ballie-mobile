@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
@@ -93,12 +93,13 @@ export default function TrialBalanceReportScreen({ navigation }: Props) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
@@ -106,177 +107,181 @@ export default function TrialBalanceReportScreen({ navigation }: Props) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Trial Balance</Text>
         <View style={styles.placeholder} />
-      </View>
+      </LinearGradient>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.filtersSection}>
-          <Text style={styles.sectionTitle}>Filters</Text>
-          <View style={styles.toggleRow}>
-            <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                mode === "period" && styles.toggleButtonActive,
-              ]}
-              onPress={() => setMode("period")}>
-              <Text
+      <View style={styles.body}>
+        <ScrollView style={styles.content}>
+          <View style={styles.filtersSection}>
+            <Text style={styles.sectionTitle}>Filters</Text>
+            <View style={styles.toggleRow}>
+              <TouchableOpacity
                 style={[
-                  styles.toggleButtonText,
-                  mode === "period" && styles.toggleButtonTextActive,
-                ]}>
-                Period
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                mode === "as_of" && styles.toggleButtonActive,
-              ]}
-              onPress={() => setMode("as_of")}>
-              <Text
+                  styles.toggleButton,
+                  mode === "period" && styles.toggleButtonActive,
+                ]}
+                onPress={() => setMode("period")}>
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    mode === "period" && styles.toggleButtonTextActive,
+                  ]}>
+                  Period
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[
-                  styles.toggleButtonText,
-                  mode === "as_of" && styles.toggleButtonTextActive,
-                ]}>
-                As Of
-              </Text>
-            </TouchableOpacity>
+                  styles.toggleButton,
+                  mode === "as_of" && styles.toggleButtonActive,
+                ]}
+                onPress={() => setMode("as_of")}>
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    mode === "as_of" && styles.toggleButtonTextActive,
+                  ]}>
+                  As Of
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {mode === "period" ? (
+              <View style={styles.formRow}>
+                <View style={styles.formGroupHalf}>
+                  <Text style={styles.label}>From</Text>
+                  <TouchableOpacity
+                    style={styles.dateButton}
+                    onPress={() => setShowFromPicker(true)}>
+                    <Text style={styles.dateButtonText}>{fromDate}</Text>
+                    <Text style={styles.calendarIcon}>📅</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.formGroupHalf}>
+                  <Text style={styles.label}>To</Text>
+                  <TouchableOpacity
+                    style={styles.dateButton}
+                    onPress={() => setShowToPicker(true)}>
+                    <Text style={styles.dateButtonText}>{toDate}</Text>
+                    <Text style={styles.calendarIcon}>📅</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.formRow}>
+                <View style={styles.formGroupHalf}>
+                  <Text style={styles.label}>As of</Text>
+                  <TouchableOpacity
+                    style={styles.dateButton}
+                    onPress={() => setShowAsOfPicker(true)}>
+                    <Text style={styles.dateButtonText}>{asOfDate}</Text>
+                    <Text style={styles.calendarIcon}>📅</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
 
-          {mode === "period" ? (
-            <View style={styles.formRow}>
-              <View style={styles.formGroupHalf}>
-                <Text style={styles.label}>From</Text>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setShowFromPicker(true)}>
-                  <Text style={styles.dateButtonText}>{fromDate}</Text>
-                  <Text style={styles.calendarIcon}>📅</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.formGroupHalf}>
-                <Text style={styles.label}>To</Text>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setShowToPicker(true)}>
-                  <Text style={styles.dateButtonText}>{toDate}</Text>
-                  <Text style={styles.calendarIcon}>📅</Text>
-                </TouchableOpacity>
-              </View>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+              <Text style={styles.loadingText}>Loading trial balance...</Text>
             </View>
           ) : (
-            <View style={styles.formRow}>
-              <View style={styles.formGroupHalf}>
-                <Text style={styles.label}>As of</Text>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setShowAsOfPicker(true)}>
-                  <Text style={styles.dateButtonText}>{asOfDate}</Text>
-                  <Text style={styles.calendarIcon}>📅</Text>
-                </TouchableOpacity>
+            <>
+              <View style={styles.statsSection}>
+                <Text style={styles.sectionTitle}>Overview</Text>
+                <View style={styles.statsGrid}>
+                  {summaryCards.map((stat) => (
+                    <LinearGradient
+                      key={stat.label}
+                      colors={stat.colors}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.statCard}>
+                      <Text style={styles.statValue}>{stat.value}</Text>
+                      <Text style={styles.statLabel}>{stat.label}</Text>
+                    </LinearGradient>
+                  ))}
+                </View>
               </View>
-            </View>
+
+              <View style={styles.listSection}>
+                <Text style={styles.sectionTitle}>Accounts</Text>
+                {data?.records?.length ? (
+                  data.records.map((item, index) => (
+                    <View
+                      style={styles.recordCard}
+                      key={`${item.account_id}-${index}`}>
+                      <Text style={styles.recordTitle}>
+                        {item.name || "Account"}{" "}
+                        {item.code ? `(${item.code})` : ""}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        {item.group || item.account_type || ""}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        Opening: {formatAmount(item.opening_balance)} • Current:{" "}
+                        {formatAmount(item.current_balance)}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        Debit: {formatAmount(item.debit_amount)} • Credit:{" "}
+                        {formatAmount(item.credit_amount)}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>
+                    No trial balance records.
+                  </Text>
+                )}
+              </View>
+            </>
           )}
-        </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-            <Text style={styles.loadingText}>Loading trial balance...</Text>
-          </View>
-        ) : (
-          <>
-            <View style={styles.statsSection}>
-              <Text style={styles.sectionTitle}>Overview</Text>
-              <View style={styles.statsGrid}>
-                {summaryCards.map((stat) => (
-                  <LinearGradient
-                    key={stat.label}
-                    colors={stat.colors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.statCard}>
-                    <Text style={styles.statValue}>{stat.value}</Text>
-                    <Text style={styles.statLabel}>{stat.label}</Text>
-                  </LinearGradient>
-                ))}
-              </View>
-            </View>
+          {showFromPicker && (
+            <DateTimePicker
+              value={new Date(fromDate)}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_event, selectedDate) => {
+                setShowFromPicker(Platform.OS === "ios");
+                if (selectedDate) {
+                  setFromDate(formatDate(selectedDate));
+                }
+              }}
+            />
+          )}
 
-            <View style={styles.listSection}>
-              <Text style={styles.sectionTitle}>Accounts</Text>
-              {data?.records?.length ? (
-                data.records.map((item, index) => (
-                  <View
-                    style={styles.recordCard}
-                    key={`${item.account_id}-${index}`}>
-                    <Text style={styles.recordTitle}>
-                      {item.name || "Account"}{" "}
-                      {item.code ? `(${item.code})` : ""}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      {item.group || item.account_type || ""}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      Opening: {formatAmount(item.opening_balance)} • Current:{" "}
-                      {formatAmount(item.current_balance)}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      Debit: {formatAmount(item.debit_amount)} • Credit:{" "}
-                      {formatAmount(item.credit_amount)}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No trial balance records.</Text>
-              )}
-            </View>
-          </>
-        )}
+          {showToPicker && (
+            <DateTimePicker
+              value={new Date(toDate)}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_event, selectedDate) => {
+                setShowToPicker(Platform.OS === "ios");
+                if (selectedDate) {
+                  setToDate(formatDate(selectedDate));
+                }
+              }}
+            />
+          )}
 
-        {showFromPicker && (
-          <DateTimePicker
-            value={new Date(fromDate)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(_event, selectedDate) => {
-              setShowFromPicker(Platform.OS === "ios");
-              if (selectedDate) {
-                setFromDate(formatDate(selectedDate));
-              }
-            }}
-          />
-        )}
+          {showAsOfPicker && (
+            <DateTimePicker
+              value={new Date(asOfDate)}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_event, selectedDate) => {
+                setShowAsOfPicker(Platform.OS === "ios");
+                if (selectedDate) {
+                  setAsOfDate(formatDate(selectedDate));
+                }
+              }}
+            />
+          )}
 
-        {showToPicker && (
-          <DateTimePicker
-            value={new Date(toDate)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(_event, selectedDate) => {
-              setShowToPicker(Platform.OS === "ios");
-              if (selectedDate) {
-                setToDate(formatDate(selectedDate));
-              }
-            }}
-          />
-        )}
-
-        {showAsOfPicker && (
-          <DateTimePicker
-            value={new Date(asOfDate)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(_event, selectedDate) => {
-              setShowAsOfPicker(Platform.OS === "ios");
-              if (selectedDate) {
-                setAsOfDate(formatDate(selectedDate));
-              }
-            }}
-          />
-        )}
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -293,7 +298,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
+  },
+  body: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
   backButton: {
     paddingVertical: 8,
@@ -313,7 +324,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   filtersSection: {
     paddingHorizontal: 20,

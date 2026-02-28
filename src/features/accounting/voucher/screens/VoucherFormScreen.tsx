@@ -5,12 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  StatusBar,
   TextInput,
   ActivityIndicator,
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
 import { showToast, showConfirm } from "../../../../utils/toast";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
@@ -70,8 +71,26 @@ type FormAction =
 
 function formReducer(state: FormState, action: FormAction): FormState {
   switch (action.type) {
-    case "SET_FIELD":
+    case "SET_FIELD": {
+      // When narration changes, sync to entries whose description is empty
+      // or still matches the old narration
+      if (action.field === "narration") {
+        const oldNarration = state.narration;
+        const newNarration = action.value;
+        return {
+          ...state,
+          narration: newNarration,
+          entries: state.entries.map((entry) => {
+            const desc = entry.description.trim();
+            if (desc === "" || desc === oldNarration.trim()) {
+              return { ...entry, description: newNarration };
+            }
+            return entry;
+          }),
+        };
+      }
       return { ...state, [action.field]: action.value };
+    }
     case "ADD_ENTRY":
       return {
         ...state,
@@ -81,7 +100,7 @@ function formReducer(state: FormState, action: FormAction): FormState {
             ledger_account_id: undefined,
             debit_amount: "",
             credit_amount: "",
-            description: "",
+            description: state.narration,
             document: undefined,
           },
         ],
@@ -688,13 +707,14 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
-        />
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
 
-        <View style={styles.header}>
+        <LinearGradient
+          colors={["#1a0f33", "#2d1f5e"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}>
@@ -702,25 +722,28 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{voucherTypeName}</Text>
           <View style={styles.placeholder} />
-        </View>
+        </LinearGradient>
 
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-          <Text style={styles.loadingText}>Loading form data...</Text>
+        <View style={styles.body}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+            <Text style={styles.loadingText}>Loading form data...</Text>
+          </View>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
@@ -728,294 +751,346 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{voucherTypeName}</Text>
         <View style={styles.placeholder} />
-      </View>
+      </LinearGradient>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}>
-        {/* Voucher Details Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Voucher Details</Text>
+      <View style={styles.body}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}>
+          {/* Voucher Details Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Voucher Details</Text>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>
-              Date <Text style={styles.required}>*</Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.datePickerButton}
-              onPress={() => setShowDatePicker(true)}>
-              <Text style={styles.datePickerText}>
-                {new Date(formState.voucher_date).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>
+                Date <Text style={styles.required}>*</Text>
               </Text>
-              <Text style={styles.calendarIcon}>📅</Text>
-            </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={new Date(formState.voucher_date)}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(event, selectedDate) => {
-                  setShowDatePicker(Platform.OS === "ios");
-                  if (selectedDate) {
-                    const formattedDate = selectedDate
-                      .toISOString()
-                      .split("T")[0];
-                    dispatch({
-                      type: "SET_FIELD",
-                      field: "voucher_date",
-                      value: formattedDate,
-                    });
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.datePickerText}>
+                  {new Date(formState.voucher_date).toLocaleDateString(
+                    "en-GB",
+                    {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    },
+                  )}
+                </Text>
+                <Text style={styles.calendarIcon}>📅</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={new Date(formState.voucher_date)}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(Platform.OS === "ios");
+                    if (selectedDate) {
+                      const formattedDate = selectedDate
+                        .toISOString()
+                        .split("T")[0];
+                      dispatch({
+                        type: "SET_FIELD",
+                        field: "voucher_date",
+                        value: formattedDate,
+                      });
+                    }
+                  }}
+                />
+              )}
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Voucher Number (Optional)</Text>
+              <TextInput
+                style={styles.input}
+                value={formState.voucher_number}
+                onChangeText={(value) =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "voucher_number",
+                    value,
+                  })
+                }
+                placeholder="Auto-generated if left empty"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Narration</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={formState.narration}
+                onChangeText={(value) => {
+                  const oldNarration = formState.narration.trim();
+                  dispatch({ type: "SET_FIELD", field: "narration", value });
+
+                  // Sync to contra particulars
+                  if (
+                    isContraVoucher &&
+                    (contraParticulars.trim() === "" ||
+                      contraParticulars.trim() === oldNarration)
+                  ) {
+                    setContraParticulars(value);
+                  }
+
+                  // Sync to credit note entries
+                  if (isCreditNoteVoucher) {
+                    setCreditEntries((prev) =>
+                      prev.map((e) =>
+                        e.description.trim() === "" ||
+                        e.description.trim() === oldNarration
+                          ? { ...e, description: value }
+                          : e,
+                      ),
+                    );
+                  }
+
+                  // Sync to debit note entries
+                  if (isDebitNoteVoucher) {
+                    setDebitEntries((prev) =>
+                      prev.map((e) =>
+                        e.description.trim() === "" ||
+                        e.description.trim() === oldNarration
+                          ? { ...e, description: value }
+                          : e,
+                      ),
+                    );
                   }
                 }}
+                placeholder="Enter description..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
               />
-            )}
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Reference Number</Text>
+              <TextInput
+                style={styles.input}
+                value={formState.reference_number}
+                onChangeText={(value) =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "reference_number",
+                    value,
+                  })
+                }
+                placeholder="External reference (optional)"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Voucher Number (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              value={formState.voucher_number}
-              onChangeText={(value) =>
-                dispatch({ type: "SET_FIELD", field: "voucher_number", value })
+          {isReceiptVoucher ? (
+            <ReceiptVoucherEntriesSection
+              entries={formState.entries}
+              ledgerAccounts={ledgerAccounts}
+              bankAccountId={receiptBankAccountId}
+              onBankAccountChange={setReceiptBankAccountId}
+              onAddEntry={() => dispatch({ type: "ADD_ENTRY" })}
+              onRemoveEntry={(index) =>
+                dispatch({ type: "REMOVE_ENTRY", index })
               }
-              placeholder="Auto-generated if left empty"
-              placeholderTextColor="#9ca3af"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Narration</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={formState.narration}
-              onChangeText={(value) =>
-                dispatch({ type: "SET_FIELD", field: "narration", value })
+              onUpdateEntry={(index, field, value) =>
+                dispatch({ type: "UPDATE_ENTRY", index, field, value })
               }
-              placeholder="Enter description..."
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={3}
+              onPickDocument={handlePickDocument}
+              onTakePhoto={handleTakePhoto}
+              onRemoveDocument={handleRemoveDocument}
+              totalCredits={totalCredits}
             />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Reference Number</Text>
-            <TextInput
-              style={styles.input}
-              value={formState.reference_number}
-              onChangeText={(value) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "reference_number",
-                  value,
-                })
+          ) : isPaymentVoucher ? (
+            <PaymentVoucherEntriesSection
+              entries={formState.entries}
+              ledgerAccounts={ledgerAccounts}
+              bankAccountId={paymentBankAccountId}
+              onBankAccountChange={setPaymentBankAccountId}
+              onAddEntry={() => dispatch({ type: "ADD_ENTRY" })}
+              onRemoveEntry={(index) =>
+                dispatch({ type: "REMOVE_ENTRY", index })
               }
-              placeholder="External reference (optional)"
-              placeholderTextColor="#9ca3af"
+              onUpdateEntry={(index, field, value) =>
+                dispatch({ type: "UPDATE_ENTRY", index, field, value })
+              }
+              onPickDocument={handlePickDocument}
+              onTakePhoto={handleTakePhoto}
+              onRemoveDocument={handleRemoveDocument}
+              totalDebits={totalDebits}
             />
-          </View>
-        </View>
+          ) : isContraVoucher ? (
+            <ContraVoucherEntriesSection
+              ledgerAccounts={ledgerAccounts}
+              fromAccountId={contraFromAccountId}
+              toAccountId={contraToAccountId}
+              transferAmount={contraAmount}
+              particulars={contraParticulars}
+              onFromAccountChange={setContraFromAccountId}
+              onToAccountChange={setContraToAccountId}
+              onTransferAmountChange={setContraAmount}
+              onParticularsChange={setContraParticulars}
+            />
+          ) : isCreditNoteVoucher ? (
+            <CreditNoteEntriesSection
+              ledgerAccounts={ledgerAccounts}
+              customerAccountId={creditNoteCustomerAccountId}
+              customerAmount={creditNoteAmount}
+              creditEntries={creditEntries}
+              onCustomerAccountChange={setCreditNoteCustomerAccountId}
+              onCustomerAmountChange={setCreditNoteAmount}
+              onAddEntry={() =>
+                setCreditEntries((prev) => [
+                  ...prev,
+                  { ledger_account_id: undefined, amount: "", description: "" },
+                ])
+              }
+              onRemoveEntry={(index) =>
+                setCreditEntries((prev) => prev.filter((_, i) => i !== index))
+              }
+              onUpdateEntry={(index, field, value) =>
+                setCreditEntries((prev) =>
+                  prev.map((entry, i) =>
+                    i === index ? { ...entry, [field]: value } : entry,
+                  ),
+                )
+              }
+            />
+          ) : isDebitNoteVoucher ? (
+            <DebitNoteEntriesSection
+              ledgerAccounts={ledgerAccounts}
+              customerAccountId={debitNoteCustomerAccountId}
+              customerAmount={debitNoteAmount}
+              debitEntries={debitEntries}
+              onCustomerAccountChange={setDebitNoteCustomerAccountId}
+              onCustomerAmountChange={setDebitNoteAmount}
+              onAddEntry={() =>
+                setDebitEntries((prev) => [
+                  ...prev,
+                  { ledger_account_id: undefined, amount: "", description: "" },
+                ])
+              }
+              onRemoveEntry={(index) =>
+                setDebitEntries((prev) => prev.filter((_, i) => i !== index))
+              }
+              onUpdateEntry={(index, field, value) =>
+                setDebitEntries((prev) =>
+                  prev.map((entry, i) =>
+                    i === index ? { ...entry, [field]: value } : entry,
+                  ),
+                )
+              }
+            />
+          ) : (
+            <VoucherEntriesSection
+              entries={formState.entries}
+              ledgerAccounts={ledgerAccounts}
+              onAddEntry={() => dispatch({ type: "ADD_ENTRY" })}
+              onRemoveEntry={(index) =>
+                dispatch({ type: "REMOVE_ENTRY", index })
+              }
+              onUpdateEntry={(index, field, value) =>
+                dispatch({ type: "UPDATE_ENTRY", index, field, value })
+              }
+              onPickDocument={handlePickDocument}
+              onTakePhoto={handleTakePhoto}
+              onRemoveDocument={handleRemoveDocument}
+            />
+          )}
 
-        {isReceiptVoucher ? (
-          <ReceiptVoucherEntriesSection
-            entries={formState.entries}
-            ledgerAccounts={ledgerAccounts}
-            bankAccountId={receiptBankAccountId}
-            onBankAccountChange={setReceiptBankAccountId}
-            onAddEntry={() => dispatch({ type: "ADD_ENTRY" })}
-            onRemoveEntry={(index) => dispatch({ type: "REMOVE_ENTRY", index })}
-            onUpdateEntry={(index, field, value) =>
-              dispatch({ type: "UPDATE_ENTRY", index, field, value })
-            }
-            onPickDocument={handlePickDocument}
-            onTakePhoto={handleTakePhoto}
-            onRemoveDocument={handleRemoveDocument}
-            totalCredits={totalCredits}
-          />
-        ) : isPaymentVoucher ? (
-          <PaymentVoucherEntriesSection
-            entries={formState.entries}
-            ledgerAccounts={ledgerAccounts}
-            bankAccountId={paymentBankAccountId}
-            onBankAccountChange={setPaymentBankAccountId}
-            onAddEntry={() => dispatch({ type: "ADD_ENTRY" })}
-            onRemoveEntry={(index) => dispatch({ type: "REMOVE_ENTRY", index })}
-            onUpdateEntry={(index, field, value) =>
-              dispatch({ type: "UPDATE_ENTRY", index, field, value })
-            }
-            onPickDocument={handlePickDocument}
-            onTakePhoto={handleTakePhoto}
-            onRemoveDocument={handleRemoveDocument}
-            totalDebits={totalDebits}
-          />
-        ) : isContraVoucher ? (
-          <ContraVoucherEntriesSection
-            ledgerAccounts={ledgerAccounts}
-            fromAccountId={contraFromAccountId}
-            toAccountId={contraToAccountId}
-            transferAmount={contraAmount}
-            particulars={contraParticulars}
-            onFromAccountChange={setContraFromAccountId}
-            onToAccountChange={setContraToAccountId}
-            onTransferAmountChange={setContraAmount}
-            onParticularsChange={setContraParticulars}
-          />
-        ) : isCreditNoteVoucher ? (
-          <CreditNoteEntriesSection
-            ledgerAccounts={ledgerAccounts}
-            customerAccountId={creditNoteCustomerAccountId}
-            customerAmount={creditNoteAmount}
-            creditEntries={creditEntries}
-            onCustomerAccountChange={setCreditNoteCustomerAccountId}
-            onCustomerAmountChange={setCreditNoteAmount}
-            onAddEntry={() =>
-              setCreditEntries((prev) => [
-                ...prev,
-                { ledger_account_id: undefined, amount: "", description: "" },
-              ])
-            }
-            onRemoveEntry={(index) =>
-              setCreditEntries((prev) => prev.filter((_, i) => i !== index))
-            }
-            onUpdateEntry={(index, field, value) =>
-              setCreditEntries((prev) =>
-                prev.map((entry, i) =>
-                  i === index ? { ...entry, [field]: value } : entry,
-                ),
-              )
-            }
-          />
-        ) : isDebitNoteVoucher ? (
-          <DebitNoteEntriesSection
-            ledgerAccounts={ledgerAccounts}
-            customerAccountId={debitNoteCustomerAccountId}
-            customerAmount={debitNoteAmount}
-            debitEntries={debitEntries}
-            onCustomerAccountChange={setDebitNoteCustomerAccountId}
-            onCustomerAmountChange={setDebitNoteAmount}
-            onAddEntry={() =>
-              setDebitEntries((prev) => [
-                ...prev,
-                { ledger_account_id: undefined, amount: "", description: "" },
-              ])
-            }
-            onRemoveEntry={(index) =>
-              setDebitEntries((prev) => prev.filter((_, i) => i !== index))
-            }
-            onUpdateEntry={(index, field, value) =>
-              setDebitEntries((prev) =>
-                prev.map((entry, i) =>
-                  i === index ? { ...entry, [field]: value } : entry,
-                ),
-              )
-            }
-          />
-        ) : (
-          <VoucherEntriesSection
-            entries={formState.entries}
-            ledgerAccounts={ledgerAccounts}
-            onAddEntry={() => dispatch({ type: "ADD_ENTRY" })}
-            onRemoveEntry={(index) => dispatch({ type: "REMOVE_ENTRY", index })}
-            onUpdateEntry={(index, field, value) =>
-              dispatch({ type: "UPDATE_ENTRY", index, field, value })
-            }
-            onPickDocument={handlePickDocument}
-            onTakePhoto={handleTakePhoto}
-            onRemoveDocument={handleRemoveDocument}
-          />
-        )}
+          {/* Balance Summary */}
+          <View style={styles.balanceCard}>
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceLabel}>Total Debits:</Text>
+              <Text style={styles.balanceValue}>
+                ₦
+                {totalDebits.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceLabel}>Total Credits:</Text>
+              <Text style={styles.balanceValue}>
+                ₦
+                {totalCredits.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+            <View style={styles.balanceDivider} />
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceLabelBold}>Difference:</Text>
+              <Text
+                style={[
+                  styles.balanceValueBold,
+                  isBalanced ? styles.balanceGreen : styles.balanceRed,
+                ]}>
+                ₦
+                {Math.abs(totalDebits - totalCredits).toLocaleString(
+                  undefined,
+                  {
+                    minimumFractionDigits: 2,
+                  },
+                )}
+              </Text>
+            </View>
+            <View style={styles.balanceStatus}>
+              {isBalanced && totalDebits > 0 ? (
+                <Text style={styles.balanceStatusGreen}>
+                  ✓ Entries are balanced
+                </Text>
+              ) : (
+                <Text style={styles.balanceStatusRed}>
+                  ✗ Entries must be balanced
+                </Text>
+              )}
+            </View>
+          </View>
 
-        {/* Balance Summary */}
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceRow}>
-            <Text style={styles.balanceLabel}>Total Debits:</Text>
-            <Text style={styles.balanceValue}>
-              ₦
-              {totalDebits.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
-            </Text>
-          </View>
-          <View style={styles.balanceRow}>
-            <Text style={styles.balanceLabel}>Total Credits:</Text>
-            <Text style={styles.balanceValue}>
-              ₦
-              {totalCredits.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
-            </Text>
-          </View>
-          <View style={styles.balanceDivider} />
-          <View style={styles.balanceRow}>
-            <Text style={styles.balanceLabelBold}>Difference:</Text>
-            <Text
+          {/* Save Button */}
+          <View style={styles.saveButtonsRow}>
+            <TouchableOpacity
               style={[
-                styles.balanceValueBold,
-                isBalanced ? styles.balanceGreen : styles.balanceRed,
-              ]}>
-              ₦
-              {Math.abs(totalDebits - totalCredits).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
-            </Text>
+                styles.saveButton,
+                (!canSave || saving) && styles.saveButtonDisabled,
+              ]}
+              onPress={() => handleSave("save")}
+              disabled={!canSave || saving}>
+              {saving ? (
+                <ActivityIndicator color={BRAND_COLORS.darkPurple} />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Draft</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.postButton,
+                (!canSave || saving) && styles.saveButtonDisabled,
+              ]}
+              onPress={() =>
+                showConfirm(
+                  "Post Voucher",
+                  "This will save and post the voucher. Continue?",
+                  () => handleSave("save_and_post"),
+                )
+              }
+              disabled={!canSave || saving}>
+              {saving ? (
+                <ActivityIndicator color={BRAND_COLORS.darkPurple} />
+              ) : (
+                <Text style={styles.postButtonText}>Save & Post</Text>
+              )}
+            </TouchableOpacity>
           </View>
-          <View style={styles.balanceStatus}>
-            {isBalanced && totalDebits > 0 ? (
-              <Text style={styles.balanceStatusGreen}>
-                ✓ Entries are balanced
-              </Text>
-            ) : (
-              <Text style={styles.balanceStatusRed}>
-                ✗ Entries must be balanced
-              </Text>
-            )}
-          </View>
-        </View>
 
-        {/* Save Button */}
-        <View style={styles.saveButtonsRow}>
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              (!canSave || saving) && styles.saveButtonDisabled,
-            ]}
-            onPress={() => handleSave("save")}
-            disabled={!canSave || saving}>
-            {saving ? (
-              <ActivityIndicator color={BRAND_COLORS.darkPurple} />
-            ) : (
-              <Text style={styles.saveButtonText}>Save Draft</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.postButton,
-              (!canSave || saving) && styles.saveButtonDisabled,
-            ]}
-            onPress={() =>
-              showConfirm(
-                "Post Voucher",
-                "This will save and post the voucher. Continue?",
-                () => handleSave("save_and_post"),
-              )
-            }
-            disabled={!canSave || saving}>
-            {saving ? (
-              <ActivityIndicator color={BRAND_COLORS.darkPurple} />
-            ) : (
-              <Text style={styles.postButtonText}>Save & Post</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -1023,16 +1098,22 @@ export default function VoucherFormScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  body: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
   backButton: {
     paddingVertical: 8,
@@ -1056,7 +1137,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
-    backgroundColor: "#f5f5f5",
   },
   loadingText: {
     marginTop: 12,
@@ -1065,7 +1145,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   scrollContent: {
     padding: 20,

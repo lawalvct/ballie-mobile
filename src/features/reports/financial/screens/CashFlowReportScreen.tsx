@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
@@ -84,12 +84,13 @@ export default function CashFlowReportScreen({ navigation }: Props) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
@@ -97,157 +98,159 @@ export default function CashFlowReportScreen({ navigation }: Props) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Cash Flow</Text>
         <View style={styles.placeholder} />
+      </LinearGradient>
+
+      <View style={styles.body}>
+        <ScrollView style={styles.content}>
+          <View style={styles.filtersSection}>
+            <Text style={styles.sectionTitle}>Filters</Text>
+            <View style={styles.formRow}>
+              <View style={styles.formGroupHalf}>
+                <Text style={styles.label}>From</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowFromPicker(true)}>
+                  <Text style={styles.dateButtonText}>{fromDate}</Text>
+                  <Text style={styles.calendarIcon}>📅</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.formGroupHalf}>
+                <Text style={styles.label}>To</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowToPicker(true)}>
+                  <Text style={styles.dateButtonText}>{toDate}</Text>
+                  <Text style={styles.calendarIcon}>📅</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+              <Text style={styles.loadingText}>Loading cash flow...</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.statsSection}>
+                <Text style={styles.sectionTitle}>Overview</Text>
+                <View style={styles.statsGrid}>
+                  {summaryCards.map((stat) => (
+                    <LinearGradient
+                      key={stat.label}
+                      colors={stat.colors}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.statCard}>
+                      <Text style={styles.statValue}>{stat.value}</Text>
+                      <Text style={styles.statLabel}>{stat.label}</Text>
+                    </LinearGradient>
+                  ))}
+                </View>
+                <View style={styles.cashRow}>
+                  <Text style={styles.cashLabel}>
+                    Opening Cash: {formatAmount(data?.summary?.opening_cash)}
+                  </Text>
+                  <Text style={styles.cashLabel}>
+                    Closing Cash: {formatAmount(data?.summary?.closing_cash)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.listSection}>
+                <Text style={styles.sectionTitle}>Operating</Text>
+                {data?.operating?.length ? (
+                  data.operating.map((item, index) => (
+                    <View
+                      style={styles.recordCard}
+                      key={`${item.description}-${index}`}>
+                      <Text style={styles.recordTitle}>
+                        {item.description || "Operating item"}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        {formatAmount(item.amount)}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>No operating data.</Text>
+                )}
+              </View>
+
+              <View style={styles.listSection}>
+                <Text style={styles.sectionTitle}>Investing</Text>
+                {data?.investing?.length ? (
+                  data.investing.map((item, index) => (
+                    <View
+                      style={styles.recordCard}
+                      key={`${item.description}-${index}`}>
+                      <Text style={styles.recordTitle}>
+                        {item.description || "Investing item"}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        {formatAmount(item.amount)}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>No investing data.</Text>
+                )}
+              </View>
+
+              <View style={styles.listSection}>
+                <Text style={styles.sectionTitle}>Financing</Text>
+                {data?.financing?.length ? (
+                  data.financing.map((item, index) => (
+                    <View
+                      style={styles.recordCard}
+                      key={`${item.description}-${index}`}>
+                      <Text style={styles.recordTitle}>
+                        {item.description || "Financing item"}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        {formatAmount(item.amount)}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>No financing data.</Text>
+                )}
+              </View>
+            </>
+          )}
+
+          {showFromPicker && (
+            <DateTimePicker
+              value={new Date(fromDate)}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_event, selectedDate) => {
+                setShowFromPicker(Platform.OS === "ios");
+                if (selectedDate) {
+                  setFromDate(formatDate(selectedDate));
+                }
+              }}
+            />
+          )}
+
+          {showToPicker && (
+            <DateTimePicker
+              value={new Date(toDate)}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_event, selectedDate) => {
+                setShowToPicker(Platform.OS === "ios");
+                if (selectedDate) {
+                  setToDate(formatDate(selectedDate));
+                }
+              }}
+            />
+          )}
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
       </View>
-
-      <ScrollView style={styles.content}>
-        <View style={styles.filtersSection}>
-          <Text style={styles.sectionTitle}>Filters</Text>
-          <View style={styles.formRow}>
-            <View style={styles.formGroupHalf}>
-              <Text style={styles.label}>From</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowFromPicker(true)}>
-                <Text style={styles.dateButtonText}>{fromDate}</Text>
-                <Text style={styles.calendarIcon}>📅</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.formGroupHalf}>
-              <Text style={styles.label}>To</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowToPicker(true)}>
-                <Text style={styles.dateButtonText}>{toDate}</Text>
-                <Text style={styles.calendarIcon}>📅</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-            <Text style={styles.loadingText}>Loading cash flow...</Text>
-          </View>
-        ) : (
-          <>
-            <View style={styles.statsSection}>
-              <Text style={styles.sectionTitle}>Overview</Text>
-              <View style={styles.statsGrid}>
-                {summaryCards.map((stat) => (
-                  <LinearGradient
-                    key={stat.label}
-                    colors={stat.colors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.statCard}>
-                    <Text style={styles.statValue}>{stat.value}</Text>
-                    <Text style={styles.statLabel}>{stat.label}</Text>
-                  </LinearGradient>
-                ))}
-              </View>
-              <View style={styles.cashRow}>
-                <Text style={styles.cashLabel}>
-                  Opening Cash: {formatAmount(data?.summary?.opening_cash)}
-                </Text>
-                <Text style={styles.cashLabel}>
-                  Closing Cash: {formatAmount(data?.summary?.closing_cash)}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.listSection}>
-              <Text style={styles.sectionTitle}>Operating</Text>
-              {data?.operating?.length ? (
-                data.operating.map((item, index) => (
-                  <View
-                    style={styles.recordCard}
-                    key={`${item.description}-${index}`}>
-                    <Text style={styles.recordTitle}>
-                      {item.description || "Operating item"}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      {formatAmount(item.amount)}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No operating data.</Text>
-              )}
-            </View>
-
-            <View style={styles.listSection}>
-              <Text style={styles.sectionTitle}>Investing</Text>
-              {data?.investing?.length ? (
-                data.investing.map((item, index) => (
-                  <View
-                    style={styles.recordCard}
-                    key={`${item.description}-${index}`}>
-                    <Text style={styles.recordTitle}>
-                      {item.description || "Investing item"}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      {formatAmount(item.amount)}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No investing data.</Text>
-              )}
-            </View>
-
-            <View style={styles.listSection}>
-              <Text style={styles.sectionTitle}>Financing</Text>
-              {data?.financing?.length ? (
-                data.financing.map((item, index) => (
-                  <View
-                    style={styles.recordCard}
-                    key={`${item.description}-${index}`}>
-                    <Text style={styles.recordTitle}>
-                      {item.description || "Financing item"}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      {formatAmount(item.amount)}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No financing data.</Text>
-              )}
-            </View>
-          </>
-        )}
-
-        {showFromPicker && (
-          <DateTimePicker
-            value={new Date(fromDate)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(_event, selectedDate) => {
-              setShowFromPicker(Platform.OS === "ios");
-              if (selectedDate) {
-                setFromDate(formatDate(selectedDate));
-              }
-            }}
-          />
-        )}
-
-        {showToPicker && (
-          <DateTimePicker
-            value={new Date(toDate)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(_event, selectedDate) => {
-              setShowToPicker(Platform.OS === "ios");
-              if (selectedDate) {
-                setToDate(formatDate(selectedDate));
-              }
-            }}
-          />
-        )}
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -264,7 +267,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
+  },
+  body: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
   backButton: {
     paddingVertical: 8,
@@ -284,7 +293,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   filtersSection: {
     paddingHorizontal: 20,

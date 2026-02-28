@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   ScrollView,
   RefreshControl,
   Alert,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -271,12 +271,13 @@ export default function BankStatementScreen({ navigation, route }: Props) {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
-        />
-        <View style={styles.header}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <LinearGradient
+          colors={["#1a0f33", "#2d1f5e"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}>
@@ -284,10 +285,12 @@ export default function BankStatementScreen({ navigation, route }: Props) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bank Statement</Text>
           <View style={styles.placeholder} />
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-          <Text style={styles.loadingText}>Loading statement...</Text>
+        </LinearGradient>
+        <View style={styles.body}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+            <Text style={styles.loadingText}>Loading statement...</Text>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -295,12 +298,13 @@ export default function BankStatementScreen({ navigation, route }: Props) {
 
   if (!statement) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
-        />
-        <View style={styles.header}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <LinearGradient
+          colors={["#1a0f33", "#2d1f5e"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}>
@@ -308,16 +312,20 @@ export default function BankStatementScreen({ navigation, route }: Props) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bank Statement</Text>
           <View style={styles.placeholder} />
-        </View>
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>📄</Text>
-          <Text style={styles.emptyTitle}>No statement found</Text>
-          <Text style={styles.emptyText}>
-            Adjust the date range and try again.
-          </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadStatement}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
+        </LinearGradient>
+        <View style={styles.body}>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>📄</Text>
+            <Text style={styles.emptyTitle}>No statement found</Text>
+            <Text style={styles.emptyText}>
+              Adjust the date range and try again.
+            </Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={loadStatement}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -327,12 +335,13 @@ export default function BankStatementScreen({ navigation, route }: Props) {
   const transactions = statement.transactions || [];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
@@ -340,152 +349,160 @@ export default function BankStatementScreen({ navigation, route }: Props) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bank Statement</Text>
         <View style={styles.placeholder} />
-      </View>
+      </LinearGradient>
 
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }>
-        <View style={styles.summaryCard}>
-          <Text style={styles.bankName}>{bank.bank_name}</Text>
-          <Text style={styles.accountNumber}>{bank.account_number}</Text>
-          <Text style={styles.dateRangeText}>
-            {statement.date_range.start_date} → {statement.date_range.end_date}
-          </Text>
-        </View>
-
-        <View style={styles.filterSection}>
-          <Text style={styles.sectionTitle}>Date Range</Text>
-          <View style={styles.filterRow}>
-            <TouchableOpacity
-              onPress={() => setShowStartPicker(true)}
-              style={styles.filterButton}>
-              <Text style={styles.filterLabel}>📅 From</Text>
-              <Text style={styles.filterValue}>{startDate}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setShowEndPicker(true)}
-              style={styles.filterButton}>
-              <Text style={styles.filterLabel}>📅 To</Text>
-              <Text style={styles.filterValue}>{endDate}</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.applyButton} onPress={loadStatement}>
-            <Text style={styles.applyButtonText}>Apply Filters</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.exportRow}>
-          <TouchableOpacity
-            style={styles.exportButton}
-            onPress={() => handleExport("pdf")}
-            disabled={!!exporting}>
-            <Text style={styles.exportButtonText}>
-              {exporting === "pdf" ? "Exporting..." : "📄 Export PDF"}
+      <View style={styles.body}>
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }>
+          <View style={styles.summaryCard}>
+            <Text style={styles.bankName}>{bank.bank_name}</Text>
+            <Text style={styles.accountNumber}>{bank.account_number}</Text>
+            <Text style={styles.dateRangeText}>
+              {statement.date_range.start_date} →{" "}
+              {statement.date_range.end_date}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.exportButton, styles.exportButtonSecondary]}
-            onPress={() => handleExport("excel")}
-            disabled={!!exporting}>
-            <Text style={styles.exportButtonText}>
-              {exporting === "excel" ? "Exporting..." : "📥 Export Excel"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {showStartPicker && (
-          <DateTimePicker
-            value={new Date(startDate)}
-            mode="date"
-            display="default"
-            onChange={(_event, selected) => {
-              setShowStartPicker(false);
-              if (selected) setStartDate(formatDate(selected));
-            }}
-          />
-        )}
-        {showEndPicker && (
-          <DateTimePicker
-            value={new Date(endDate)}
-            mode="date"
-            display="default"
-            onChange={(_event, selected) => {
-              setShowEndPicker(false);
-              if (selected) setEndDate(formatDate(selected));
-            }}
-          />
-        )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Totals</Text>
-          <View style={styles.totalsGrid}>
-            <LinearGradient
-              colors={["#8B5CF6", "#6D28D9"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.totalCard}>
-              <Text style={styles.totalValue}>
-                {formatAmount(statement.opening_balance, bank.currency)}
-              </Text>
-              <Text style={styles.totalLabel}>Opening Balance</Text>
-            </LinearGradient>
-            <LinearGradient
-              colors={["#EF4444", "#DC2626"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.totalCard}>
-              <Text style={styles.totalValue}>
-                {formatAmount(statement.totals.total_debits, bank.currency)}
-              </Text>
-              <Text style={styles.totalLabel}>Total Debits</Text>
-            </LinearGradient>
-            <LinearGradient
-              colors={["#10B981", "#059669"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.totalCard}>
-              <Text style={styles.totalValue}>
-                {formatAmount(statement.totals.total_credits, bank.currency)}
-              </Text>
-              <Text style={styles.totalLabel}>Total Credits</Text>
-            </LinearGradient>
-            <LinearGradient
-              colors={["#3B82F6", "#2563EB"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.totalCard}>
-              <Text style={styles.totalValue}>
-                {formatAmount(statement.totals.closing_balance, bank.currency)}
-              </Text>
-              <Text style={styles.totalLabel}>Closing Balance</Text>
-            </LinearGradient>
           </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Transactions</Text>
-          {transactions.length === 0 ? (
-            <View style={styles.emptyTransactions}>
-              <Text style={styles.emptyTransactionsIcon}>📋</Text>
-              <Text style={styles.emptyTransactionsText}>
-                No transactions in this period
-              </Text>
+          <View style={styles.filterSection}>
+            <Text style={styles.sectionTitle}>Date Range</Text>
+            <View style={styles.filterRow}>
+              <TouchableOpacity
+                onPress={() => setShowStartPicker(true)}
+                style={styles.filterButton}>
+                <Text style={styles.filterLabel}>📅 From</Text>
+                <Text style={styles.filterValue}>{startDate}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowEndPicker(true)}
+                style={styles.filterButton}>
+                <Text style={styles.filterLabel}>📅 To</Text>
+                <Text style={styles.filterValue}>{endDate}</Text>
+              </TouchableOpacity>
             </View>
-          ) : (
-            transactions.map((txn, index) => (
-              <StatementRow
-                key={`${txn.voucher_number || "txn"}-${index}`}
-                transaction={txn}
-                currency={bank.currency}
-              />
-            ))
-          )}
-        </View>
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={loadStatement}>
+              <Text style={styles.applyButtonText}>Apply Filters</Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={{ height: 30 }} />
-      </ScrollView>
+          <View style={styles.exportRow}>
+            <TouchableOpacity
+              style={styles.exportButton}
+              onPress={() => handleExport("pdf")}
+              disabled={!!exporting}>
+              <Text style={styles.exportButtonText}>
+                {exporting === "pdf" ? "Exporting..." : "📄 Export PDF"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.exportButton, styles.exportButtonSecondary]}
+              onPress={() => handleExport("excel")}
+              disabled={!!exporting}>
+              <Text style={styles.exportButtonText}>
+                {exporting === "excel" ? "Exporting..." : "📥 Export Excel"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {showStartPicker && (
+            <DateTimePicker
+              value={new Date(startDate)}
+              mode="date"
+              display="default"
+              onChange={(_event, selected) => {
+                setShowStartPicker(false);
+                if (selected) setStartDate(formatDate(selected));
+              }}
+            />
+          )}
+          {showEndPicker && (
+            <DateTimePicker
+              value={new Date(endDate)}
+              mode="date"
+              display="default"
+              onChange={(_event, selected) => {
+                setShowEndPicker(false);
+                if (selected) setEndDate(formatDate(selected));
+              }}
+            />
+          )}
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Totals</Text>
+            <View style={styles.totalsGrid}>
+              <LinearGradient
+                colors={["#8B5CF6", "#6D28D9"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.totalCard}>
+                <Text style={styles.totalValue}>
+                  {formatAmount(statement.opening_balance, bank.currency)}
+                </Text>
+                <Text style={styles.totalLabel}>Opening Balance</Text>
+              </LinearGradient>
+              <LinearGradient
+                colors={["#EF4444", "#DC2626"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.totalCard}>
+                <Text style={styles.totalValue}>
+                  {formatAmount(statement.totals.total_debits, bank.currency)}
+                </Text>
+                <Text style={styles.totalLabel}>Total Debits</Text>
+              </LinearGradient>
+              <LinearGradient
+                colors={["#10B981", "#059669"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.totalCard}>
+                <Text style={styles.totalValue}>
+                  {formatAmount(statement.totals.total_credits, bank.currency)}
+                </Text>
+                <Text style={styles.totalLabel}>Total Credits</Text>
+              </LinearGradient>
+              <LinearGradient
+                colors={["#3B82F6", "#2563EB"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.totalCard}>
+                <Text style={styles.totalValue}>
+                  {formatAmount(
+                    statement.totals.closing_balance,
+                    bank.currency,
+                  )}
+                </Text>
+                <Text style={styles.totalLabel}>Closing Balance</Text>
+              </LinearGradient>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Transactions</Text>
+            {transactions.length === 0 ? (
+              <View style={styles.emptyTransactions}>
+                <Text style={styles.emptyTransactionsIcon}>📋</Text>
+                <Text style={styles.emptyTransactionsText}>
+                  No transactions in this period
+                </Text>
+              </View>
+            ) : (
+              transactions.map((txn, index) => (
+                <StatementRow
+                  key={`${txn.voucher_number || "txn"}-${index}`}
+                  transaction={txn}
+                  currency={bank.currency}
+                />
+              ))
+            )}
+          </View>
+
+          <View style={{ height: 30 }} />
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -550,7 +567,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
+  },
+  body: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
   backButton: {
     paddingVertical: 8,
@@ -570,14 +593,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
-    backgroundColor: "#f5f5f5",
   },
   loadingText: {
     marginTop: 12,
@@ -818,7 +839,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
-    backgroundColor: "#f5f5f5",
   },
   emptyIcon: {
     fontSize: 48,

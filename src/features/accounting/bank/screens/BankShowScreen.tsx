@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   ScrollView,
   RefreshControl,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
@@ -79,9 +80,11 @@ export default function BankShowScreen({ navigation, route }: Props) {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [id]),
+  );
 
   const handleRefresh = async () => {
     try {
@@ -100,13 +103,14 @@ export default function BankShowScreen({ navigation, route }: Props) {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
-        />
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
 
-        <View style={styles.header}>
+        <LinearGradient
+          colors={["#1a0f33", "#2d1f5e"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}>
@@ -114,11 +118,13 @@ export default function BankShowScreen({ navigation, route }: Props) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bank Details</Text>
           <View style={styles.placeholder} />
-        </View>
+        </LinearGradient>
 
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-          <Text style={styles.loadingText}>Loading bank details...</Text>
+        <View style={styles.body}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+            <Text style={styles.loadingText}>Loading bank details...</Text>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -126,13 +132,14 @@ export default function BankShowScreen({ navigation, route }: Props) {
 
   if (!bank) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
-        />
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
 
-        <View style={styles.header}>
+        <LinearGradient
+          colors={["#1a0f33", "#2d1f5e"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}>
@@ -140,17 +147,19 @@ export default function BankShowScreen({ navigation, route }: Props) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bank Details</Text>
           <View style={styles.placeholder} />
-        </View>
+        </LinearGradient>
 
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>🏦</Text>
-          <Text style={styles.emptyTitle}>Bank not found</Text>
-          <Text style={styles.emptyText}>
-            {error || "Unable to load bank details."}
-          </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadData}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
+        <View style={styles.body}>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>🏦</Text>
+            <Text style={styles.emptyTitle}>Bank not found</Text>
+            <Text style={styles.emptyText}>
+              {error || "Unable to load bank details."}
+            </Text>
+            <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -162,13 +171,14 @@ export default function BankShowScreen({ navigation, route }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
 
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
@@ -176,253 +186,260 @@ export default function BankShowScreen({ navigation, route }: Props) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bank Details</Text>
         <View style={styles.placeholder} />
-      </View>
+      </LinearGradient>
 
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }>
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryHeader}>
-            <View>
-              <Text style={styles.bankName}>{bank.bank_name}</Text>
-              <Text style={styles.accountName}>{bank.account_name}</Text>
+      <View style={styles.body}>
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }>
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryHeader}>
+              <View>
+                <Text style={styles.bankName}>{bank.bank_name}</Text>
+                <Text style={styles.accountName}>{bank.account_name}</Text>
+              </View>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: statusStyle.bg },
+                ]}>
+                <Text style={[styles.statusText, { color: statusStyle.text }]}>
+                  {(bank.status || "unknown").toUpperCase()}
+                </Text>
+              </View>
             </View>
-            <View
-              style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-              <Text style={[styles.statusText, { color: statusStyle.text }]}>
-                {(bank.status || "unknown").toUpperCase()}
-              </Text>
-            </View>
-          </View>
 
-          <Text style={styles.accountNumber}>
-            {bank.masked_account_number || bank.account_number}
-          </Text>
-          <View style={styles.metaRow}>
-            <Text style={styles.metaText}>
-              {bank.account_type_display || bank.account_type || "-"}
+            <Text style={styles.accountNumber}>
+              {bank.masked_account_number || bank.account_number}
             </Text>
-            <Text style={styles.metaText}>{bank.currency || "NGN"}</Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaText}>
+                {bank.account_type_display || bank.account_type || "-"}
+              </Text>
+              <Text style={styles.metaText}>{bank.currency || "NGN"}</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.balanceSection}>
-          <Text style={styles.sectionTitle}>Balances</Text>
-          <View style={styles.balanceGrid}>
-            <LinearGradient
-              colors={["#8B5CF6", "#6D28D9"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.balanceCard}>
-              <Text style={styles.balanceValue}>
-                {formatAmount(bank.opening_balance, bank.currency)}
-              </Text>
-              <Text style={styles.balanceLabel}>Opening Balance</Text>
-            </LinearGradient>
-            <LinearGradient
-              colors={["#10B981", "#059669"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.balanceCard}>
-              <Text style={styles.balanceValue}>
-                {formatAmount(bank.current_balance, bank.currency)}
-              </Text>
-              <Text style={styles.balanceLabel}>Current Balance</Text>
-            </LinearGradient>
-            <LinearGradient
-              colors={["#3B82F6", "#2563EB"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.balanceCard}>
-              <Text style={styles.balanceValue}>
-                {formatAmount(bank.available_balance, bank.currency)}
-              </Text>
-              <Text style={styles.balanceLabel}>Available Balance</Text>
-            </LinearGradient>
-            {toNumber(bank.overdraft_limit) > 0 && (
+          <View style={styles.balanceSection}>
+            <Text style={styles.sectionTitle}>Balances</Text>
+            <View style={styles.balanceGrid}>
               <LinearGradient
-                colors={["#F59E0B", "#D97706"]}
+                colors={["#8B5CF6", "#6D28D9"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.balanceCard}>
                 <Text style={styles.balanceValue}>
-                  {formatAmount(bank.overdraft_limit, bank.currency)}
+                  {formatAmount(bank.opening_balance, bank.currency)}
                 </Text>
-                <Text style={styles.balanceLabel}>Overdraft Limit</Text>
+                <Text style={styles.balanceLabel}>Opening Balance</Text>
               </LinearGradient>
-            )}
+              <LinearGradient
+                colors={["#10B981", "#059669"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.balanceCard}>
+                <Text style={styles.balanceValue}>
+                  {formatAmount(bank.current_balance, bank.currency)}
+                </Text>
+                <Text style={styles.balanceLabel}>Current Balance</Text>
+              </LinearGradient>
+              <LinearGradient
+                colors={["#3B82F6", "#2563EB"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.balanceCard}>
+                <Text style={styles.balanceValue}>
+                  {formatAmount(bank.available_balance, bank.currency)}
+                </Text>
+                <Text style={styles.balanceLabel}>Available Balance</Text>
+              </LinearGradient>
+              {toNumber(bank.overdraft_limit) > 0 && (
+                <LinearGradient
+                  colors={["#F59E0B", "#D97706"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.balanceCard}>
+                  <Text style={styles.balanceValue}>
+                    {formatAmount(bank.overdraft_limit, bank.currency)}
+                  </Text>
+                  <Text style={styles.balanceLabel}>Overdraft Limit</Text>
+                </LinearGradient>
+              )}
+            </View>
           </View>
-        </View>
 
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Account Info</Text>
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Branch</Text>
-              <Text style={styles.infoValue}>{bank.branch_name || "-"}</Text>
-            </View>
-            {(bank.swift_code ||
-              bank.iban ||
-              bank.routing_number ||
-              bank.sort_code) && (
-              <>
-                {bank.swift_code && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>SWIFT Code</Text>
-                    <Text style={styles.infoValue}>{bank.swift_code}</Text>
-                  </View>
-                )}
-                {bank.iban && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>IBAN</Text>
-                    <Text style={styles.infoValue}>{bank.iban}</Text>
-                  </View>
-                )}
-                {bank.routing_number && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Routing Number</Text>
-                    <Text style={styles.infoValue}>{bank.routing_number}</Text>
-                  </View>
-                )}
-                {bank.sort_code && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Sort Code</Text>
-                    <Text style={styles.infoValue}>{bank.sort_code}</Text>
-                  </View>
-                )}
-              </>
-            )}
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Primary</Text>
-              <Text style={styles.infoValue}>
-                {bank.is_primary ? "✓ Yes" : "No"}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Payroll Account</Text>
-              <Text style={styles.infoValue}>
-                {bank.is_payroll_account ? "✓ Yes" : "No"}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Reconciliation</Text>
-              <View
-                style={[
-                  styles.reconciliationBadge,
-                  {
-                    backgroundColor:
-                      reconciliationStatusMap[
-                        bank.reconciliation_status || "disabled"
-                      ]?.bg || "#e5e7eb",
-                  },
-                ]}>
-                <Text
+          <View style={styles.infoSection}>
+            <Text style={styles.sectionTitle}>Account Info</Text>
+            <View style={styles.infoCard}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Branch</Text>
+                <Text style={styles.infoValue}>{bank.branch_name || "-"}</Text>
+              </View>
+              {(bank.swift_code ||
+                bank.iban ||
+                bank.routing_number ||
+                bank.sort_code) && (
+                <>
+                  {bank.swift_code && (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>SWIFT Code</Text>
+                      <Text style={styles.infoValue}>{bank.swift_code}</Text>
+                    </View>
+                  )}
+                  {bank.iban && (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>IBAN</Text>
+                      <Text style={styles.infoValue}>{bank.iban}</Text>
+                    </View>
+                  )}
+                  {bank.routing_number && (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Routing Number</Text>
+                      <Text style={styles.infoValue}>
+                        {bank.routing_number}
+                      </Text>
+                    </View>
+                  )}
+                  {bank.sort_code && (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Sort Code</Text>
+                      <Text style={styles.infoValue}>{bank.sort_code}</Text>
+                    </View>
+                  )}
+                </>
+              )}
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Primary</Text>
+                <Text style={styles.infoValue}>
+                  {bank.is_primary ? "✓ Yes" : "No"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Payroll Account</Text>
+                <Text style={styles.infoValue}>
+                  {bank.is_payroll_account ? "✓ Yes" : "No"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Reconciliation</Text>
+                <View
                   style={[
-                    styles.reconciliationText,
+                    styles.reconciliationBadge,
                     {
-                      color:
+                      backgroundColor:
                         reconciliationStatusMap[
                           bank.reconciliation_status || "disabled"
-                        ]?.text || "#6b7280",
+                        ]?.bg || "#e5e7eb",
                     },
                   ]}>
-                  {(bank.reconciliation_status || "disabled").toUpperCase()}
+                  <Text
+                    style={[
+                      styles.reconciliationText,
+                      {
+                        color:
+                          reconciliationStatusMap[
+                            bank.reconciliation_status || "disabled"
+                          ]?.text || "#6b7280",
+                      },
+                    ]}>
+                    {(bank.reconciliation_status || "disabled").toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Last Reconciled</Text>
+                <Text style={styles.infoValue}>
+                  {bank.last_reconciliation_date || "Never"}
                 </Text>
               </View>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Last Reconciled</Text>
-              <Text style={styles.infoValue}>
-                {bank.last_reconciliation_date || "Never"}
-              </Text>
-            </View>
           </View>
-        </View>
 
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.actionButtonSecondary]}
-            onPress={() =>
-              navigation.navigate("BankEdit", {
-                id: bank.id,
-                onUpdated: loadData,
-              })
-            }>
-            <Text style={styles.actionButtonIcon}>✏️</Text>
-            <Text style={styles.actionButtonText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.actionButtonPrimary]}
-            onPress={() =>
-              navigation.navigate("BankStatement", { id: bank.id })
-            }>
-            <Text style={styles.actionButtonIcon}>📊</Text>
-            <Text style={styles.actionButtonTextLight}>Statement</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.actionButtonDanger]}
-            onPress={() => {
-              Alert.alert(
-                "Delete Bank Account",
-                `Are you sure you want to delete ${bank.bank_name} - ${bank.masked_account_number}?`,
-                [
-                  { text: "Cancel", style: "cancel" },
-                  {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: () =>
-                      Alert.alert(
-                        "Coming soon",
-                        "Delete functionality pending",
-                      ),
-                  },
-                ],
-              );
-            }}>
-            <Text style={styles.actionButtonIcon}>🗑️</Text>
-            <Text style={styles.actionButtonText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.transactionsSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <View style={styles.actionRow}>
             <TouchableOpacity
+              style={[styles.actionButton, styles.actionButtonSecondary]}
               onPress={() =>
-                Alert.alert(
-                  "Coming soon",
-                  "Full transaction history screen pending",
-                  [{ text: "OK" }],
-                )
+                navigation.navigate("BankEdit", {
+                  id: bank.id,
+                  onUpdated: loadData,
+                })
               }>
-              <Text style={styles.viewAllText}>View All →</Text>
+              <Text style={styles.actionButtonIcon}>✏️</Text>
+              <Text style={styles.actionButtonText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.actionButtonPrimary]}
+              onPress={() =>
+                navigation.navigate("BankStatement", { id: bank.id })
+              }>
+              <Text style={styles.actionButtonIcon}>📊</Text>
+              <Text style={styles.actionButtonTextLight}>Statement</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.actionButtonDanger]}
+              onPress={() => {
+                Alert.alert(
+                  "Delete Bank Account",
+                  `Are you sure you want to delete ${bank.bank_name} - ${bank.masked_account_number}?`,
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: () =>
+                        Alert.alert(
+                          "Coming soon",
+                          "Delete functionality pending",
+                        ),
+                    },
+                  ],
+                );
+              }}>
+              <Text style={styles.actionButtonIcon}>🗑️</Text>
+              <Text style={styles.actionButtonText}>Delete</Text>
             </TouchableOpacity>
           </View>
-          {transactions.length === 0 ? (
-            <View style={styles.emptyTransactions}>
-              <Text style={styles.emptyTransactionsIcon}>📋</Text>
-              <Text style={styles.emptyTransactionsText}>
-                No recent transactions
-              </Text>
-              <Text style={styles.emptyTransactionsSubtext}>
-                Transactions will appear here once recorded
-              </Text>
-            </View>
-          ) : (
-            transactions.map((txn) => (
-              <TransactionRow
-                key={txn.id}
-                transaction={txn}
-                currency={bank.currency}
-              />
-            ))
-          )}
-        </View>
 
-        <View style={{ height: 30 }} />
-      </ScrollView>
+          <View style={styles.transactionsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recent Transactions</Text>
+              <TouchableOpacity
+                onPress={() =>
+                  Alert.alert(
+                    "Coming soon",
+                    "Full transaction history screen pending",
+                    [{ text: "OK" }],
+                  )
+                }>
+                <Text style={styles.viewAllText}>View All →</Text>
+              </TouchableOpacity>
+            </View>
+            {transactions.length === 0 ? (
+              <View style={styles.emptyTransactions}>
+                <Text style={styles.emptyTransactionsIcon}>📋</Text>
+                <Text style={styles.emptyTransactionsText}>
+                  No recent transactions
+                </Text>
+                <Text style={styles.emptyTransactionsSubtext}>
+                  Transactions will appear here once recorded
+                </Text>
+              </View>
+            ) : (
+              transactions.map((txn) => (
+                <TransactionRow
+                  key={txn.id}
+                  transaction={txn}
+                  currency={bank.currency}
+                />
+              ))
+            )}
+          </View>
+
+          <View style={{ height: 30 }} />
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -480,16 +497,22 @@ function TransactionRow({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  body: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
   backButton: {
     paddingVertical: 8,
@@ -509,14 +532,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
-    backgroundColor: "#f5f5f5",
   },
   loadingText: {
     marginTop: 12,
@@ -528,7 +549,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
-    backgroundColor: "#f5f5f5",
   },
   emptyIcon: {
     fontSize: 48,

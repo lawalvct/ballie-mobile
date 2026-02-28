@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  StatusBar,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AccountingStackParamList } from "../../../../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
@@ -27,11 +29,13 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(true);
   const [accountGroup, setAccountGroup] = useState<AccountGroup | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      loadAccountGroup();
-    }
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        loadAccountGroup();
+      }
+    }, [id]),
+  );
 
   const loadAccountGroup = async () => {
     try {
@@ -67,7 +71,7 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -83,32 +87,45 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
-        />
-        <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <LinearGradient
+          colors={["#1a0f33", "#2d1f5e"]}
+          style={styles.loadingGradient}>
           <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
           <Text style={styles.loadingText}>Loading details...</Text>
-        </View>
+        </LinearGradient>
       </SafeAreaView>
     );
   }
 
   if (!accountGroup) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={BRAND_COLORS.darkPurple}
-        />
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar style="light" />
+        <LinearGradient
+          colors={["#1a0f33", "#2d1f5e"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}>
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Text style={styles.backText}>‹ Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              Account Group Details
+            </Text>
+            <View style={{ width: 50 }} />
+          </View>
+        </LinearGradient>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Account group not found</Text>
           <TouchableOpacity
-            style={styles.backButton}
+            style={styles.errorBtn}
             onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>Go Back</Text>
+            <Text style={styles.errorBtnText}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -116,27 +133,36 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Account Group Details</Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("accountgroupedit", { id })}
-          style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>Edit</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
 
-      <ScrollView style={styles.content}>
+      {/* ── Gradient Header ── */}
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            Account Group Details
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("AccountGroupEdit", { id })}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.editText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentInner}
+        showsVerticalScrollIndicator={false}>
         {/* Basic Info */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Basic Information</Text>
@@ -206,24 +232,23 @@ export default function AccountGroupShowScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
-  loadingContainer: {
+  loadingGradient: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    gap: 16,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#6b7280",
+    fontSize: 14,
+    color: "rgba(255,255,255,0.7)",
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
     padding: 20,
   },
   errorText: {
@@ -231,43 +256,59 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginBottom: 20,
   },
-  backButton: {
+  errorBtn: {
     backgroundColor: BRAND_COLORS.gold,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
-  backButtonText: {
+  errorBtnText: {
     color: BRAND_COLORS.darkPurple,
     fontWeight: "600",
+    fontSize: 14,
   },
+  /* ── Header ── */
   header: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: BRAND_COLORS.darkPurple,
   },
-  headerButton: {
-    paddingVertical: 8,
-    minWidth: 60,
-  },
-  headerButtonText: {
+  backText: {
     fontSize: 16,
-    color: SEMANTIC_COLORS.white,
+    color: "rgba(164,212,255,0.9)",
     fontWeight: "600",
+    minWidth: 60,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: SEMANTIC_COLORS.white,
+    fontWeight: "800",
+    color: "#fff",
+    flex: 1,
+    textAlign: "center",
+    letterSpacing: -0.3,
   },
+  editText: {
+    fontSize: 15,
+    color: BRAND_COLORS.gold,
+    fontWeight: "700",
+    minWidth: 60,
+    textAlign: "right",
+  },
+  /* ── Body ── */
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f3f4f8",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
-  
+  contentInner: {
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
   card: {
     backgroundColor: SEMANTIC_COLORS.white,
     marginHorizontal: 20,

@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
 import { VoucherType } from "../types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../../../../theme/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { AccountingStackParamList } from "../../../../navigation/types";
-import { voucherService } from "../services/voucherService";
-import { voucherTypeService } from "../../vouchertype/services/voucherTypeService";
+import { useVoucherTypes } from "../../vouchertype/hooks/useVoucherTypes";
 
 type Props = NativeStackScreenProps<AccountingStackParamList, "VoucherCreate">;
 
@@ -40,33 +40,11 @@ const VOUCHER_TYPE_COLORS: Record<string, string> = {
 };
 
 export default function VoucherCreateScreen({ navigation }: Props) {
-  const [voucherTypes, setVoucherTypes] = useState<VoucherType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { voucherTypes, isLoading, isError } = useVoucherTypes("accounting");
 
-  useEffect(() => {
-    loadVoucherTypes();
-  }, []);
-
-  const loadVoucherTypes = async () => {
-    try {
-      setLoading(true);
-      // Load only accounting category voucher types
-      const types = await voucherTypeService.search("", "accounting");
-      setVoucherTypes(types || []);
-    } catch (error: any) {
-      console.error("Error loading voucher types:", error);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to load voucher types",
-        [{ text: "OK" }],
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  if (isError) {
+    Alert.alert("Error", "Failed to load voucher types");
+  }
   const handleVoucherTypeSelect = (voucherType: VoucherType) => {
     navigation.navigate("VoucherForm", {
       voucherTypeId: voucherType.id,
@@ -76,14 +54,15 @@ export default function VoucherCreateScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
@@ -91,55 +70,57 @@ export default function VoucherCreateScreen({ navigation }: Props) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Voucher</Text>
         <View style={styles.placeholder} />
-      </View>
+      </LinearGradient>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-          <Text style={styles.loadingText}>Loading voucher types...</Text>
-        </View>
-      ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}>
-          {/* Instructions */}
-          <View style={styles.instructionsContainer}>
-            <Text style={styles.instructionsTitle}>Select Voucher Type</Text>
-            <Text style={styles.instructionsText}>
-              Choose the type of voucher you want to create
-            </Text>
+      <View style={styles.body}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+            <Text style={styles.loadingText}>Loading voucher types...</Text>
           </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}>
+            {/* Instructions */}
+            <View style={styles.instructionsContainer}>
+              <Text style={styles.instructionsTitle}>Select Voucher Type</Text>
+              <Text style={styles.instructionsText}>
+                Choose the type of voucher you want to create
+              </Text>
+            </View>
 
-          {/* Voucher Types Grid */}
-          <View style={styles.vouchersGrid}>
-            {voucherTypes.map((voucherType) => (
-              <TouchableOpacity
-                key={voucherType.id}
-                style={styles.voucherCard}
-                onPress={() => handleVoucherTypeSelect(voucherType)}
-                activeOpacity={0.7}>
-                <View
-                  style={[
-                    styles.voucherIcon,
-                    {
-                      backgroundColor:
-                        VOUCHER_TYPE_COLORS[voucherType.code] || "#e5e7eb",
-                    },
-                  ]}>
-                  <Text style={styles.voucherEmoji}>
-                    {VOUCHER_TYPE_EMOJIS[voucherType.code] || "📄"}
+            {/* Voucher Types Grid */}
+            <View style={styles.vouchersGrid}>
+              {voucherTypes.map((voucherType) => (
+                <TouchableOpacity
+                  key={voucherType.id}
+                  style={styles.voucherCard}
+                  onPress={() => handleVoucherTypeSelect(voucherType)}
+                  activeOpacity={0.7}>
+                  <View
+                    style={[
+                      styles.voucherIcon,
+                      {
+                        backgroundColor:
+                          VOUCHER_TYPE_COLORS[voucherType.code] || "#e5e7eb",
+                      },
+                    ]}>
+                    <Text style={styles.voucherEmoji}>
+                      {VOUCHER_TYPE_EMOJIS[voucherType.code] || "📄"}
+                    </Text>
+                  </View>
+                  <Text style={styles.voucherLabel}>{voucherType.name}</Text>
+                  <Text style={styles.voucherCode}>{voucherType.code}</Text>
+                  <Text style={styles.voucherDescription}>
+                    {voucherType.description}
                   </Text>
-                </View>
-                <Text style={styles.voucherLabel}>{voucherType.name}</Text>
-                <Text style={styles.voucherCode}>{voucherType.code}</Text>
-                <Text style={styles.voucherDescription}>
-                  {voucherType.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-      )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -147,16 +128,22 @@ export default function VoucherCreateScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    backgroundColor: "#1a0f33",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  body: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
   backButton: {
     paddingVertical: 8,
@@ -180,7 +167,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
-    backgroundColor: "#f5f5f5",
   },
   loadingText: {
     marginTop: 12,
@@ -189,7 +175,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   scrollContent: {
     padding: 20,

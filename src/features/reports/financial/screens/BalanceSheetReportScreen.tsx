@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
@@ -90,12 +90,13 @@ export default function BalanceSheetReportScreen({ navigation }: Props) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={BRAND_COLORS.darkPurple}
-      />
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={["#1a0f33", "#2d1f5e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
@@ -103,172 +104,175 @@ export default function BalanceSheetReportScreen({ navigation }: Props) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Balance Sheet</Text>
         <View style={styles.placeholder} />
-      </View>
+      </LinearGradient>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.filtersSection}>
-          <Text style={styles.sectionTitle}>Filters</Text>
-          <View style={styles.formRow}>
-            <View style={styles.formGroupHalf}>
-              <Text style={styles.label}>As of</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowDatePicker(true)}>
-                <Text style={styles.dateButtonText}>{asOfDate}</Text>
-                <Text style={styles.calendarIcon}>📅</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.formGroupHalf}>
-              <Text style={styles.label}>Compare</Text>
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={compare}
-                  onValueChange={(value) => setCompare(Boolean(value))}>
-                  {COMPARE_OPTIONS.map((option) => (
-                    <Picker.Item
-                      key={option.label}
-                      label={option.label}
-                      value={option.value}
-                    />
-                  ))}
-                </Picker>
+      <View style={styles.body}>
+        <ScrollView style={styles.content}>
+          <View style={styles.filtersSection}>
+            <Text style={styles.sectionTitle}>Filters</Text>
+            <View style={styles.formRow}>
+              <View style={styles.formGroupHalf}>
+                <Text style={styles.label}>As of</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowDatePicker(true)}>
+                  <Text style={styles.dateButtonText}>{asOfDate}</Text>
+                  <Text style={styles.calendarIcon}>📅</Text>
+                </TouchableOpacity>
               </View>
-            </View>
-          </View>
-        </View>
-
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
-            <Text style={styles.loadingText}>Loading balance sheet...</Text>
-          </View>
-        ) : (
-          <>
-            <View style={styles.statsSection}>
-              <Text style={styles.sectionTitle}>Overview</Text>
-              <View style={styles.statsGrid}>
-                {summaryCards.map((stat) => (
-                  <LinearGradient
-                    key={stat.label}
-                    colors={stat.colors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.statCard}>
-                    <Text style={styles.statValue}>{stat.value}</Text>
-                    <Text style={styles.statLabel}>{stat.label}</Text>
-                  </LinearGradient>
-                ))}
-              </View>
-              {data?.summary?.balance_check !== undefined && (
-                <Text style={styles.balanceCheck}>
-                  {data.summary.balance_check
-                    ? "Balance check: OK"
-                    : "Balance check: Out of balance"}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.listSection}>
-              <Text style={styles.sectionTitle}>Assets</Text>
-              {data?.assets?.length ? (
-                data.assets.map((item, index) => (
-                  <View
-                    style={styles.recordCard}
-                    key={`${item.account_id}-${index}`}>
-                    <Text style={styles.recordTitle}>
-                      {item.name || "Asset"}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      {item.code ? `${item.code} • ` : ""}
-                      {formatAmount(item.balance)}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No assets found.</Text>
-              )}
-            </View>
-
-            <View style={styles.listSection}>
-              <Text style={styles.sectionTitle}>Liabilities</Text>
-              {data?.liabilities?.length ? (
-                data.liabilities.map((item, index) => (
-                  <View
-                    style={styles.recordCard}
-                    key={`${item.account_id}-${index}`}>
-                    <Text style={styles.recordTitle}>
-                      {item.name || "Liability"}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      {item.code ? `${item.code} • ` : ""}
-                      {formatAmount(item.balance)}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No liabilities found.</Text>
-              )}
-            </View>
-
-            <View style={styles.listSection}>
-              <Text style={styles.sectionTitle}>Equity</Text>
-              {data?.equity?.length ? (
-                data.equity.map((item, index) => (
-                  <View
-                    style={styles.recordCard}
-                    key={`${item.account_id}-${index}`}>
-                    <Text style={styles.recordTitle}>
-                      {item.name || "Equity"}
-                    </Text>
-                    <Text style={styles.recordSubtext}>
-                      {item.code ? `${item.code} • ` : ""}
-                      {formatAmount(item.balance)}
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No equity data.</Text>
-              )}
-            </View>
-
-            {compare && data?.compare && (
-              <View style={styles.listSection}>
-                <Text style={styles.sectionTitle}>Comparison</Text>
-                <View style={styles.recordCard}>
-                  <Text style={styles.recordTitle}>
-                    As of {data.compare.as_of_date}
-                  </Text>
-                  <Text style={styles.recordSubtext}>
-                    Assets: {formatAmount(data.compare.total_assets)}
-                  </Text>
-                  <Text style={styles.recordSubtext}>
-                    Liabilities: {formatAmount(data.compare.total_liabilities)}
-                  </Text>
-                  <Text style={styles.recordSubtext}>
-                    Equity: {formatAmount(data.compare.total_equity)}
-                  </Text>
+              <View style={styles.formGroupHalf}>
+                <Text style={styles.label}>Compare</Text>
+                <View style={styles.pickerWrapper}>
+                  <Picker
+                    selectedValue={compare}
+                    onValueChange={(value) => setCompare(Boolean(value))}>
+                    {COMPARE_OPTIONS.map((option) => (
+                      <Picker.Item
+                        key={option.label}
+                        label={option.label}
+                        value={option.value}
+                      />
+                    ))}
+                  </Picker>
                 </View>
               </View>
-            )}
-          </>
-        )}
+            </View>
+          </View>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={new Date(asOfDate)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(_event, selectedDate) => {
-              setShowDatePicker(Platform.OS === "ios");
-              if (selectedDate) {
-                setAsOfDate(formatDate(selectedDate));
-              }
-            }}
-          />
-        )}
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={BRAND_COLORS.gold} />
+              <Text style={styles.loadingText}>Loading balance sheet...</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.statsSection}>
+                <Text style={styles.sectionTitle}>Overview</Text>
+                <View style={styles.statsGrid}>
+                  {summaryCards.map((stat) => (
+                    <LinearGradient
+                      key={stat.label}
+                      colors={stat.colors}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.statCard}>
+                      <Text style={styles.statValue}>{stat.value}</Text>
+                      <Text style={styles.statLabel}>{stat.label}</Text>
+                    </LinearGradient>
+                  ))}
+                </View>
+                {data?.summary?.balance_check !== undefined && (
+                  <Text style={styles.balanceCheck}>
+                    {data.summary.balance_check
+                      ? "Balance check: OK"
+                      : "Balance check: Out of balance"}
+                  </Text>
+                )}
+              </View>
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+              <View style={styles.listSection}>
+                <Text style={styles.sectionTitle}>Assets</Text>
+                {data?.assets?.length ? (
+                  data.assets.map((item, index) => (
+                    <View
+                      style={styles.recordCard}
+                      key={`${item.account_id}-${index}`}>
+                      <Text style={styles.recordTitle}>
+                        {item.name || "Asset"}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        {item.code ? `${item.code} • ` : ""}
+                        {formatAmount(item.balance)}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>No assets found.</Text>
+                )}
+              </View>
+
+              <View style={styles.listSection}>
+                <Text style={styles.sectionTitle}>Liabilities</Text>
+                {data?.liabilities?.length ? (
+                  data.liabilities.map((item, index) => (
+                    <View
+                      style={styles.recordCard}
+                      key={`${item.account_id}-${index}`}>
+                      <Text style={styles.recordTitle}>
+                        {item.name || "Liability"}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        {item.code ? `${item.code} • ` : ""}
+                        {formatAmount(item.balance)}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>No liabilities found.</Text>
+                )}
+              </View>
+
+              <View style={styles.listSection}>
+                <Text style={styles.sectionTitle}>Equity</Text>
+                {data?.equity?.length ? (
+                  data.equity.map((item, index) => (
+                    <View
+                      style={styles.recordCard}
+                      key={`${item.account_id}-${index}`}>
+                      <Text style={styles.recordTitle}>
+                        {item.name || "Equity"}
+                      </Text>
+                      <Text style={styles.recordSubtext}>
+                        {item.code ? `${item.code} • ` : ""}
+                        {formatAmount(item.balance)}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>No equity data.</Text>
+                )}
+              </View>
+
+              {compare && data?.compare && (
+                <View style={styles.listSection}>
+                  <Text style={styles.sectionTitle}>Comparison</Text>
+                  <View style={styles.recordCard}>
+                    <Text style={styles.recordTitle}>
+                      As of {data.compare.as_of_date}
+                    </Text>
+                    <Text style={styles.recordSubtext}>
+                      Assets: {formatAmount(data.compare.total_assets)}
+                    </Text>
+                    <Text style={styles.recordSubtext}>
+                      Liabilities:{" "}
+                      {formatAmount(data.compare.total_liabilities)}
+                    </Text>
+                    <Text style={styles.recordSubtext}>
+                      Equity: {formatAmount(data.compare.total_equity)}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={new Date(asOfDate)}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_event, selectedDate) => {
+                setShowDatePicker(Platform.OS === "ios");
+                if (selectedDate) {
+                  setAsOfDate(formatDate(selectedDate));
+                }
+              }}
+            />
+          )}
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -285,7 +289,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 12,
-    backgroundColor: BRAND_COLORS.darkPurple,
+  },
+  body: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
   backButton: {
     paddingVertical: 8,
@@ -305,7 +315,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   filtersSection: {
     paddingHorizontal: 20,
