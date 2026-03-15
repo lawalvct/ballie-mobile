@@ -115,6 +115,22 @@ export type ReportsStackParamList = {
 };
 
 // ============================================================================
+// ADMIN STACK NAVIGATOR
+// ============================================================================
+export type AdminStackParamList = {
+  AdminDashboard: undefined;
+  UserList: undefined;
+  UserCreate: undefined;
+  UserShow: { id: number };
+  UserEdit: { id: number };
+  RoleList: undefined;
+  RoleCreate: undefined;
+  RoleShow: { id: number };
+  RoleEdit: { id: number };
+  PermissionMatrix: undefined;
+};
+
+// ============================================================================
 // MAIN TAB NAVIGATOR
 // ============================================================================
 export type MainTabParamList = {
@@ -127,7 +143,7 @@ export type MainTabParamList = {
   Audit: undefined;
   Ecommerce: undefined;
   Payroll: NavigatorScreenParams<PayrollStackParamList>;
-  Admins: undefined;
+  Admins: NavigatorScreenParams<AdminStackParamList>;
   Statutory: undefined;
 };
 

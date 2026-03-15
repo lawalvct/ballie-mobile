@@ -9,7 +9,7 @@ import CRMNavigator from "../navigation/CRMNavigator";
 import ReportsNavigator from "../navigation/ReportsNavigator";
 import AuditScreen from "./AuditScreen";
 import EcommerceScreen from "./EcommerceScreen";
-import AdminsScreen from "./AdminsScreen";
+import AdminNavigator from "../navigation/AdminNavigator";
 import StatutoryScreen from "./StatutoryScreen";
 
 // Navigation Stacks
@@ -41,7 +41,7 @@ export default function MainNavigator() {
         <Tab.Screen name="Audit" component={AuditScreen} />
         <Tab.Screen name="Ecommerce" component={EcommerceScreen} />
 
-        <Tab.Screen name="Admins" component={AdminsScreen} />
+        <Tab.Screen name="Admins" component={AdminNavigator} />
         <Tab.Screen name="Statutory" component={StatutoryScreen} />
       </Tab.Navigator>
       <DevScreenIndicator />

@@ -204,6 +204,31 @@ export const queryKeys = {
       [...queryKeys.reports.all, "audit", params] as const,
   },
 
+  // ── Admin ───────────────────────────────────────────────────────────────────
+  admin: {
+    all: ["admin"] as const,
+    dashboard: () => [...queryKeys.admin.all, "dashboard"] as const,
+    users: {
+      all: () => [...queryKeys.admin.all, "users"] as const,
+      list: (params?: Record<string, any>) =>
+        [...queryKeys.admin.users.all(), "list", params] as const,
+      detail: (id: number) =>
+        [...queryKeys.admin.users.all(), "detail", id] as const,
+      formData: () => [...queryKeys.admin.users.all(), "formData"] as const,
+    },
+    roles: {
+      all: () => [...queryKeys.admin.all, "roles"] as const,
+      list: (params?: Record<string, any>) =>
+        [...queryKeys.admin.roles.all(), "list", params] as const,
+      detail: (id: number) =>
+        [...queryKeys.admin.roles.all(), "detail", id] as const,
+      formData: () => [...queryKeys.admin.roles.all(), "formData"] as const,
+    },
+    permissions: () => [...queryKeys.admin.all, "permissions"] as const,
+    permissionMatrix: () =>
+      [...queryKeys.admin.all, "permissionMatrix"] as const,
+  },
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
   dashboard: {
     all: ["dashboard"] as const,
