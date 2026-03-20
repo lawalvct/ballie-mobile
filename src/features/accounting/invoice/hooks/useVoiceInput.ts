@@ -9,12 +9,19 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Animated, Alert } from "react-native";
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from "expo-speech-recognition";
 import { showToast } from "../../../../utils/toast";
 import { NIGERIAN_CONTEXTUAL_STRINGS } from "../screens/aiInvoiceConstants";
+
+/* ── Safely import expo-speech-recognition (not available in Expo Go) ── */
+let ExpoSpeechRecognitionModule: any = null;
+let useSpeechRecognitionEvent: any = (_event: string, _cb: any) => {};
+try {
+  const mod = require("expo-speech-recognition");
+  ExpoSpeechRecognitionModule = mod.ExpoSpeechRecognitionModule;
+  useSpeechRecognitionEvent = mod.useSpeechRecognitionEvent;
+} catch {
+  console.warn("[useVoiceInput] expo-speech-recognition not available — voice input disabled");
+}
 
 export function useVoiceInput(
   setDescription: React.Dispatch<React.SetStateAction<string>>,
@@ -88,6 +95,14 @@ export function useVoiceInput(
 
   /* ── Toggle handler ── */
   const handleVoiceToggle = useCallback(async () => {
+    if (!ExpoSpeechRecognitionModule) {
+      Alert.alert(
+        "Voice Not Available",
+        "Speech recognition requires a development build. It is not supported in Expo Go.",
+      );
+      return;
+    }
+
     if (isListening) {
       ExpoSpeechRecognitionModule.stop();
       return;
