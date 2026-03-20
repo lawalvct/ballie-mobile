@@ -204,6 +204,60 @@ export const queryKeys = {
       [...queryKeys.reports.all, "audit", params] as const,
   },
 
+  // ── E-commerce ──────────────────────────────────────────────────────────────
+  ecommerce: {
+    all: ["ecommerce"] as const,
+    settings: () => [...queryKeys.ecommerce.all, "settings"] as const,
+    qrCode: () => [...queryKeys.ecommerce.all, "qrCode"] as const,
+    orders: {
+      all: () => [...queryKeys.ecommerce.all, "orders"] as const,
+      list: (params?: Record<string, any>) =>
+        [...queryKeys.ecommerce.orders.all(), "list", params] as const,
+      detail: (id: number) =>
+        [...queryKeys.ecommerce.orders.all(), "detail", id] as const,
+    },
+    shippingMethods: {
+      all: () => [...queryKeys.ecommerce.all, "shippingMethods"] as const,
+      list: () =>
+        [...queryKeys.ecommerce.shippingMethods.all(), "list"] as const,
+      detail: (id: number) =>
+        [...queryKeys.ecommerce.shippingMethods.all(), "detail", id] as const,
+    },
+    coupons: {
+      all: () => [...queryKeys.ecommerce.all, "coupons"] as const,
+      list: (params?: Record<string, any>) =>
+        [...queryKeys.ecommerce.coupons.all(), "list", params] as const,
+      detail: (id: number) =>
+        [...queryKeys.ecommerce.coupons.all(), "detail", id] as const,
+    },
+    payouts: {
+      all: () => [...queryKeys.ecommerce.all, "payouts"] as const,
+      list: (params?: Record<string, any>) =>
+        [...queryKeys.ecommerce.payouts.all(), "list", params] as const,
+      detail: (id: number) =>
+        [...queryKeys.ecommerce.payouts.all(), "detail", id] as const,
+      formData: () =>
+        [...queryKeys.ecommerce.payouts.all(), "formData"] as const,
+    },
+    reports: {
+      all: () => [...queryKeys.ecommerce.all, "reports"] as const,
+      orders: (params?: Record<string, any>) =>
+        [...queryKeys.ecommerce.reports.all(), "orders", params] as const,
+      revenue: (params?: Record<string, any>) =>
+        [...queryKeys.ecommerce.reports.all(), "revenue", params] as const,
+      products: (params?: Record<string, any>) =>
+        [...queryKeys.ecommerce.reports.all(), "products", params] as const,
+      customers: (params?: Record<string, any>) =>
+        [...queryKeys.ecommerce.reports.all(), "customers", params] as const,
+      abandonedCarts: (params?: Record<string, any>) =>
+        [
+          ...queryKeys.ecommerce.reports.all(),
+          "abandonedCarts",
+          params,
+        ] as const,
+    },
+  },
+
   // ── Admin ───────────────────────────────────────────────────────────────────
   admin: {
     all: ["admin"] as const,

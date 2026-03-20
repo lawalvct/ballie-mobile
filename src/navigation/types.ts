@@ -130,6 +130,27 @@ export type AdminStackParamList = {
   PermissionMatrix: undefined;
 };
 
+export type EcommerceStackParamList = {
+  EcommerceDashboard: undefined;
+  OrderList: undefined;
+  OrderDetail: { id: number };
+  EcommerceSettings: undefined;
+  ShippingMethods: undefined;
+  ShippingMethodForm: { id?: number };
+  CouponList: undefined;
+  CouponForm: { id?: number };
+  CouponDetail: { id: number };
+  PayoutDashboard: undefined;
+  PayoutRequest: undefined;
+  PayoutDetail: { id: number };
+  EcommerceReports: undefined;
+  OrderReport: undefined;
+  RevenueReport: undefined;
+  ProductReport: undefined;
+  CustomerReport: undefined;
+  AbandonedCartReport: undefined;
+};
+
 // ============================================================================
 // MAIN TAB NAVIGATOR
 // ============================================================================
@@ -141,7 +162,7 @@ export type MainTabParamList = {
   CRM: NavigatorScreenParams<CRMStackParamList>;
   Reports: NavigatorScreenParams<ReportsStackParamList>;
   Audit: undefined;
-  Ecommerce: undefined;
+  Ecommerce: NavigatorScreenParams<EcommerceStackParamList>;
   Payroll: NavigatorScreenParams<PayrollStackParamList>;
   Admins: NavigatorScreenParams<AdminStackParamList>;
   Statutory: undefined;

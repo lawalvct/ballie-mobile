@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import { View, ActivityIndicator, Alert } from "react-native";
+import {
+  View,
+  ActivityIndicator,
+  Alert,
+  AppState,
+  Platform,
+  type AppStateStatus,
+} from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { queryClient } from "./src/state";
 import Splash1 from "./src/screens/Splash1";
 import Splash2 from "./src/screens/Splash2";
@@ -47,6 +54,27 @@ interface RegistrationData {
   businessStructure?: string;
   planId?: number;
   terms?: boolean;
+}
+
+function ReactQueryFocusBridge() {
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      return;
+    }
+
+    const onAppStateChange = (status: AppStateStatus) => {
+      focusManager.setFocused(status === "active");
+    };
+
+    const subscription = AppState.addEventListener("change", onAppStateChange);
+    focusManager.setFocused(AppState.currentState === "active");
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  return null;
 }
 
 function AppContent() {
@@ -404,6 +432,7 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ReactQueryFocusBridge />
       <AuthProvider>
         <SafeAreaProvider>
           <AppContent />

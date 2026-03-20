@@ -8,7 +8,7 @@ import DashboardScreen from "./DashboardScreen";
 import CRMNavigator from "../navigation/CRMNavigator";
 import ReportsNavigator from "../navigation/ReportsNavigator";
 import AuditScreen from "./AuditScreen";
-import EcommerceScreen from "./EcommerceScreen";
+import EcommerceNavigator from "../navigation/EcommerceNavigator";
 import AdminNavigator from "../navigation/AdminNavigator";
 import StatutoryScreen from "./StatutoryScreen";
 
@@ -39,7 +39,7 @@ export default function MainNavigator() {
         <Tab.Screen name="Payroll" component={PayrollNavigator} />
         <Tab.Screen name="Reports" component={ReportsNavigator} />
         <Tab.Screen name="Audit" component={AuditScreen} />
-        <Tab.Screen name="Ecommerce" component={EcommerceScreen} />
+        <Tab.Screen name="Ecommerce" component={EcommerceNavigator} />
 
         <Tab.Screen name="Admins" component={AdminNavigator} />
         <Tab.Screen name="Statutory" component={StatutoryScreen} />
