@@ -8,11 +8,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { EcommerceStackParamList } from "../../../navigation/types";
 import { BRAND_COLORS } from "../../../theme/colors";
+import EcommerceModuleHeader from "../../../components/ecommerce/EcommerceModuleHeader";
 
 type Nav = NativeStackNavigationProp<
   EcommerceStackParamList,
@@ -64,15 +64,11 @@ export default function EcommerceReportsScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="light" />
 
-      <LinearGradient colors={["#1a0f33", "#2d1f5e"]} style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Reports</Text>
-        <View style={styles.placeholder} />
-      </LinearGradient>
+      <EcommerceModuleHeader
+        title="Reports"
+        onBack={() => navigation.goBack()}
+        navigation={navigation}
+      />
 
       <ScrollView style={styles.body}>
         {REPORTS.map((r) => (

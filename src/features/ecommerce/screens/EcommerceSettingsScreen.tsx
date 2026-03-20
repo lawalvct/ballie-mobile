@@ -18,7 +18,10 @@ import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { EcommerceStackParamList } from "../../../navigation/types";
 import { BRAND_COLORS } from "../../../theme/colors";
+import EcommerceModuleHeader from "../../../components/ecommerce/EcommerceModuleHeader";
 import {
   useEcommerceSettings,
   useUpdateSettings,
@@ -32,8 +35,10 @@ type UploadFile = {
   type: string;
 };
 
+type Nav = NativeStackNavigationProp<EcommerceStackParamList, "EcommerceSettings">;
+
 export default function EcommerceSettingsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<Nav>();
   const { settings, isLoading, isRefreshing, refresh } = useEcommerceSettings();
   const updateSettings = useUpdateSettings();
   const {
@@ -201,15 +206,11 @@ export default function EcommerceSettingsScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="light" />
 
-      <LinearGradient colors={["#1a0f33", "#2d1f5e"]} style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Store Settings</Text>
-        <View style={{ width: 60 }} />
-      </LinearGradient>
+      <EcommerceModuleHeader
+        title="Store Settings"
+        onBack={() => navigation.goBack()}
+        navigation={navigation}
+      />
 
       <ScrollView
         style={styles.body}
