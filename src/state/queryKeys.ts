@@ -292,6 +292,28 @@ export const queryKeys = {
       [...queryKeys.audit.all, "trail", model, id] as const,
   },
 
+  // ── Tax / Statutory ────────────────────────────────────────────────────────
+  tax: {
+    all: ["tax"] as const,
+    dashboard: () => [...queryKeys.tax.all, "dashboard"] as const,
+    vatReport: (params?: Record<string, any>) =>
+      [...queryKeys.tax.all, "vatReport", params] as const,
+    payeReport: (params?: Record<string, any>) =>
+      [...queryKeys.tax.all, "payeReport", params] as const,
+    pensionReport: (params?: Record<string, any>) =>
+      [...queryKeys.tax.all, "pensionReport", params] as const,
+    nsitfReport: (params?: Record<string, any>) =>
+      [...queryKeys.tax.all, "nsitfReport", params] as const,
+    settings: () => [...queryKeys.tax.all, "settings"] as const,
+    filings: {
+      all: () => [...queryKeys.tax.all, "filings"] as const,
+      list: (params?: Record<string, any>) =>
+        [...queryKeys.tax.filings.all(), "list", params] as const,
+      detail: (id: number) =>
+        [...queryKeys.tax.filings.all(), "detail", id] as const,
+    },
+  },
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
   dashboard: {
     all: ["dashboard"] as const,

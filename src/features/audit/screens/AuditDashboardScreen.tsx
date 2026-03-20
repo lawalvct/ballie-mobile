@@ -114,12 +114,16 @@ export default function AuditDashboardScreen({ navigation }: Props) {
               </TouchableOpacity>
             </View>
           </View>
+        </LinearGradient>
 
+        {/* Body */}
+        <View style={styles.body}>
+          {/* Module intro card */}
           <View style={styles.auditBanner}>
             <View style={styles.auditBannerLeft}>
               <Text style={styles.auditBannerTitle}>Audit Trail</Text>
               <Text style={styles.auditBannerSubtitle}>
-                Review activity history, user actions, and record changes
+                Review activity history, user actions &amp; record changes
               </Text>
             </View>
             <View style={styles.auditMetaBadge}>
@@ -127,10 +131,7 @@ export default function AuditDashboardScreen({ navigation }: Props) {
               <Text style={styles.auditMetaText}>90 days</Text>
             </View>
           </View>
-        </LinearGradient>
 
-        {/* Body */}
-        <View style={styles.body}>
           <AuditStats stats={stats} isLoading={isLoading} />
           <AuditFilters
             users={users}
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   hero: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 18,
+    paddingBottom: 22,
   },
   headerRow: {
     flexDirection: "row",
@@ -275,26 +276,36 @@ const styles = StyleSheet.create({
     color: "#1a0f33",
   },
   auditBanner: {
-    marginTop: 18,
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 4,
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "space-between",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
     gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   auditBannerLeft: {
     flex: 1,
   },
   auditBannerTitle: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#fff",
-    letterSpacing: 0.3,
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1a0f33",
+    letterSpacing: 0.2,
   },
   auditBannerSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "#6b7280",
+    marginTop: 3,
   },
   body: {
     flex: 1,
@@ -308,22 +319,22 @@ const styles = StyleSheet.create({
   auditMetaBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: "rgba(16,185,129,0.1)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 20,
-    gap: 6,
+    gap: 5,
   },
   statusDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
     backgroundColor: "#10b981",
   },
   auditMetaText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "rgba(255,255,255,0.85)",
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#059669",
   },
   paginationRow: {
     paddingHorizontal: 20,

@@ -10,7 +10,7 @@ import ReportsNavigator from "../navigation/ReportsNavigator";
 import AuditNavigator from "../navigation/AuditNavigator";
 import EcommerceNavigator from "../navigation/EcommerceNavigator";
 import AdminNavigator from "../navigation/AdminNavigator";
-import StatutoryScreen from "./StatutoryScreen";
+import TaxNavigator from "../navigation/TaxNavigator";
 
 // Navigation Stacks
 import AccountingNavigator from "../navigation/AccountingNavigator";
@@ -42,7 +42,7 @@ export default function MainNavigator() {
         <Tab.Screen name="Ecommerce" component={EcommerceNavigator} />
 
         <Tab.Screen name="Admins" component={AdminNavigator} />
-        <Tab.Screen name="Statutory" component={StatutoryScreen} />
+        <Tab.Screen name="Statutory" component={TaxNavigator} />
       </Tab.Navigator>
       <DevScreenIndicator />
     </>

@@ -152,6 +152,19 @@ export type EcommerceStackParamList = {
 };
 
 // ============================================================================
+// TAX / STATUTORY STACK NAVIGATOR
+// ============================================================================
+export type TaxStackParamList = {
+  TaxDashboard: undefined;
+  VatReport: undefined;
+  PayeReport: undefined;
+  PensionReport: undefined;
+  NsitfReport: undefined;
+  TaxFilings: undefined;
+  TaxSettings: undefined;
+};
+
+// ============================================================================
 // AUDIT STACK NAVIGATOR
 // ============================================================================
 export type AuditStackParamList = {
@@ -173,7 +186,7 @@ export type MainTabParamList = {
   Ecommerce: NavigatorScreenParams<EcommerceStackParamList>;
   Payroll: NavigatorScreenParams<PayrollStackParamList>;
   Admins: NavigatorScreenParams<AdminStackParamList>;
-  Statutory: undefined;
+  Statutory: NavigatorScreenParams<TaxStackParamList>;
 };
 
 // ============================================================================
