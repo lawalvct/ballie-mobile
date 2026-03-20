@@ -188,7 +188,7 @@ export default function UserListScreen() {
           ) : (
             users.map((user: UserListItem) => (
               <TouchableOpacity
-                key={user.id}
+                key={`user-${user.id}`}
                 style={styles.userCard}
                 onPress={() =>
                   navigation.navigate("UserShow", { id: user.id })
@@ -215,7 +215,7 @@ export default function UserListScreen() {
                     <View style={styles.roleBadges}>
                       {user.roles.map((role) => (
                         <View
-                          key={role.id}
+                          key={`role-${role.id}`}
                           style={[
                             styles.roleBadge,
                             {

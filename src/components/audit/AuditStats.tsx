@@ -1,52 +1,85 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SEMANTIC_COLORS } from "../../theme/colors";
+import type { AuditStats as AuditStatsType } from "../../features/audit/types";
 
-export default function AuditStats() {
-  const stats = [
-    {
-      label: "Total Records",
-      value: "15,847",
-      subtitle: "All time",
-      color1: "#3c2c64",
-      color2: "#5a4a7e",
-    },
-    {
-      label: "Created Today",
-      value: "42",
-      subtitle: "New entries",
-      color1: "#10b981",
-      color2: "#059669",
-    },
-    {
-      label: "Updated Today",
-      value: "128",
-      subtitle: "Modified",
-      color1: "#f59e0b",
-      color2: "#d97706",
-    },
-    {
-      label: "Posted Today",
-      value: "87",
-      subtitle: "Published",
-      color1: "#3b82f6",
-      color2: "#2563eb",
-    },
-  ];
+interface Props {
+  stats: AuditStatsType | null;
+  isLoading: boolean;
+}
+
+const STAT_CONFIG = [
+  {
+    key: "total_records" as const,
+    label: "Total Records",
+    subtitle: "All time",
+    color1: "#3c2c64",
+    color2: "#5a4a7e",
+  },
+  {
+    key: "created_today" as const,
+    label: "Created Today",
+    subtitle: "New entries",
+    color1: "#10b981",
+    color2: "#059669",
+    //icon: "✨",
+  },
+  {
+    key: "updated_today" as const,
+    label: "Updated Today",
+    subtitle: "Modified",
+    color1: "#f59e0b",
+    color2: "#d97706",
+    //icon: "✏️",
+  },
+  {
+    key: "posted_today" as const,
+    label: "Posted Today",
+    subtitle: "Published",
+    color1: "#3b82f6",
+    color2: "#2563eb",
+    //icon: "📤",
+  },
+  {
+    key: "active_users" as const,
+    label: "Active Users",
+    subtitle: "Currently active",
+    color1: "#8b5cf6",
+    color2: "#7c3aed",
+   // icon: "👥",
+  },
+];
+
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+export default function AuditStats({ stats, isLoading }: Props) {
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="small" color="#3c2c64" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {stats.map((stat, index) => (
+      {STAT_CONFIG.map((cfg) => (
         <LinearGradient
-          key={index}
-          colors={[stat.color1, stat.color2]}
+          key={cfg.key}
+          colors={[cfg.color1, cfg.color2]}
           style={styles.statCard}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}>
-          <Text style={styles.statValue}>{stat.value}</Text>
-          <Text style={styles.statLabel}>{stat.label}</Text>
-          <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
+          <Text style={styles.statSubtitle}>{cfg.subtitle}</Text>
+          <Text style={styles.statValue}>
+            {stats ? formatNumber(stats[cfg.key]) : "—"}
+          </Text>
+          <Text style={styles.statLabel}>{cfg.label}</Text>
         </LinearGradient>
       ))}
     </View>
@@ -61,30 +94,41 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     gap: 12,
   },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+  },
   statCard: {
-    width: "48%",
-    padding: 16,
-    borderRadius: 12,
+    width: "47%",
+    flexGrow: 1,
+    minHeight: 132,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    borderRadius: 18,
+    justifyContent: "space-between",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
   },
   statValue: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "bold",
     color: SEMANTIC_COLORS.white,
-    marginBottom: 4,
+    marginTop: 12,
+    marginBottom: 10,
   },
   statLabel: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
     color: SEMANTIC_COLORS.white,
-    marginBottom: 2,
   },
   statSubtitle: {
     fontSize: 11,
-    color: "rgba(255, 255, 255, 0.8)",
+    fontWeight: "600",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+    color: "rgba(255, 255, 255, 0.78)",
   },
 });

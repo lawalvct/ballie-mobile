@@ -283,6 +283,15 @@ export const queryKeys = {
       [...queryKeys.admin.all, "permissionMatrix"] as const,
   },
 
+  // ── Audit ───────────────────────────────────────────────────────────────────
+  audit: {
+    all: ["audit"] as const,
+    dashboard: (params?: Record<string, any>) =>
+      [...queryKeys.audit.all, "dashboard", params] as const,
+    trail: (model: string, id: number) =>
+      [...queryKeys.audit.all, "trail", model, id] as const,
+  },
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
   dashboard: {
     all: ["dashboard"] as const,

@@ -334,7 +334,7 @@ export default function LedgerAccountCreateScreen({
                     <Picker.Item label="Select account group..." value={null} />
                     {availableGroups.map((group) => (
                       <Picker.Item
-                        key={group.id}
+                        key={`group-${group.id}`}
                         label={`${group.code} - ${group.name}`}
                         value={group.id}
                       />
@@ -373,7 +373,7 @@ export default function LedgerAccountCreateScreen({
                     <Picker.Item label="None (Top Level)" value={null} />
                     {availableParents.map((parent) => (
                       <Picker.Item
-                        key={parent.id}
+                        key={`parent-${parent.id}`}
                         label={`${parent.code} - ${parent.name}`}
                         value={parent.id}
                       />

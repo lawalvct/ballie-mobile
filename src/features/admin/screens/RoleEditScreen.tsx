@@ -256,7 +256,7 @@ export default function RoleEditScreen() {
                       const selected = form.permissions?.includes(perm.id);
                       return (
                         <TouchableOpacity
-                          key={perm.id}
+                          key={`perm-${perm.id}`}
                           style={styles.permissionRow}
                           onPress={() => togglePermission(perm.id)}>
                           <View

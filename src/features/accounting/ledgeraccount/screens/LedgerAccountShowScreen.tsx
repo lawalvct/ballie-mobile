@@ -428,7 +428,7 @@ export default function LedgerAccountShowScreen({ navigation, route }: Props) {
             {account.children && account.children.length > 0 ? (
               account.children.map((child) => (
                 <TouchableOpacity
-                  key={child.id}
+                  key={`child-${child.id}`}
                   style={styles.childCard}
                   onPress={() =>
                     navigation.push("LedgerAccountShow", { id: child.id })

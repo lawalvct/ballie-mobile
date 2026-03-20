@@ -136,7 +136,7 @@ export default function RoleListScreen() {
           ) : (
             roles.map((role: RoleListItem) => (
               <TouchableOpacity
-                key={role.id}
+                key={`role-${role.id}`}
                 style={styles.roleCard}
                 onPress={() =>
                   navigation.navigate("RoleShow", { id: role.id })

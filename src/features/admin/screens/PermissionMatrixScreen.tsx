@@ -159,7 +159,7 @@ function ModuleMatrixCard({ module, roles, onRefresh }: ModuleMatrixCardProps) {
                   <Text style={styles.colHeader}>Permission</Text>
                 </View>
                 {roles.map((role) => (
-                  <View key={role.id} style={styles.roleCol}>
+                  <View key={`role-${role.id}`} style={styles.roleCol}>
                     <View
                       style={[
                         styles.roleColDot,
@@ -176,7 +176,7 @@ function ModuleMatrixCard({ module, roles, onRefresh }: ModuleMatrixCardProps) {
               {/* Permission rows */}
               {module.permissions.map((perm, idx) => (
                 <PermissionRow
-                  key={perm.id}
+                  key={`perm-${perm.id}`}
                   permission={perm}
                   roles={roles}
                   isEven={idx % 2 === 0}
@@ -214,7 +214,7 @@ function PermissionRow({
       {roles.map((role) => {
         const hasPermission = permission.roles[role.id.toString()] ?? false;
         return (
-          <View key={role.id} style={styles.roleCol}>
+          <View key={`role-${role.id}`} style={styles.roleCol}>
             <View
               style={[
                 styles.matrixCheck,

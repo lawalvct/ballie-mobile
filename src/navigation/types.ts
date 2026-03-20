@@ -152,6 +152,14 @@ export type EcommerceStackParamList = {
 };
 
 // ============================================================================
+// AUDIT STACK NAVIGATOR
+// ============================================================================
+export type AuditStackParamList = {
+  AuditDashboard: undefined;
+  AuditTrail: { model: string; id: number; name?: string };
+};
+
+// ============================================================================
 // MAIN TAB NAVIGATOR
 // ============================================================================
 export type MainTabParamList = {
@@ -161,7 +169,7 @@ export type MainTabParamList = {
   // POS: undefined;
   CRM: NavigatorScreenParams<CRMStackParamList>;
   Reports: NavigatorScreenParams<ReportsStackParamList>;
-  Audit: undefined;
+  Audit: NavigatorScreenParams<AuditStackParamList>;
   Ecommerce: NavigatorScreenParams<EcommerceStackParamList>;
   Payroll: NavigatorScreenParams<PayrollStackParamList>;
   Admins: NavigatorScreenParams<AdminStackParamList>;

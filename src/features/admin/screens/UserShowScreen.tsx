@@ -172,7 +172,7 @@ export default function UserShowScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>Roles & Permissions</Text>
             {user.roles.map((role: any) => (
-              <View key={role.id} style={styles.roleSection}>
+              <View key={`role-${role.id}`} style={styles.roleSection}>
                 <View style={styles.roleTitleRow}>
                   <View
                     style={[
@@ -185,7 +185,7 @@ export default function UserShowScreen() {
                 {role.permissions && role.permissions.length > 0 && (
                   <View style={styles.permissionsList}>
                     {role.permissions.map((perm: any) => (
-                      <View key={perm.id} style={styles.permissionChip}>
+                      <View key={`perm-${perm.id}`} style={styles.permissionChip}>
                         <Text style={styles.permissionText}>
                           {perm.display_name}
                         </Text>

@@ -137,7 +137,7 @@ export default function RoleShowScreen() {
             </Text>
             {role.users.map((u: any) => (
               <TouchableOpacity
-                key={u.id}
+                key={`user-${u.id}`}
                 style={styles.userRow}
                 onPress={() => navigation.navigate("UserShow", { id: u.id })}>
                 <View
@@ -187,7 +187,7 @@ export default function RoleShowScreen() {
                   </Text>
                   <View style={styles.permissionChips}>
                     {module.permissions.map((perm: any) => (
-                      <View key={perm.id} style={styles.permChip}>
+                      <View key={`perm-${perm.id}`} style={styles.permChip}>
                         <Text style={styles.permChipText}>
                           {perm.display_name}
                         </Text>

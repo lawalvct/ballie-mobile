@@ -145,7 +145,7 @@ export default function AdminDashboardScreen() {
             <Text style={styles.sectionTitle}>Role Distribution</Text>
             <View style={styles.roleList}>
               {dashboard.role_distribution.map((role) => (
-                <View key={role.id} style={styles.roleRow}>
+                <View key={`role-${role.id}`} style={styles.roleRow}>
                   <View style={styles.roleRowLeft}>
                     <View
                       style={[
