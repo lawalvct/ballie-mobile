@@ -11,7 +11,7 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
-import { useCompanySettings } from "../features/company-settings/hooks/useCompanySettings";
+import { useBusiness } from "../context/BusinessContext";
 import type { ModuleKey } from "../features/company-settings/types";
 
 const TAB_BAR_HEIGHT = 62;
@@ -46,9 +46,16 @@ const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   Projects: "projects",
 };
 
+const TAB_TERMINOLOGY_KEY: Record<string, string> = {
+  CRM: "crm",
+  Inventory: "products",
+  Ecommerce: "ecommerce",
+  Projects: "projects",
+};
+
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { data: settings } = useCompanySettings();
+  const { modules, getLabel, terminology } = useBusiness();
   const [containerWidth, setContainerWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
   const [showPointer, setShowPointer] = useState(false);
@@ -62,15 +69,37 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const bottomPad = Math.max(insets.bottom, 4);
 
   const visibleTabs = useMemo(() => {
-    if (!settings?.modules) return TABS;
-    const enabledKeys = new Set(
-      settings.modules.filter((m) => m.enabled).map((m) => m.key),
-    );
+    const enabledKeys = new Set<ModuleKey>();
+    // Core modules always enabled
+    enabledKeys.add("dashboard");
+    enabledKeys.add("accounting");
+    enabledKeys.add("admin");
+    enabledKeys.add("settings");
+    // Reports & Audit always shown
+    enabledKeys.add("reports");
+    enabledKeys.add("audit");
+    enabledKeys.add("statutory");
+    enabledKeys.add("payroll");
+    // Dynamic modules from API
+    if (modules.inventory) enabledKeys.add("inventory");
+    if (modules.crm) enabledKeys.add("crm");
+    if (modules.pos) enabledKeys.add("pos");
+    if (modules.ecommerce) enabledKeys.add("ecommerce");
+    if (modules.projects) enabledKeys.add("projects");
+
     return TABS.filter((tab) => {
       const moduleKey = TAB_MODULE_MAP[tab.id];
       return !moduleKey || enabledKeys.has(moduleKey);
-    });
-  }, [settings?.modules]);
+    }).map((tab) => {
+      const termKey = TAB_TERMINOLOGY_KEY[tab.id];
+      if (termKey) {
+        const label = getLabel(termKey, tab.label);
+        if (label === null) return null; // hidden by terminology
+        return { ...tab, label };
+      }
+      return tab;
+    }).filter(Boolean) as typeof TABS[number][];
+  }, [modules, terminology]);
 
   const focusedRouteName = state.routes[state.index]?.name;
 

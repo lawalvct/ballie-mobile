@@ -25,6 +25,8 @@ import OnboardingPreferencesScreen from "./src/screens/OnboardingPreferencesScre
 import OnboardingCompleteScreen from "./src/screens/OnboardingCompleteScreen";
 import MainNavigator from "./src/screens/MainNavigator";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
+import { BusinessProvider } from "./src/context/BusinessContext";
+import { useDashboard } from "./src/features/dashboard/hooks/useDashboard";
 import { authAPI } from "./src/api/endpoints/auth";
 import { onboardingAPI } from "./src/api/endpoints/onboarding";
 import { BRAND_COLORS } from "./src/theme/colors";
@@ -75,6 +77,15 @@ function ReactQueryFocusBridge() {
   }, []);
 
   return null;
+}
+
+function MainNavigatorWithBusiness() {
+  const { data } = useDashboard();
+  return (
+    <BusinessProvider dashboard={data}>
+      <MainNavigator />
+    </BusinessProvider>
+  );
 }
 
 function AppContent() {
@@ -324,7 +335,7 @@ function AppContent() {
           }
         }}>
         <StatusBar style="light" />
-        <MainNavigator />
+        <MainNavigatorWithBusiness />
       </NavigationContainer>
     );
   }
