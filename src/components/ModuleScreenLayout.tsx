@@ -119,7 +119,7 @@ export default function ModuleScreenLayout({
               <View style={styles.ddDivider} />
               <TouchableOpacity style={styles.ddItem}>
                 <Text style={styles.ddItemIcon}>⚙️</Text>
-                <Text style={styles.ddItemText}>Profile Settings</Text>
+                <Text style={styles.ddItemText}>My Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.ddItem}

@@ -75,7 +75,7 @@ export default function AppHeader({
               <View style={styles.dropdownDivider} />
               <TouchableOpacity style={styles.dropdownItem}>
                 <Text style={styles.dropdownItemIcon}>⚙️</Text>
-                <Text style={styles.dropdownItemText}>Profile Settings</Text>
+                <Text style={styles.dropdownItemText}>My Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.dropdownItem}
