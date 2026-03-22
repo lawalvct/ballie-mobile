@@ -9,6 +9,11 @@ import type {
   ModuleKey,
 } from "../types";
 
+const MODULE_INVALIDATION_KEYS = [
+  queryKeys.companySettings.all,
+  queryKeys.dashboard.all,
+];
+
 // ─── Get All Settings (dashboard) ────────────────────────────────────────────
 export function useCompanySettings() {
   const query = useApiQuery<GetAllSettingsResponse>(
@@ -82,7 +87,7 @@ export function useUpdateModules() {
   return useApiMutation(
     (modules: ModuleKey[]) => companySettingsService.updateModules(modules),
     {
-      invalidateKeys: [queryKeys.companySettings.all],
+      invalidateKeys: MODULE_INVALIDATION_KEYS,
       successMessage: "Module settings updated",
     },
   );
@@ -90,7 +95,7 @@ export function useUpdateModules() {
 
 export function useResetModules() {
   return useApiMutation(() => companySettingsService.resetModules(), {
-    invalidateKeys: [queryKeys.companySettings.all],
+    invalidateKeys: MODULE_INVALIDATION_KEYS,
     successMessage: "Modules reset to defaults",
   });
 }
