@@ -356,6 +356,12 @@ export const queryKeys = {
     reports: () => [...queryKeys.projects.all, "reports"] as const,
   },
 
+  // ── Profile ─────────────────────────────────────────────────────────────────
+  profile: {
+    all: ["profile"] as const,
+    me: () => [...queryKeys.profile.all, "me"] as const,
+  },
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
   dashboard: {
     all: ["dashboard"] as const,

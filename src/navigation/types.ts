@@ -187,6 +187,16 @@ export type ProjectStackParamList = {
 };
 
 // ============================================================================
+// PROFILE STACK NAVIGATOR
+// ============================================================================
+export type ProfileStackParamList = {
+  ProfileHome: undefined;
+  ProfileEdit: undefined;
+  ChangePassword: undefined;
+  EmailVerification: undefined;
+};
+
+// ============================================================================
 // AUDIT STACK NAVIGATOR
 // ============================================================================
 export type AuditStackParamList = {
@@ -210,6 +220,7 @@ export type MainTabParamList = {
   Admins: NavigatorScreenParams<AdminStackParamList>;
   Statutory: NavigatorScreenParams<TaxStackParamList>;
   Projects: NavigatorScreenParams<ProjectStackParamList>;
+  Profile: NavigatorScreenParams<ProfileStackParamList>;
 };
 
 // ============================================================================

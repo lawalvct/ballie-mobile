@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { MainTabParamList } from "../navigation/types";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
 import { useAuth } from "../context/AuthContext";
 
@@ -16,6 +19,7 @@ export default function AppHeader({
   userRole,
 }: AppHeaderProps) {
   const { logout } = useAuth();
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const [showDropdown, setShowDropdown] = useState(false);
   const avatarLetter = userName?.charAt(0).toUpperCase() || "U";
 
@@ -73,7 +77,12 @@ export default function AppHeader({
                 </View>
               </View>
               <View style={styles.dropdownDivider} />
-              <TouchableOpacity style={styles.dropdownItem}>
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setShowDropdown(false);
+                  navigation.navigate("Profile", { screen: "ProfileHome" });
+                }}>
                 <Text style={styles.dropdownItemIcon}>⚙️</Text>
                 <Text style={styles.dropdownItemText}>My Profile</Text>
               </TouchableOpacity>

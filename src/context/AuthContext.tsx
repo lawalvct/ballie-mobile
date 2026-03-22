@@ -10,6 +10,7 @@ interface AuthContextType {
   needsOnboarding: boolean;
   setNeedsOnboarding: (needs: boolean) => void;
   login: (token: string, user: User, tenant: Tenant) => Promise<void>;
+  updateUser: (user: Partial<User>) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -90,6 +91,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const updateUser = async (partial: Partial<User>) => {
+    try {
+      const updated = { ...user!, ...partial };
+      await AsyncStorage.setItem("user_data", JSON.stringify(updated));
+      setUser(updated);
+    } catch (error) {
+      console.error("Error updating user data:", error);
+    }
+  };
+
   const logout = async () => {
     try {
       await AsyncStorage.multiRemove([
@@ -119,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         needsOnboarding,
         setNeedsOnboarding,
         login,
+        updateUser,
         logout,
         isLoading,
       }}>
