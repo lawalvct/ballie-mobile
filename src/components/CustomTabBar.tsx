@@ -11,6 +11,8 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_COLORS, SEMANTIC_COLORS } from "../theme/colors";
+import { useCompanySettings } from "../features/company-settings/hooks/useCompanySettings";
+import type { ModuleKey } from "../features/company-settings/types";
 
 const TAB_BAR_HEIGHT = 62;
 
@@ -29,8 +31,24 @@ const TABS = [
   { id: "Projects", label: "Projects", icon: "📁" },
 ] as const;
 
+const TAB_MODULE_MAP: Record<string, ModuleKey> = {
+  Dashboard: "dashboard",
+  Accounting: "accounting",
+  Inventory: "inventory",
+  POS: "pos",
+  CRM: "crm",
+  Payroll: "payroll",
+  Reports: "reports",
+  Audit: "audit",
+  Ecommerce: "ecommerce",
+  Admins: "admin",
+  Statutory: "statutory",
+  Projects: "projects",
+};
+
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { data: settings } = useCompanySettings();
   const [containerWidth, setContainerWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
   const [showPointer, setShowPointer] = useState(false);
@@ -43,15 +61,28 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   // devices that report insets.bottom === 0 (some older Android builds).
   const bottomPad = Math.max(insets.bottom, 4);
 
+  const visibleTabs = useMemo(() => {
+    if (!settings?.modules) return TABS;
+    const enabledKeys = new Set(
+      settings.modules.filter((m) => m.enabled).map((m) => m.key),
+    );
+    return TABS.filter((tab) => {
+      const moduleKey = TAB_MODULE_MAP[tab.id];
+      return !moduleKey || enabledKeys.has(moduleKey);
+    });
+  }, [settings?.modules]);
+
+  const focusedRouteName = state.routes[state.index]?.name;
+
   const isOverflowing = useMemo(
     () => contentWidth > containerWidth + 8,
     [contentWidth, containerWidth],
   );
 
   const shouldShowHint = useMemo(() => {
-    if (contentWidth === 0 || containerWidth === 0) return TABS.length > 5;
+    if (contentWidth === 0 || containerWidth === 0) return visibleTabs.length > 5;
     return isOverflowing;
-  }, [contentWidth, containerWidth, isOverflowing]);
+  }, [contentWidth, containerWidth, isOverflowing, visibleTabs.length]);
 
   useEffect(() => {
     if (!shouldShowHint) {
@@ -112,8 +143,8 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           onContentSizeChange={(w) => setContentWidth(w)}
           onScroll={handleScroll}
           scrollEventThrottle={64}>
-          {TABS.map((tab, index) => {
-            const isFocused = state.index === index;
+          {visibleTabs.map((tab) => {
+            const isFocused = focusedRouteName === tab.id;
             return (
               <TouchableOpacity
                 key={tab.id}

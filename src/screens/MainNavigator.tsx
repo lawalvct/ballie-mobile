@@ -13,6 +13,7 @@ import AdminNavigator from "../navigation/AdminNavigator";
 import TaxNavigator from "../navigation/TaxNavigator";
 import ProjectNavigator from "../navigation/ProjectNavigator";
 import ProfileNavigator from "../navigation/ProfileNavigator";
+import CompanySettingsNavigator from "../navigation/CompanySettingsNavigator";
 
 // Navigation Stacks
 import AccountingNavigator from "../navigation/AccountingNavigator";
@@ -47,6 +48,7 @@ export default function MainNavigator() {
         <Tab.Screen name="Statutory" component={TaxNavigator} />
         <Tab.Screen name="Projects" component={ProjectNavigator} />
         <Tab.Screen name="Profile" component={ProfileNavigator} />
+        <Tab.Screen name="CompanySettings" component={CompanySettingsNavigator} />
       </Tab.Navigator>
       <DevScreenIndicator />
     </>

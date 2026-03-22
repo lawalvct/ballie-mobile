@@ -197,6 +197,18 @@ export type ProfileStackParamList = {
 };
 
 // ============================================================================
+// COMPANY SETTINGS STACK NAVIGATOR
+// ============================================================================
+export type CompanySettingsStackParamList = {
+  SettingsDashboard: undefined;
+  CompanyInfo: undefined;
+  BusinessDetails: undefined;
+  Branding: undefined;
+  Preferences: undefined;
+  Modules: undefined;
+};
+
+// ============================================================================
 // AUDIT STACK NAVIGATOR
 // ============================================================================
 export type AuditStackParamList = {
@@ -221,6 +233,7 @@ export type MainTabParamList = {
   Statutory: NavigatorScreenParams<TaxStackParamList>;
   Projects: NavigatorScreenParams<ProjectStackParamList>;
   Profile: NavigatorScreenParams<ProfileStackParamList>;
+  CompanySettings: NavigatorScreenParams<CompanySettingsStackParamList>;
 };
 
 // ============================================================================

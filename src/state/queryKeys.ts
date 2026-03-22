@@ -362,6 +362,11 @@ export const queryKeys = {
     me: () => [...queryKeys.profile.all, "me"] as const,
   },
 
+  // ── Company Settings ───────────────────────────────────────────────────────
+  companySettings: {
+    all: ["companySettings"] as const,
+  },
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
   dashboard: {
     all: ["dashboard"] as const,

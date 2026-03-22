@@ -88,6 +88,15 @@ export default function AppHeader({
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.dropdownItem}
+                onPress={() => {
+                  setShowDropdown(false);
+                  navigation.navigate("CompanySettings", { screen: "SettingsDashboard" });
+                }}>
+                <Text style={styles.dropdownItemIcon}>🏢</Text>
+                <Text style={styles.dropdownItemText}>Company Settings</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dropdownItem}
                 onPress={handleLogout}>
                 <Text style={styles.dropdownItemIcon}>🚪</Text>
                 <Text style={styles.dropdownItemText}>Logout</Text>

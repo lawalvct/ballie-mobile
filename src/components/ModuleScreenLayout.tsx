@@ -134,6 +134,15 @@ export default function ModuleScreenLayout({
                 style={styles.ddItem}
                 onPress={() => {
                   setShowDropdown(false);
+                  tabNav.navigate("CompanySettings", { screen: "SettingsDashboard" });
+                }}>
+                <Text style={styles.ddItemIcon}>🏢</Text>
+                <Text style={styles.ddItemText}>Company Settings</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.ddItem}
+                onPress={() => {
+                  setShowDropdown(false);
                   logout();
                 }}>
                 <Text style={styles.ddItemIcon}>🚪</Text>
