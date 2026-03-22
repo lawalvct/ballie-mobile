@@ -283,7 +283,7 @@ export default function AIInvoiceScreen() {
                   isListening && styles.micButtonActive,
                   { transform: [{ scale: pulseAnim }] },
                 ]}>
-                <Text style={styles.micIcon}>{isListening ? "" : ""}</Text>
+                <Text style={styles.micIcon}>{isListening ? "⏹" : "🎤"}</Text>
               </Animated.View>
             </TouchableOpacity>
           </View>
@@ -291,7 +291,7 @@ export default function AIInvoiceScreen() {
           {isListening && (
             <View style={styles.listeningBanner}>
               <View style={styles.listeningDot} />
-              <Text style={styles.listeningText}>Listening speak now</Text>
+              <Text style={styles.listeningText}>🔴 Listening… speak now</Text>
             </View>
           )}
 
@@ -315,7 +315,7 @@ export default function AIInvoiceScreen() {
           />
           <View style={styles.charCountRow}>
             {isListening && (
-              <Text style={styles.voiceHint}>Tap  to stop</Text>
+              <Text style={styles.voiceHint}>Tap ⏹ to stop</Text>
             )}
             <Text style={styles.charCount}>{description.length}/1000</Text>
           </View>
