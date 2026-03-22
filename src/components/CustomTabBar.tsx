@@ -18,7 +18,7 @@ const TABS = [
   { id: "Dashboard", label: "Dashboard", icon: "📊" },
   { id: "Accounting", label: "Accounting", icon: "💰" },
   { id: "Inventory", label: "Inventory", icon: "📦" },
-  // { id: "POS", label: "POS", icon: "💳" },
+  { id: "POS", label: "POS", icon: "💳" },
   { id: "CRM", label: "CRM", icon: "👥" },
   { id: "Payroll", label: "Payroll", icon: "💵" },
   { id: "Reports", label: "Reports", icon: "📈" },

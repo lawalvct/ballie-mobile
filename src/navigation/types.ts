@@ -165,6 +165,17 @@ export type TaxStackParamList = {
 };
 
 // ============================================================================
+// POS STACK NAVIGATOR
+// ============================================================================
+export type POSStackParamList = {
+  POSSession: undefined;
+  POSSale: undefined;
+  POSTransactions: undefined;
+  POSTransactionDetail: { id: number };
+  POSReports: undefined;
+};
+
+// ============================================================================
 // AUDIT STACK NAVIGATOR
 // ============================================================================
 export type AuditStackParamList = {
@@ -179,7 +190,7 @@ export type MainTabParamList = {
   Dashboard: undefined;
   Accounting: NavigatorScreenParams<AccountingStackParamList>;
   Inventory: NavigatorScreenParams<InventoryStackParamList>;
-  // POS: undefined;
+  POS: NavigatorScreenParams<POSStackParamList>;
   CRM: NavigatorScreenParams<CRMStackParamList>;
   Reports: NavigatorScreenParams<ReportsStackParamList>;
   Audit: NavigatorScreenParams<AuditStackParamList>;

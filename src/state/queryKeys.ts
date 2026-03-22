@@ -314,6 +314,36 @@ export const queryKeys = {
     },
   },
 
+  // ── POS ─────────────────────────────────────────────────────────────────────
+  pos: {
+    all: ["pos"] as const,
+    session: () => [...queryKeys.pos.all, "session"] as const,
+    registers: () => [...queryKeys.pos.all, "registers"] as const,
+    initData: () => [...queryKeys.pos.all, "initData"] as const,
+    products: (params?: Record<string, any>) =>
+      [...queryKeys.pos.all, "products", params] as const,
+    categories: () => [...queryKeys.pos.all, "categories"] as const,
+    customers: (params?: Record<string, any>) =>
+      [...queryKeys.pos.all, "customers", params] as const,
+    paymentMethods: () => [...queryKeys.pos.all, "paymentMethods"] as const,
+    transactions: {
+      all: () => [...queryKeys.pos.all, "transactions"] as const,
+      list: (params?: Record<string, any>) =>
+        [...queryKeys.pos.transactions.all(), "list", params] as const,
+      detail: (id: number) =>
+        [...queryKeys.pos.transactions.all(), "detail", id] as const,
+      receipt: (id: number) =>
+        [...queryKeys.pos.transactions.all(), "receipt", id] as const,
+    },
+    reports: {
+      all: () => [...queryKeys.pos.all, "reports"] as const,
+      daily: (params?: Record<string, any>) =>
+        [...queryKeys.pos.reports.all(), "daily", params] as const,
+      topProducts: (params?: Record<string, any>) =>
+        [...queryKeys.pos.reports.all(), "topProducts", params] as const,
+    },
+  },
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
   dashboard: {
     all: ["dashboard"] as const,
