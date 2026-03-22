@@ -26,6 +26,7 @@ const TABS = [
   { id: "Ecommerce", label: "E-com", icon: "🛒" },
   { id: "Admins", label: "Admins", icon: "👔" },
   { id: "Statutory", label: "Statutory", icon: "📜" },
+  { id: "Projects", label: "Projects", icon: "📁" },
 ] as const;
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {

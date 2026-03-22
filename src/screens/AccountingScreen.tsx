@@ -174,29 +174,7 @@ export default function AccountingScreen({ navigation }: Props) {
             </View>
           </View>
 
-          {/*  FOOTER  */}
-          <View style={styles.footer}>
-            <View style={styles.footerDivider} />
-            <Text style={styles.footerBrand}>Ballie Accounting</Text>
-            <Text style={styles.footerSub}>
-              Powered by BallieAI Made for Nigerian businesses
-            </Text>
-            <View style={styles.footerLinks}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("AccountingActions")}>
-                <Text style={styles.footerLink}>All Actions</Text>
-              </TouchableOpacity>
-              <Text style={styles.footerDot}></Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("LedgerAccountHome")}>
-                <Text style={styles.footerLink}>Ledger</Text>
-              </TouchableOpacity>
-              <Text style={styles.footerDot}></Text>
-              <TouchableOpacity>
-                <Text style={styles.footerLink}>Help</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          {/* Footer removed */}
         </View>
       </ScrollView>
 
@@ -418,46 +396,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  /*  Footer  */
-  footer: {
-    alignItems: "center",
-    paddingVertical: 28,
-    paddingHorizontal: 20,
-    marginTop: 12,
-  },
-  footerDivider: {
-    width: 48,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "#d1d5db",
-    marginBottom: 16,
-  },
-  footerBrand: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: BRAND_COLORS.darkPurple,
-    letterSpacing: 0.5,
-  },
-  footerSub: {
-    fontSize: 12,
-    color: "#9ca3af",
-    marginTop: 4,
-    marginBottom: 14,
-  },
-  footerLinks: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  footerLink: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: BRAND_COLORS.blue,
-  },
-  footerDot: {
-    fontSize: 10,
-    color: "#d1d5db",
-  },
+  /*  Footer styles removed */
 
   /*  Avatar dropdown  */
   overlay: {

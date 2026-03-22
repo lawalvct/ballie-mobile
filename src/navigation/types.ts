@@ -176,6 +176,17 @@ export type POSStackParamList = {
 };
 
 // ============================================================================
+// PROJECT STACK NAVIGATOR
+// ============================================================================
+export type ProjectStackParamList = {
+  ProjectList: undefined;
+  ProjectCreate: undefined;
+  ProjectEdit: { id: number };
+  ProjectDetail: { id: number };
+  ProjectReports: undefined;
+};
+
+// ============================================================================
 // AUDIT STACK NAVIGATOR
 // ============================================================================
 export type AuditStackParamList = {
@@ -198,6 +209,7 @@ export type MainTabParamList = {
   Payroll: NavigatorScreenParams<PayrollStackParamList>;
   Admins: NavigatorScreenParams<AdminStackParamList>;
   Statutory: NavigatorScreenParams<TaxStackParamList>;
+  Projects: NavigatorScreenParams<ProjectStackParamList>;
 };
 
 // ============================================================================

@@ -344,6 +344,18 @@ export const queryKeys = {
     },
   },
 
+  // ── Projects ─────────────────────────────────────────────────────────────────
+  projects: {
+    all: ["projects"] as const,
+    lists: () => [...queryKeys.projects.all, "list"] as const,
+    list: (params?: Record<string, any>) =>
+      [...queryKeys.projects.lists(), params] as const,
+    detail: (id: number) =>
+      [...queryKeys.projects.all, "detail", id] as const,
+    formData: () => [...queryKeys.projects.all, "formData"] as const,
+    reports: () => [...queryKeys.projects.all, "reports"] as const,
+  },
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
   dashboard: {
     all: ["dashboard"] as const,
